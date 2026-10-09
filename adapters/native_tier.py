@@ -5,10 +5,11 @@ This module never creates a network client. Inject ``hermes_web_search`` and
 tool boundary.
 """
 
+import inspect
 from collections.abc import Mapping
 from urllib.parse import urlsplit
 
-from ssrf_guard import validate_public_url
+from ssrf_guard import check_url, pinned_fetch, resolve_public_url
 
 
 MISSING_CONFIG = "MISSING_CONFIG"
@@ -91,11 +92,52 @@ def _legacy_valid_web_url(value):
 
 
 def _valid_web_url(value, resolver=None):
+    allowed, _code = check_url(value)
+    if not allowed:
+        return False
+    if resolver is None:
+        return True
     try:
-        validate_public_url(value, resolver=resolver)
+        resolve_public_url(value, resolver=resolver)
     except Exception:
         return False
     return True
+
+
+def _supports_keyword(function, keyword):
+    try:
+        parameters = inspect.signature(function).parameters.values()
+    except (TypeError, ValueError):
+        return False
+    return any(
+        parameter.name == keyword or parameter.kind is inspect.Parameter.VAR_KEYWORD
+        for parameter in parameters
+    )
+
+
+def _extract_with_pinned_context(web_extract, url, resolver, addresses):
+    """Give pin-aware native adapters the guarded fetch primitive and answer."""
+    # P1 fix: keep validated addresses pinned. When a resolver is supplied,
+    # the addresses must be forwarded to the adapter so the connection can be
+    # pinned; discarding them would allow a later DNS rebinding to private IP.
+    # Non-pin-aware adapters are fail-closed when resolver is required.
+    if resolver is not None and not (_supports_keyword(web_extract, "pinned_fetch") or _supports_keyword(web_extract, "resolved_addresses")):
+        # Keep addresses but adapter cannot pin -> fail closed for live.
+        # For offline fakes without resolver this branch is not taken.
+        # We raise so native_extract maps to URL_BLOCKED.
+        raise ValueError("adapter must support pinned_fetch or resolved_addresses when resolver is supplied")
+    kwargs = {"urls": [url], "char_limit": MAX_CONTENT_CHARS}
+    if _supports_keyword(web_extract, "pinned_fetch"):
+        def guarded_fetch(target, **options):
+            if "connection_factory" in options:
+                raise ValueError("native adapter may not override the pinned connection factory")
+            options["resolver"] = resolver
+            return pinned_fetch(target, **options)
+
+        kwargs["pinned_fetch"] = guarded_fetch
+    if _supports_keyword(web_extract, "resolved_addresses"):
+        kwargs["resolved_addresses"] = tuple(addresses)
+    return web_extract(**kwargs)
 
 
 def _response_error(response):
@@ -117,7 +159,7 @@ def _search_items(response):
     return data if isinstance(data, (list, tuple)) else None
 
 
-def native_search(query, web_search=None, *, max_results=MAX_RESULTS):
+def native_search(query, web_search=None, *, max_results=MAX_RESULTS, resolver=None):
     """Search via an injected native callable and return the Goat result shape.
 
     ``web_search`` is called as ``web_search(query, limit=bounded_limit)``; its
@@ -146,7 +188,7 @@ def native_search(query, web_search=None, *, max_results=MAX_RESULTS):
         if not isinstance(item, Mapping):
             continue
         url = item.get("url")
-        if not _valid_web_url(url):
+        if not _valid_web_url(url, resolver=resolver):
             continue
         title, title_cut = _truncate(item.get("title", ""))
         snippet, snippet_cut = _truncate(item.get("description", item.get("snippet", "")))
@@ -173,14 +215,26 @@ def _extract_record(response):
 
 
 def native_extract(url, web_extract=None, *, resolver=None):
-    """Extract one page via ``web_extract(urls=[url], char_limit=8000)``."""
+    """Extract a page through an injected, pin-aware native adapter.
+
+    The adapter receives the resolved address set when a resolver is supplied,
+    and adapters supporting the ``pinned_fetch`` keyword receive the guarded
+    transport. Without a resolver the wrapper performs syntax-only validation
+    so injected fakes stay offline; a live legacy adapter must pin its own
+    connection and expose every redirect. With no adapter, no fetch is attempted.
+    """
     missing = _callable_error(web_extract)
     if missing is not None:
         return _error_result(missing)
-    if not _valid_web_url(url, resolver):
+    try:
+        allowed, _code = check_url(url)
+        if not allowed:
+            return _error_result(URL_BLOCKED)
+        addresses = resolve_public_url(url, resolver=resolver) if resolver is not None else ()
+    except Exception:
         return _error_result(URL_BLOCKED)
     try:
-        response = web_extract(urls=[url], char_limit=MAX_CONTENT_CHARS)
+        response = _extract_with_pinned_context(web_extract, url, resolver, addresses)
     except Exception as error:
         return _error_result(error)
     error = _response_error(response)
@@ -192,7 +246,7 @@ def native_extract(url, web_extract=None, *, resolver=None):
     if record.get("error") is not None or record.get("code") is not None:
         return _error_result(record)
     final_url = record.get("url", url)
-    if not _valid_web_url(final_url, resolver):
+    if not _valid_web_url(final_url, resolver=resolver):
         return _error_result(REDIRECT_BLOCKED)
     content_value = record.get("content", record.get("text"))
     if content_value is None:
@@ -210,7 +264,9 @@ class NativeTier:
         self.resolver = resolver
 
     def search(self, query, *, max_results=MAX_RESULTS):
-        return native_search(query, self.web_search, max_results=max_results)
+        return native_search(
+            query, self.web_search, max_results=max_results, resolver=self.resolver
+        )
 
     def extract(self, url):
         return native_extract(url, self.web_extract, resolver=self.resolver)

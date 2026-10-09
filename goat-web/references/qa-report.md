@@ -4,13 +4,13 @@ Scope: current staging tree; local/offline checks only. Unit tests use fakes; th
 
 ## Current inventory
 
-- 10 `test_*.py` files; 56 unittest cases discovered.
+- 10 `test_*.py` files; 61 unittest cases discovered.
 
 ## Current verification
 
 | Gate | Result |
 |---|---|
-| `python3 -m unittest discover -s tests -v` | PASS, exit 0; 56 tests. |
+| `python3 -m unittest discover -s tests -v` | PASS, exit 0; 61 tests. |
 | `python3 scripts/fuzz_gate.py` | PASS, exit 0; 4,288 total cases, 2,600 URL cases (2,600 distinct), 284 userinfo URL cases, 1,683 redirect cases, 0 failures. |
 | `python3 scripts/audit_staging.py` | PASS, exit 0; `OK: no staging findings`. This is a narrow heuristic, not a comprehensive secret scan or release gate. |
 | Provenance/license metadata check from `goat-gate.yml` | PASS; `Provenance and license metadata checks passed.` |

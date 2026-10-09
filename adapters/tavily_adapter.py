@@ -8,7 +8,7 @@ transport or unauthenticated fallback is provided.
 import json as _json
 from collections.abc import Mapping
 
-from ssrf_guard import GuardError, URL_BLOCKED, validate_public_url
+from ssrf_guard import GuardError, URL_BLOCKED, check_url, validate_public_url
 
 
 API_BASE_URL = "https://api.tavily.com"
@@ -25,6 +25,16 @@ def _missing_config():
 
 def _invalid_input():
     return {"ok": False, "error": "INVALID_INPUT"}
+
+
+def _validate_target(url, resolver):
+    allowed, code = check_url(url)
+    if not allowed:
+        raise GuardError(code)
+    # Injected transports are caller-controlled; only an explicitly supplied
+    # resolver performs wrapper-level DNS validation. Real transports must pin.
+    if resolver is not None:
+        validate_public_url(url, resolver=resolver)
 
 
 class TavilyClient:
@@ -92,7 +102,7 @@ class TavilyClient:
             return _invalid_input()
         try:
             for target in url_list:
-                validate_public_url(target, resolver=self._resolver)
+                _validate_target(target, self._resolver)
         except GuardError:
             return {"error": {"code": URL_BLOCKED}}
         payload = dict(options)
@@ -106,7 +116,7 @@ class TavilyClient:
         if not isinstance(url, str) or not url.strip():
             return _invalid_input()
         try:
-            validate_public_url(url, resolver=self._resolver)
+            _validate_target(url, self._resolver)
         except GuardError:
             return {"error": {"code": URL_BLOCKED}}
         payload = dict(options)

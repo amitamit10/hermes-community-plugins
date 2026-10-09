@@ -7,7 +7,6 @@ for the explicitly configured SearXNG instance.
 """
 
 from collections.abc import Mapping
-from html.parser import HTMLParser
 import http.client
 import ipaddress
 import json
@@ -15,6 +14,8 @@ import re
 import socket
 import ssl
 from urllib.parse import parse_qs, quote, urlencode, urljoin, urlsplit, urlunsplit
+
+from ddg_parser import _SearchParser, _VOID_TAGS, _plain_text
 
 
 DEFAULT_SEARXNG_URL = "http://localhost:8888"
@@ -30,9 +31,6 @@ URL_BLOCKED = "URL_BLOCKED"
 REDIRECT_BLOCKED = "REDIRECT_BLOCKED"
 _PUBLIC_ERRORS = frozenset((MISSING_CONFIG, URL_BLOCKED, REDIRECT_BLOCKED))
 _REDIRECT_STATUSES = frozenset((301, 302, 303, 307, 308))
-_VOID_TAGS = frozenset(
-    ("area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr")
-)
 _DOMAIN_RE = re.compile(r"[a-z0-9-]+(?:\.[a-z0-9-]+)*\Z")
 
 
@@ -365,78 +363,6 @@ def _json_body(body):
         return json.loads(body)
     except (TypeError, ValueError):
         raise _ClientError(URL_BLOCKED) from None
-
-
-class _SearchParser(HTMLParser):
-    def __init__(self):
-        super().__init__(convert_charrefs=True)
-        self.results = []
-        self.snippets = []
-        self._capture = None
-        self._stack = []
-
-    def _finish_capture(self):
-        kind, href, chunks = self._capture
-        text = " ".join("".join(chunks).split())
-        if kind == "result":
-            self.results.append({"url": href, "title": text})
-        else:
-            self.snippets.append(text)
-        self._capture = None
-        self._stack = []
-
-    def handle_starttag(self, tag, attrs):
-        lowered = tag.lower()
-        attributes = dict(attrs)
-        classes = set((attributes.get("class") or "").split())
-        if self._capture is not None:
-            if lowered not in _VOID_TAGS:
-                self._stack.append(lowered)
-            return
-        if lowered == "a" and "result__a" in classes:
-            self._capture = ("result", attributes.get("href", ""), [])
-            self._stack = [lowered]
-        elif "result__snippet" in classes:
-            self._capture = ("snippet", "", [])
-            self._stack = [lowered]
-
-    def handle_endtag(self, tag):
-        if self._capture is None:
-            return
-        lowered = tag.lower()
-        if lowered not in self._stack:
-            return
-        index = len(self._stack) - 1 - self._stack[::-1].index(lowered)
-        self._stack = self._stack[:index]
-        if not self._stack:
-            self._finish_capture()
-
-    def handle_data(self, data):
-        if self._capture is not None:
-            self._capture[2].append(data)
-
-    def close(self):
-        super().close()
-        if self._capture is not None:
-            self._finish_capture()
-
-
-class _PlainTextParser(HTMLParser):
-    def __init__(self):
-        super().__init__(convert_charrefs=True)
-        self.parts = []
-
-    def handle_data(self, data):
-        self.parts.append(data)
-
-
-def _plain_text(value):
-    if not isinstance(value, str):
-        value = str(value) if value is not None else ""
-    parser = _PlainTextParser()
-    parser.feed(value)
-    parser.close()
-    return " ".join(" ".join(parser.parts).split())
 
 
 def _ddg_result_url(raw_url):

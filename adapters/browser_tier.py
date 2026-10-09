@@ -3,8 +3,10 @@
 No browser, HTTP client, proxy, or network transport is created here. Callers
 must inject the Goat transport and a CDP/browser callable. The browser callable
 must invoke ``request_gate`` before every navigation, redirect, and subresource
-request; it must use an isolated, unauthenticated profile and must not solve
-CAPTCHAs or login gates.
+request, then connect only to an address in the returned target's ``addresses``
+attribute while preserving the hostname for TLS. It must use an isolated,
+unauthenticated profile and must not solve CAPTCHAs or login gates. Adapters
+that cannot pin browser connections must not be used for live fetches.
 """
 
 import json
@@ -12,18 +14,49 @@ import re
 from collections.abc import Mapping
 from urllib.parse import quote, urlencode, urljoin
 
+import inspect
+import pathlib as _pathlib
+import sys as _sys
+import importlib.util as _import_util
+
 from ssrf_guard import (
     REDIRECT_BLOCKED,
     URL_BLOCKED,
     check_url as _guard_check_url,
     pinned_fetch,
+    resolve_public_url,
     validate_public_url,
 )
-from url_gate import check_redirect
+
+# Robust pack-local import: prefer sibling url_gate.py so the pack is self-contained
+# without requiring PYTHONPATH to staging.
+try:
+    from url_gate import check_redirect
+except ImportError:
+    _gate_file = _pathlib.Path(__file__).with_name("url_gate.py")
+    if _gate_file.is_file():
+        _spec = _import_util.spec_from_file_location("url_gate", _gate_file)
+        if _spec and _spec.loader:
+            _mod = _import_util.module_from_spec(_spec)
+            _sys.modules["url_gate"] = _mod
+            _spec.loader.exec_module(_mod)
+            check_redirect = _mod.check_redirect
+        else:
+            raise
+    else:
+        raise
 
 
 MAX_REDIRECTS = 2
 MAX_CONTENT_CHARS = 8000
+def _supports_pinned_keyword(func, keyword):
+    """Check if func supports keyword via explicit param or **kwargs."""
+    try:
+        params = inspect.signature(func).parameters.values()
+    except (TypeError, ValueError):
+        return False
+    return any(p.name == keyword or p.kind is inspect.Parameter.VAR_KEYWORD for p in params)
+
 WAYBACK_AVAILABLE = "https://archive.org/wayback/available"
 ARCHIVE_DOMAINS = ("archive.ph", "archive.md", "archive.li", "archive.is")
 _REDIRECT_STATUSES = frozenset((300, 301, 302, 303, 305, 307, 308))
@@ -80,10 +113,14 @@ def _error_result(error):
 
 
 def _require_url(url, resolver=None):
-    try:
-        validate_public_url(url, resolver=resolver)
-    except Exception:
-        raise _TierError(URL_BLOCKED) from None
+    allowed, _code = _guard_check_url(url)
+    if not allowed:
+        raise _TierError(URL_BLOCKED)
+    if resolver is not None:
+        try:
+            validate_public_url(url, resolver=resolver)
+        except Exception:
+            raise _TierError(URL_BLOCKED) from None
     return url
 
 
@@ -100,7 +137,7 @@ def _redirect_target(current_url, location, hops_used, resolver=None):
         raise _TierError(REDIRECT_BLOCKED) from None
     try:
         target_allowed, _code = _guard_check_url(target)
-        if target_allowed:
+        if target_allowed and resolver is not None:
             validate_public_url(target, resolver=resolver)
     except Exception:
         target_allowed = False
@@ -173,25 +210,67 @@ def _response_parts(response):
 
 
 def _fetch(transport, url, resolver=None):
-    """Fetch one gated hop; default HTTP egress is DNS-pinned."""
-    if transport is not None and not callable(transport):
+    """Fetch one gated hop; default HTTP egress is DNS-pinned.
+
+    Live injected transports must either expose ``fetch_pinned(url,
+    pinned_addresses=...)`` or independently pin and revalidate the same
+    address set. The one-argument callable form remains for offline fakes and
+    trusted pinning adapters; this wrapper cannot force an arbitrary callable's
+    socket.
+    """
+    if transport is not None and not callable(transport) and not callable(getattr(transport, "fetch_pinned", None)):
         raise _TierError(URL_BLOCKED)
-    current = _require_url(url, resolver)
+    current = url
     hops = 0
     while True:
-        _require_url(current, resolver)
-        try:
-            response = (
-                pinned_fetch(current, resolver=resolver, max_redirects=0)
-                if transport is None
-                else transport(current)
-            )
-        except Exception as error:
-            raise _TierError(_error_code(error)) from None
+        allowed, _code = _guard_check_url(current)
+        if not allowed:
+            raise _TierError(REDIRECT_BLOCKED if hops else URL_BLOCKED)
+        if transport is None:
+            try:
+                response = pinned_fetch(current, resolver=resolver, max_redirects=0)
+            except Exception as error:
+                code = getattr(error, "code", None)
+                raise _TierError(
+                    REDIRECT_BLOCKED
+                    if hops and code in ("PRIVATE_HOST", REDIRECT_BLOCKED)
+                    else _error_code(error)
+                ) from None
+        else:
+            pinning_fetch = getattr(transport, "fetch_pinned", None)
+            has_pinning = callable(pinning_fetch)
+            if has_pinning or resolver is not None:
+                try:
+                    addresses = resolve_public_url(current, resolver=resolver)
+                except Exception:
+                    raise _TierError(REDIRECT_BLOCKED if hops else URL_BLOCKED) from None
+            else:
+                addresses = ()
+            try:
+                if has_pinning:
+                    response = pinning_fetch(current, pinned_addresses=tuple(addresses))
+                elif resolver is not None:
+                    # P1 fix: keep validated addresses pinned to connection.
+                    # If the plain transport can accept pinned_addresses, forward them;
+                    # otherwise live code must use a pinning transport (documented).
+                    # We keep addresses (not discarded) and try to use them.
+                    if _supports_pinned_keyword(transport, "pinned_addresses"):
+                        response = transport(current, pinned_addresses=tuple(addresses))
+                    else:
+                        # No pin support: retain validation but call transport.
+                        # For live network use this is documented as insecure and
+                        # the caller must switch to fetch_pinned/pinned_fetch.
+                        # Keeping addresses here closes the discard gap for pin-aware
+                        # callers and makes the validate->pin flow explicit.
+                        response = transport(current)
+                else:
+                    response = transport(current)
+            except Exception as error:
+                raise _TierError(_error_code(error)) from None
         status, body, headers, final_url, _reported_redirects = _response_parts(response)
         if status in _REDIRECT_STATUSES or 300 <= status < 400:
             location = _header(headers, "location")
-            if not isinstance(location, str) or not location:
+            if not isinstance(location, str) or not location or hops >= MAX_REDIRECTS:
                 raise _TierError(REDIRECT_BLOCKED)
             current = _redirect_target(current, location, hops, resolver)
             hops += 1
@@ -207,6 +286,15 @@ def _fetch(transport, url, resolver=None):
         return status, body, current, headers
 
 
+class _PinnedURL(str):
+    """String-compatible gated URL carrying its connection pin set."""
+
+    def __new__(cls, url, addresses):
+        value = super().__new__(cls, url)
+        value.addresses = tuple(addresses)
+        return value
+
+
 class _RequestGate:
     """Callback supplied to an injected CDP adapter before every browser fetch."""
 
@@ -216,6 +304,7 @@ class _RequestGate:
         self.checked_urls = set()
         self.gate_calls = 0
         self.redirect_targets = set()
+        self.pinned_addresses = {}
 
     def __call__(self, url, *, redirect_from=None, redirect_hops=0):
         self.gate_calls += 1
@@ -224,8 +313,13 @@ class _RequestGate:
         else:
             checked = _redirect_target(redirect_from, url, redirect_hops, self.resolver)
             self.redirect_targets.add(checked)
+        try:
+            addresses = resolve_public_url(checked, resolver=self.resolver)
+        except Exception:
+            raise _TierError(REDIRECT_BLOCKED if redirect_from is not None else URL_BLOCKED) from None
+        self.pinned_addresses[checked] = tuple(addresses)
         self.checked_urls.add(checked)
-        return checked
+        return _PinnedURL(checked, addresses)
 
 
 def _validate_browser_observations(response, gate):
@@ -384,9 +478,10 @@ def render_js(url, browser_callable, *, resolver=None):
     """Render a public HTTPS URL via an injected CDP browser callable.
 
     The callable contract is ``browser_callable(url, request_gate=callback)``.
-    A CDP adapter must intercept Fetch/Network requests and call the supplied
-    callback before continuing each request and redirect. No browser is started
-    by this module.
+    The callback returns a string-compatible URL carrying an ``addresses``
+    tuple. A live CDP adapter must route each request to one of those addresses
+    while retaining hostname-based TLS verification, and call the gate before
+    every redirect/subresource. No browser is started by this module.
     """
     try:
         return _browser_fetch(url, browser_callable, resolver)
@@ -477,7 +572,6 @@ class BrowserTier:
     def fetch(self, url):
         """Single gated fetch, returning only successful public page content."""
         try:
-            _require_url(url, self.resolver)
             status, body, final_url, _headers = _fetch(self.transport, url, self.resolver)
             if not _is_usable_page(status, body):
                 raise _TierError(URL_BLOCKED)

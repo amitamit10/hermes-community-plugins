@@ -1,7 +1,9 @@
 """Fake-only tests for browser_tier; no browser or network access is used."""
 
 import json
+import socket
 import unittest
+from unittest import mock
 from urllib.parse import urlencode
 
 from browser_tier import (
@@ -12,6 +14,9 @@ from browser_tier import (
     render_js,
 )
 from url_gate import REDIRECT_BLOCKED, URL_BLOCKED, URLGateError, check_url
+
+
+PUBLIC_RESOLVER = lambda host, port, **kwargs: ["93.184.216.34"]
 
 
 class FakeTransport:
@@ -54,6 +59,16 @@ class BrowserTierTests(unittest.TestCase):
         result = BrowserTier(transport=transport).fetch("http://example.com/")
         self.assertEqual(result, {"ok": False, "error": URL_BLOCKED})
         self.assertEqual(transport.calls, [])
+
+    def test_fake_http_transport_does_not_trigger_system_dns(self):
+        url = "https://example.test/article"
+        transport = FakeTransport({url: {"status": 200, "body": "public article content"}})
+
+        with mock.patch.object(socket, "getaddrinfo", side_effect=AssertionError("unexpected DNS")):
+            result = BrowserTier(transport=transport).fetch(url)
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(transport.calls, [url])
 
     def test_redirect_to_private_target_is_blocked_before_second_fetch(self):
         start = "https://example.com/start"
@@ -103,7 +118,7 @@ class BrowserTierTests(unittest.TestCase):
 
     def test_js_render_passes_gate_to_injected_cdp_callable(self):
         browser = FakeBrowser()
-        result = render_js("https://example.com/app", browser)
+        result = render_js("https://example.com/app", browser, resolver=PUBLIC_RESOLVER)
         self.assertTrue(result["ok"])
         self.assertEqual(result["source"], "browser_js")
         self.assertEqual(browser.calls, ["https://example.com/app"])
@@ -114,7 +129,7 @@ class BrowserTierTests(unittest.TestCase):
             return {"status": 200, "body": "should not be reached", "url": url}
 
         browser = FakeBrowser(action=action)
-        result = render_js("https://example.com/app", browser)
+        result = render_js("https://example.com/app", browser, resolver=PUBLIC_RESOLVER)
         self.assertEqual(result, {"ok": False, "error": URL_BLOCKED})
 
     def test_js_render_blocks_private_redirect(self):
@@ -122,12 +137,12 @@ class BrowserTierTests(unittest.TestCase):
             request_gate("http://127.0.0.1/private", redirect_from=url, redirect_hops=0)
             return {"status": 200, "body": "unreachable", "url": url}
 
-        result = render_js("https://example.com/app", FakeBrowser(action=action))
+        result = render_js("https://example.com/app", FakeBrowser(action=action), resolver=PUBLIC_RESOLVER)
         self.assertEqual(result, {"ok": False, "error": REDIRECT_BLOCKED})
 
     def test_js_render_requires_redirect_evidence_for_changed_final_url(self):
         browser = FakeBrowser(final_url="https://other.example/landing")
-        result = render_js("https://example.com/app", browser)
+        result = render_js("https://example.com/app", browser, resolver=PUBLIC_RESOLVER)
         self.assertEqual(result, {"ok": False, "error": REDIRECT_BLOCKED})
 
     def test_browser_request_log_is_checked(self):
@@ -140,7 +155,7 @@ class BrowserTierTests(unittest.TestCase):
                 "requests": [url, "https://[::1]/private.js"],
             }
 
-        result = render_js("https://example.com/app", FakeBrowser(action=action))
+        result = render_js("https://example.com/app", FakeBrowser(action=action), resolver=PUBLIC_RESOLVER)
         self.assertEqual(result, {"ok": False, "error": URL_BLOCKED})
 
     def test_cloudflare_callable_runs_only_for_non_captcha_challenge(self):
@@ -149,7 +164,7 @@ class BrowserTierTests(unittest.TestCase):
             start: {"status": 403, "body": "<title>Just a moment...</title>"},
         })
         browser = FakeBrowser(body="<html>article rendered after challenge</html>")
-        result = cloudflare_bypass(start, transport, browser)
+        result = cloudflare_bypass(start, transport, browser, resolver=PUBLIC_RESOLVER)
         self.assertTrue(result["ok"])
         self.assertEqual(result["source"], "cloudflare_bypass")
         self.assertEqual(browser.calls, [start])
@@ -161,7 +176,7 @@ class BrowserTierTests(unittest.TestCase):
             start: {"status": 403, "body": '<div class="cf-turnstile"></div>'},
         })
         browser = FakeBrowser()
-        result = cloudflare_bypass(start, transport, browser)
+        result = cloudflare_bypass(start, transport, browser, resolver=PUBLIC_RESOLVER)
         self.assertEqual(result, {"ok": False, "error": URL_BLOCKED})
         self.assertEqual(browser.calls, [])
 
@@ -203,6 +218,7 @@ class BrowserTierTests(unittest.TestCase):
             transport=transport,
             browser_callable=browser,
             archive_domains=(),
+            resolver=PUBLIC_RESOLVER,
         ).recover(url)
         self.assertTrue(result["ok"])
         self.assertEqual(result["source"], "browser_js")
@@ -250,7 +266,7 @@ class BrowserTierTests(unittest.TestCase):
         def action(url, request_gate):
             raise URLGateError("PRIVATE_HOST")
 
-        result = render_js("https://example.com/app", FakeBrowser(action=action))
+        result = render_js("https://example.com/app", FakeBrowser(action=action), resolver=PUBLIC_RESOLVER)
         self.assertEqual(result, {"ok": False, "error": URL_BLOCKED})
 
 

@@ -187,19 +187,31 @@ def resolve_and_validate(host, resolver=None):
     return verified
 
 
-def validate_public_url(url, resolver=None):
-    """Validate HTTPS/443 syntax and, when supplied, resolve all DNS answers.
+def resolve_public_url(url, resolver=None):
+    """Validate URL syntax and resolve every DNS answer, failing closed.
 
-    Passing an explicit resolver enables offline DNS validation. Without one,
-    this helper performs syntax/IP-literal checks only; actual network fetches
-    must use ``pinned_fetch``, which always resolves and pins before connect.
+    When ``resolver`` is omitted the system resolver is used. Fetching code must
+    use the returned addresses to pin its connection; validation alone is only
+    a preflight for adapters whose transport pins independently.
     """
     allowed, code = check_url(url)
     if not allowed:
         raise GuardError(code)
-    if resolver is not None:
-        parsed = urlsplit(url)
-        resolve_and_validate(parsed.hostname, resolver=resolver)
+    parsed = urlsplit(url)
+    if not parsed.hostname:
+        raise GuardError(URL_BLOCKED)
+    return resolve_and_validate(parsed.hostname, resolver=resolver)
+
+
+def validate_public_url(url, resolver=None):
+    """Validate public HTTPS/443 syntax and resolve every DNS answer.
+
+    Omitting ``resolver`` uses the system resolver; this function never skips
+    DNS validation for hostnames. Network transports must still pin the
+    returned address (``pinned_fetch`` does so at connection time) to close the
+    DNS-rebinding window.
+    """
+    resolve_public_url(url, resolver=resolver)
     return True
 
 
@@ -357,5 +369,6 @@ __all__ = [
     "check_url",
     "pinned_fetch",
     "resolve_and_validate",
+    "resolve_public_url",
     "validate_public_url",
 ]

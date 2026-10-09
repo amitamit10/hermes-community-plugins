@@ -8,7 +8,7 @@ The pack is licensed under the MIT License; see `LICENSE`. The copyright line fo
 
 ## Component inventory
 
-`written-for-GOAT` means the component was authored specifically for this pack. Each listed component is licensed under MIT.
+`written-for-GOAT` means the component was authored specifically for this pack. The top-level Python inventory contains 39 files: 21 implementation/support modules and 18 test modules. The table below lists every `.py` file in this directory; each listed component is licensed under MIT.
 
 | Component | Source | License |
 |---|---|---|
@@ -19,6 +19,7 @@ The pack is licensed under the MIT License; see `LICENSE`. The copyright line fo
 | `serper_you_adapter.py` | written-for-GOAT | MIT |
 | `tavily_adapter.py` | written-for-GOAT | MIT |
 | `browser_tier.py` | written-for-GOAT | MIT |
+| `crawl_pro.py` | written-for-GOAT | MIT |
 | `native_tier.py` | written-for-GOAT | MIT |
 | `free_search.py` | written-for-GOAT | MIT |
 | `free_stack.py` | written-for-GOAT | MIT |
@@ -29,9 +30,14 @@ The pack is licensed under the MIT License; see `LICENSE`. The copyright line fo
 | `rss_watcher.py` | written-for-GOAT | MIT |
 | `ssrf_guard.py` | written-for-GOAT | MIT |
 | `bench_gate.py` | written-for-GOAT | MIT |
+| `bench_modules.py` | written-for-GOAT | MIT |
+| `url_gate.py` | written-for-GOAT | MIT |
+| `ddg_parser.py` | written-for-GOAT | MIT |
 | `test_anysearch.py` | written-for-GOAT | MIT |
 | `test_answer_synth.py` | written-for-GOAT | MIT |
+| `test_bench_modules.py` | written-for-GOAT | MIT |
 | `test_browser_tier.py` | written-for-GOAT | MIT |
+| `test_crawl_pro.py` | written-for-GOAT | MIT |
 | `test_deep_verticals.py` | written-for-GOAT | MIT |
 | `test_donsetch.py` | written-for-GOAT | MIT |
 | `test_exa.py` | written-for-GOAT | MIT |

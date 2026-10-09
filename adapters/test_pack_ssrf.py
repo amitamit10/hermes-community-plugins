@@ -7,9 +7,12 @@ from unittest import mock
 
 import ssrf_guard
 import browser_tier as browser_tier_module
+import crawl_pro as crawl_pro_module
 import free_search as free_search_module
+import native_tier as native_tier_module
 from anysearch_adapter import AnySearchClient
 from browser_tier import render_js
+from crawl_pro import crawl_pro
 from firecrawl_adapter import SCRAPE_ENDPOINT, FirecrawlClient
 from free_search import MAX_RESPONSE_BYTES, duckduckgo_search
 from native_tier import NativeTier, native_extract
@@ -202,6 +205,265 @@ class PackSSRFGateTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "byte limit"):
             watcher.poll("https://feed.example.test/rss")
 
+    def test_native_extract_passes_pinned_fetch_to_capable_adapter(self):
+        url = "https://native.example.test/article"
+        fetch_calls = []
+
+        def fake_pinned_fetch(target, **kwargs):
+            fetch_calls.append((target, kwargs))
+            return {"body": b"pinned body"}
+
+        def extract(*, urls, char_limit, pinned_fetch, resolved_addresses):
+            self.assertEqual(resolved_addresses, ("93.184.216.34",))
+            fetched = pinned_fetch(urls[0])
+            return {"results": [{"url": urls[0], "content": fetched["body"].decode()}]}
+
+        with mock.patch.object(native_tier_module, "pinned_fetch", side_effect=fake_pinned_fetch):
+            result = native_extract(
+                url,
+                extract,
+                resolver=lambda host, port, **kwargs: ["93.184.216.34"],
+            )
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["content"], "pinned body")
+        self.assertEqual(fetch_calls[0][0], url)
+        self.assertEqual(fetch_calls[0][1]["resolver"]("native.example.test", 443), ["93.184.216.34"])
+
+    def test_native_extract_blocks_private_dns_with_injected_resolver(self):
+        url = "https://private-dns.example.test/page"
+        calls = []
+
+        def extract(*, urls, char_limit):
+            calls.append((urls, char_limit))
+            return {"results": [{"url": url, "content": "must not be fetched"}]}
+
+        resolver_calls = []
+
+        def resolver(host, port, **kwargs):
+            resolver_calls.append((host, port))
+            return ["10.1.2.3"]
+
+        result = native_extract(url, extract, resolver=resolver)
+
+        self.assertEqual(result, {"ok": False, "error": URL_BLOCKED})
+        self.assertEqual(calls, [])
+        self.assertEqual(resolver_calls, [("private-dns.example.test", 443)])
+
+    def test_browser_default_path_blocks_private_dns_with_fake_resolver(self):
+        url = "https://private-dns.example.test/page"
+        resolver_calls = []
+
+        def resolver(host, port, **kwargs):
+            resolver_calls.append((host, port))
+            return ["10.20.30.40"]
+
+        with mock.patch.object(
+            browser_tier_module, "validate_public_url", side_effect=AssertionError("wrapper DNS preflight")
+        ) as wrapper_validation:
+            with mock.patch.object(socket, "create_connection", side_effect=AssertionError("private connect")) as connect:
+                with mock.patch.object(
+                    browser_tier_module, "pinned_fetch", wraps=browser_tier_module.pinned_fetch
+                ) as fetch:
+                    result = browser_tier_module.BrowserTier(resolver=resolver).fetch(url)
+
+        self.assertEqual(result, {"ok": False, "error": URL_BLOCKED})
+        wrapper_validation.assert_not_called()
+        fetch.assert_called_once_with(url, resolver=resolver, max_redirects=0)
+        self.assertEqual(resolver_calls, [("private-dns.example.test", 443)])
+        connect.assert_not_called()
+
+    def test_browser_http_and_js_paths_block_private_dns_with_injected_resolver(self):
+        url = "https://private-dns.example.test/page"
+        transport_calls = []
+        browser_calls = []
+        resolver = lambda host, port, **kwargs: ["172.16.0.4"]
+
+        def transport(target):
+            transport_calls.append(target)
+            return {"status": 200, "body": "public article content"}
+
+        def browser(target, *, request_gate):
+            browser_calls.append(target)
+            request_gate(target)
+            return {"status": 200, "body": "rendered content", "url": target}
+
+        http_result = browser_tier_module.BrowserTier(transport=transport, resolver=resolver).fetch(url)
+        js_result = render_js(url, browser, resolver=resolver)
+
+        self.assertEqual(http_result, {"ok": False, "error": URL_BLOCKED})
+        self.assertEqual(js_result, {"ok": False, "error": URL_BLOCKED})
+        self.assertEqual(transport_calls, [])
+        self.assertEqual(browser_calls, [])
+
+    def test_browser_redirect_to_dns_private_host_is_blocked_before_second_fetch(self):
+        start = "https://public.example.test/start"
+        redirect = "https://private.example.test/secret"
+        calls = []
+
+        def transport(url):
+            calls.append(url)
+            if url == start:
+                return {"status": 302, "headers": {"Location": redirect}}
+            return {"status": 200, "body": "private"}
+
+        def lookup(host, port, **kwargs):
+            return ["10.8.0.9" if host == "private.example.test" else "93.184.216.34"]
+
+        result = browser_tier_module.BrowserTier(transport=transport, resolver=lookup).fetch(start)
+
+        self.assertEqual(result, {"ok": False, "error": REDIRECT_BLOCKED})
+        self.assertEqual(calls, [start])
+
+    def test_browser_gate_exposes_the_verified_connection_addresses(self):
+        url = "https://browser.example.test/page"
+        gated = []
+
+        def browser(target, *, request_gate):
+            pinned_target = request_gate(target)
+            gated.append((str(pinned_target), pinned_target.addresses))
+            return {"status": 200, "body": "rendered content", "url": target}
+
+        result = render_js(
+            url,
+            browser,
+            resolver=lambda host, port, **kwargs: ["93.184.216.34"],
+        )
+
+        self.assertTrue(result["ok"])
+        self.assertIn((url, ("93.184.216.34",)), gated)
+
+    def test_browser_pinning_transport_receives_verified_addresses(self):
+        url = "https://transport.example.test/page"
+        calls = []
+
+        class PinAwareTransport:
+            def fetch_pinned(self, target, *, pinned_addresses):
+                calls.append((target, pinned_addresses))
+                return {"status": 200, "body": "public article content"}
+
+        result = browser_tier_module.BrowserTier(
+            transport=PinAwareTransport(),
+            resolver=lambda host, port, **kwargs: ["93.184.216.34"],
+        ).fetch(url)
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(calls, [(url, ("93.184.216.34",))])
+
+    def test_crawl_skips_same_origin_link_that_resolves_private(self):
+        start = "https://crawl.example.test/start"
+        secret = "https://crawl.example.test/secret"
+        calls = []
+        lookups = 0
+
+        def transport(url):
+            calls.append(url)
+            if url.endswith("/sitemap.xml"):
+                return {"status": 404, "body": ""}
+            if url == start:
+                return {"status": 200, "body": '<a href="/secret">secret</a>'}
+            return {"status": 200, "body": "must not be fetched"}
+
+        def lookup(host, port, **kwargs):
+            nonlocal lookups
+            lookups += 1
+            address = "93.184.216.34" if lookups <= 2 else "10.20.30.40"
+            return [address]
+
+        result = crawl_pro(start, transport, respect_robots=False, resolver=lookup)
+
+        self.assertTrue(result["ok"])
+        self.assertNotIn(secret, calls)
+        self.assertNotIn(secret, [page["url"] for page in result["pages"]])
+        self.assertEqual(calls, ["https://crawl.example.test/sitemap.xml", start])
+
+    def test_crawl_dns_private_redirect_blocked_before_second_fetch(self):
+        start = "https://crawl.example.test/start"
+        calls = []
+        lookups = 0
+
+        def transport(url):
+            calls.append(url)
+            if url.endswith("/sitemap.xml"):
+                return {"status": 404, "body": ""}
+            return {"status": 302, "headers": {"Location": "/private"}}
+
+        def lookup(host, port, **kwargs):
+            nonlocal lookups
+            lookups += 1
+            address = "93.184.216.34" if lookups <= 2 else "10.20.30.40"
+            return [address]
+
+        with self.assertRaisesRegex(ValueError, "not publicly fetchable"):
+            crawl_pro(start, transport, respect_robots=False, resolver=lookup)
+
+        self.assertEqual(calls, ["https://crawl.example.test/sitemap.xml", start])
+
+    def test_crawl_redirect_to_private_target_never_fetches_it(self):
+        start = "https://crawl.example.test/start"
+        private = "https://10.0.0.7/private"
+        calls = []
+
+        def transport(url):
+            calls.append(url)
+            if url.endswith("/sitemap.xml"):
+                return {"status": 404, "body": ""}
+            return {"status": 302, "headers": {"Location": private}}
+
+        with self.assertRaisesRegex(ValueError, "outside the starting origin"):
+            crawl_pro(
+                start,
+                transport,
+                respect_robots=False,
+                resolver=lambda host, port, **kwargs: ["93.184.216.34"],
+            )
+
+        self.assertEqual(calls, ["https://crawl.example.test/sitemap.xml", start])
+
+    def test_crawl_default_transport_uses_pinned_fetch_per_hop(self):
+        start = "https://crawl.example.test/start"
+        calls = []
+        resolver = lambda host, port, **kwargs: ["93.184.216.34"]
+
+        def fake_pinned_fetch(url, *, resolver, max_redirects):
+            calls.append((url, resolver, max_redirects))
+            status = 404 if url.endswith("/sitemap.xml") else 200
+            return {"status": status, "body": "article", "headers": {}, "url": url}
+
+        with mock.patch.object(crawl_pro_module, "pinned_fetch", side_effect=fake_pinned_fetch):
+            result = crawl_pro(start, respect_robots=False, resolver=resolver)
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(
+            [item[0] for item in calls],
+            ["https://crawl.example.test/sitemap.xml", start],
+        )
+        self.assertTrue(all(item[1] is resolver and item[2] == 0 for item in calls))
+
+    def test_crawl_pinning_transport_receives_verified_addresses(self):
+        start = "https://crawl.example.test/start"
+        calls = []
+
+        class PinAwareTransport:
+            def fetch_pinned(self, url, *, pinned_addresses):
+                calls.append((url, pinned_addresses))
+                if url.endswith("/sitemap.xml"):
+                    return {"status": 404, "body": ""}
+                return {"status": 200, "body": "article"}
+
+        result = crawl_pro(
+            start,
+            PinAwareTransport(),
+            respect_robots=False,
+            resolver=lambda host, port, **kwargs: ["93.184.216.34"],
+        )
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(calls, [
+            ("https://crawl.example.test/sitemap.xml", ("93.184.216.34",)),
+            (start, ("93.184.216.34",)),
+        ])
+
     def test_native_extract_rejects_loopback_before_callable(self):
         tool = CallLog()
 
@@ -223,7 +485,10 @@ class PackSSRFGateTests(unittest.TestCase):
         def bypass(url, *, request_gate):
             return {"status": 200, "body": "private fetch happened", "url": url}
 
-        result = render_js("https://public.example.test/page", bypass)
+        result = render_js(
+            "https://public.example.test/page", bypass,
+            resolver=lambda host, port, **kwargs: ["93.184.216.34"],
+        )
 
         self.assertEqual(result, {"ok": False, "error": URL_BLOCKED})
 
@@ -267,13 +532,24 @@ class PackSSRFGateTests(unittest.TestCase):
 
     def test_firecrawl_options_cannot_override_validated_target(self):
         transport = CallLog()
-        client = FirecrawlClient("key", transport)
+        resolver = lambda host, port, **kwargs: ["93.184.216.34"]
+        client = FirecrawlClient("key", transport, resolver=resolver)
         target = "https://public.example.test/article"
 
         result = client._post(SCRAPE_ENDPOINT, target, {"url": "https://127.0.0.1/private"})
 
         self.assertTrue(result["ok"])
         self.assertEqual(transport.calls[0][1]["json"]["url"], target)
+
+    def test_tavily_fake_transport_does_not_trigger_system_dns(self):
+        transport = CallLog()
+        client = TavilyClient(api_key="key", transport=transport)
+
+        with mock.patch.object(socket, "getaddrinfo", side_effect=AssertionError("unexpected DNS")):
+            result = client.extract("https://example.test/article")
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(transport.calls[0][0], ("https://api.tavily.com/extract",))
 
     def test_provider_dns_private_answers_block_requests(self):
         resolver = lambda host, port, **kwargs: ["100.64.0.9"]

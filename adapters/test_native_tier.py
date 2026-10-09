@@ -1,4 +1,6 @@
+import socket
 import unittest
+from unittest import mock
 
 from native_tier import (
     MAX_CONTENT_CHARS,
@@ -62,6 +64,23 @@ class NativeTierTests(unittest.TestCase):
             "snippet": "Desc 0",
         })
         self.assertTrue(result["truncated"])
+
+    def test_search_fake_results_do_not_trigger_system_dns(self):
+        search = FakeSearch({"data": {"web": [{
+            "title": "Offline result",
+            "url": "https://example.test/",
+            "description": "Fixture",
+        }]}})
+        tier = NativeTier(web_search=search)
+
+        with mock.patch.object(socket, "getaddrinfo", side_effect=AssertionError("unexpected DNS")):
+            result = tier.search("topic")
+
+        self.assertEqual(result["results"], [{
+            "title": "Offline result",
+            "url": "https://example.test/",
+            "snippet": "Fixture",
+        }])
 
     def test_search_truncates_long_titles_and_snippets_at_goat_limit(self):
         search = FakeSearch({"data": {"web": [{

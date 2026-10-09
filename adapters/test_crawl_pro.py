@@ -1,4 +1,6 @@
+import socket
 import unittest
+from unittest import mock
 from urllib.parse import urlsplit
 
 from crawl_pro import crawl_pro
@@ -27,6 +29,16 @@ def xml_urlset(*paths):
 
 
 class CrawlProTests(unittest.TestCase):
+    def test_fake_transport_does_not_trigger_system_dns(self):
+        start = f"{BASE}/start"
+        transport = FakeTransport({start: {"status": 200, "body": "article"}})
+
+        with mock.patch.object(socket, "getaddrinfo", side_effect=AssertionError("unexpected DNS")):
+            result = crawl_pro(start, transport, respect_robots=False)
+
+        self.assertEqual([page["url"] for page in result["pages"]], [start])
+        self.assertEqual(transport.calls, [f"{BASE}/sitemap.xml", start])
+
     def test_crawls_same_origin_urls_listed_in_sitemap(self):
         transport = FakeTransport({
             f"{BASE}/robots.txt": {"status": 200, "body": "User-agent: *\nDisallow: /blocked"},
