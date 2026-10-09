@@ -13,10 +13,13 @@ from pathlib import Path
 import tempfile
 import xml.etree.ElementTree as ET
 
+from ssrf_guard import MAX_RESPONSE_BYTES
+
 
 _DEFAULT_MAX_ITEMS = 20
 _DEFAULT_MAX_SEEN = 500
 _STATE_VERSION = 1
+MAX_FEED_BYTES = MAX_RESPONSE_BYTES
 
 
 def _local_name(tag):
@@ -43,6 +46,21 @@ def _item_link(element):
     return ""
 
 
+def _bounded_feed_text(feed_xml):
+    if isinstance(feed_xml, bytes):
+        if len(feed_xml) > MAX_FEED_BYTES:
+            raise ValueError("feed exceeds byte limit")
+        return feed_xml.decode("utf-8", errors="replace")
+    if not isinstance(feed_xml, str):
+        raise TypeError("feed_xml must be str or bytes")
+    used = 0
+    for char in feed_xml:
+        used += len(char.encode("utf-8", errors="replace"))
+        if used > MAX_FEED_BYTES:
+            raise ValueError("feed exceeds byte limit")
+    return feed_xml
+
+
 def parse_feed(feed_xml):
     """Parse RSS 2.0 or Atom XML into ordered item mappings.
 
@@ -50,10 +68,7 @@ def parse_feed(feed_xml):
     ``published`` fields. IDs prefer RSS ``guid`` / Atom ``id``, then link,
     then a deterministic content hash when the feed provides neither.
     """
-    if isinstance(feed_xml, bytes):
-        feed_xml = feed_xml.decode("utf-8", errors="replace")
-    if not isinstance(feed_xml, str):
-        raise TypeError("feed_xml must be str or bytes")
+    feed_xml = _bounded_feed_text(feed_xml)
     root = ET.fromstring(feed_xml)
     root_name = _local_name(root.tag)
     if root_name == "channel":
@@ -108,10 +123,9 @@ def _response_parts(response):
         status = int(status)
     except (TypeError, ValueError, OverflowError):
         status = 0
-    if isinstance(body, bytes):
-        body = body.decode("utf-8", errors="replace")
-    elif not isinstance(body, str):
-        body = "" if body is None else str(body)
+    if body is None:
+        body = ""
+    body = _bounded_feed_text(body)
     return status, body
 
 

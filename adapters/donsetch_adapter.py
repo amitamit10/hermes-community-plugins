@@ -18,7 +18,7 @@ import os
 
 MISSING_CONFIG = "MISSING_CONFIG"
 UNAVAILABLE = "UNAVAILABLE"
-DEFAULT_BINARY_PATH = None  # set to your donsetch-mcp-hermes path or pass an explicit checker
+DEFAULT_BINARY_PATH = os.environ.get("DONSETCH_BINARY_PATH", os.path.join(os.path.expanduser("~"), "bin", "donsetch-mcp-hermes"))
 GLIBC_EXPLANATION = (
     "Donsetch is unavailable: the installed donsetch-mcp-hermes and "
     "donsetch-hardened binaries require GLIBC_2.39, which is not available "
@@ -51,7 +51,7 @@ class DonsetchAdapter:
     """
 
     def __init__(self, binary_checker=None, *, binary_path=DEFAULT_BINARY_PATH):
-        self.binary_path = None if binary_path is None else os.fspath(binary_path)
+        self.binary_path = os.fspath(binary_path)
         self._binary_checker = (
             _default_binary_checker if binary_checker is None else binary_checker
         )

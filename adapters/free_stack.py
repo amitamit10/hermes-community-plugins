@@ -598,28 +598,39 @@ def fallback_chain(
     transport=None,
     *,
     max_results=MAX_RESULTS,
+    allow_fallback=False,
     transports=None,
     searxng_transport=None,
     wikipedia_transport=None,
     ddg_transport=None,
 ):
-    """Try SearXNG, Wikipedia, then DuckDuckGo; return first nonempty result.
+    """Search SearXNG, Wikipedia and DuckDuckGo under an explicit fallback policy.
 
-    ``transports`` may map ``searxng``, ``wikipedia`` and ``ddg`` to injected
-    one-URL callables. Named transport arguments take precedence; ``transport``
-    is a shared fallback useful for sequential offline fixtures.
+    Fallback is disabled unless ``allow_fallback=True``. ``MISSING_CONFIG``
+    always stops immediately, regardless of that policy. Every returned result
+    identifies its source; fallback results also list each transition and its
+    reason. ``transports`` may map provider names to injected one-URL callables.
+    Named transport arguments take precedence; ``transport`` is a shared
+    fallback useful for sequential offline fixtures.
     """
     if transports is not None and not isinstance(transports, Mapping):
-        return _error(URL_BLOCKED)
+        return {**_error(URL_BLOCKED), "source": None}
     supplied = transports or {}
     providers = (
         ("searxng", searxng_transport, searxng_search),
         ("wikipedia", wikipedia_transport, wikipedia_search),
         ("ddg", ddg_transport, duckduckgo_search),
     )
-    last_success = None
-    last_error = None
-    for name, explicit_transport, client in providers:
+    transitions = []
+
+    def with_source(response, source):
+        result = dict(response)
+        result["source"] = source
+        if transitions:
+            result["transitions"] = list(transitions)
+        return result
+
+    for index, (name, explicit_transport, client) in enumerate(providers):
         selected_transport = explicit_transport
         if selected_transport is None:
             selected_transport = supplied.get(name)
@@ -635,14 +646,24 @@ def fallback_chain(
             response = client(query, transport=selected_transport, max_results=max_results)
 
         if response.get("ok") is True:
-            result = dict(response)
-            result["source"] = name
-            if result.get("results"):
-                return result
-            last_success = result
+            if response.get("results"):
+                return with_source(response, name)
+            if allow_fallback is not True or index == len(providers) - 1:
+                return with_source(response, name)
+            reason = "NO_RESULTS"
         else:
-            last_error = response
-    return last_success if last_success is not None else (last_error or _error(URL_BLOCKED))
+            error = response.get("error")
+            code = error.get("code") if isinstance(error, Mapping) else None
+            if code == MISSING_CONFIG:
+                return with_source(response, name)
+            if allow_fallback is not True or index == len(providers) - 1:
+                return with_source(response, name)
+            reason = code if isinstance(code, str) else "PROVIDER_ERROR"
+
+        next_name = providers[index + 1][0]
+        transitions.append({"from": name, "to": next_name, "reason": reason})
+
+    return with_source(_error(URL_BLOCKED), providers[-1][0])
 
 
 # Short aliases retain intuitive provider names without duplicating logic.

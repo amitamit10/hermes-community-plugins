@@ -8,6 +8,8 @@ transport or unauthenticated fallback is provided.
 import json as _json
 from collections.abc import Mapping
 
+from ssrf_guard import GuardError, URL_BLOCKED, validate_public_url
+
 
 API_BASE_URL = "https://api.tavily.com"
 SEARCH_ENDPOINT = API_BASE_URL + "/search"
@@ -30,9 +32,10 @@ class TavilyClient:
 
     requires_key = True
 
-    def __init__(self, api_key=None, transport=None):
+    def __init__(self, api_key=None, transport=None, *, resolver=None):
         self._api_key = api_key
         self._transport = transport
+        self._resolver = resolver
 
     def _ready(self):
         return (
@@ -87,6 +90,11 @@ class TavilyClient:
             or any(not isinstance(url, str) or not url.strip() for url in url_list)
         ):
             return _invalid_input()
+        try:
+            for target in url_list:
+                validate_public_url(target, resolver=self._resolver)
+        except GuardError:
+            return {"error": {"code": URL_BLOCKED}}
         payload = dict(options)
         payload["urls"] = url_list
         return self._post(EXTRACT_ENDPOINT, payload)
@@ -97,6 +105,10 @@ class TavilyClient:
             return _missing_config()
         if not isinstance(url, str) or not url.strip():
             return _invalid_input()
+        try:
+            validate_public_url(url, resolver=self._resolver)
+        except GuardError:
+            return {"error": {"code": URL_BLOCKED}}
         payload = dict(options)
         payload["url"] = url
         return self._post(CRAWL_ENDPOINT, payload)

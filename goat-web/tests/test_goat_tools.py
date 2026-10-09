@@ -222,7 +222,7 @@ class GoatToolsTests(unittest.TestCase):
             search_calls.append(url)
             return {"status": 200, "body": search_html}
 
-        search_result = goat_search("bounded query", transport=search_transport, limit=5)
+        search_result = goat_search("bounded query", transport=search_transport, max_results=5)
         self.assertEqual(set(search_result), {"results"})
         self.assertEqual(len(search_result["results"]), 5)
         self.assertEqual(len(search_calls), 1)
@@ -240,6 +240,23 @@ class GoatToolsTests(unittest.TestCase):
         self.assertEqual(extract_result["final_url"], "https://example.com/article")
         self.assertEqual(len(extract_result["text"]), 8000)
         self.assertTrue(extract_result["truncated"])
+
+    def test_search_non_integer_max_results_uses_default_and_integer_range_is_enforced(self):
+        search_html = "".join(
+            f'<a class="result__a" href="https://example.com/{index}">Title {index}</a>'
+            f'<div class="result__snippet">snippet {index}</div>'
+            for index in range(7)
+        )
+        transport = lambda _url: {"status": 200, "body": search_html}
+
+        coerced = goat_search("query", transport=transport, max_results="2")
+        self.assertEqual(len(coerced["results"]), 5)
+        for invalid in (0, 6):
+            with self.subTest(max_results=invalid):
+                self.assertEqual(
+                    goat_search("query", transport=transport, max_results=invalid),
+                    {"error": {"code": URL_BLOCKED}},
+                )
 
     def test_extract_returns_documented_metadata_and_readable_text(self):
         requested_url = "https://example.com/start"

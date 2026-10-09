@@ -1,3 +1,5 @@
+> **SUPERSEDED — historical review.** This report describes an earlier tree and is not the current assessment. See the fresh adversarial re-audit at [`reaudit2.md`](../../goat-packs/reaudit2.md) before relying on findings or counts below.
+
 # סקירה עוינת — goat-browser-staging
 
 ## מסקנה

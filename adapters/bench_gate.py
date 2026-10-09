@@ -9,7 +9,7 @@ import time
 import types
 from pathlib import Path
 
-REFERENCE = Path(__file__).resolve().parent.parent / "goat-web" / "plugins" / "goat-web" / "url_gate.py"
+REFERENCE = Path(__file__).resolve().parent.parent / "goat-browser-staging" / "plugins" / "goat-web" / "url_gate.py"
 COUNT = 10_000
 WARMUP = 100
 

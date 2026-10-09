@@ -254,19 +254,21 @@ def _search_result_url(raw_url):
     return raw_url if allowed else None
 
 
-def goat_search(query, transport=None, *, limit=MAX_RESULTS, provider_config=_UNSET):
+def goat_search(query, transport=None, *, max_results=MAX_RESULTS, provider_config=_UNSET):
     """Search public web results using DuckDuckGo HTML (keyless by default)."""
     try:
         fetch = _transport_or_error(transport, provider_config)
         if not isinstance(query, str) or not query.strip():
             raise URLGateError(URL_BLOCKED)
-        limit = _bounded_integer(limit, 1, MAX_RESULTS)
+        if type(max_results) is not int:
+            max_results = MAX_RESULTS
+        max_results = _bounded_integer(max_results, 1, MAX_RESULTS)
         search_url = "https://html.duckduckgo.com/html/?" + urlencode({"q": query.strip()})
         _status, body, _final_url = _fetch(search_url, fetch)
         parser = _SearchParser()
         parser.feed(body)
         results = []
-        for index, item in enumerate(parser.results[:limit]):
+        for index, item in enumerate(parser.results[:max_results]):
             result_url = _search_result_url(item["url"])
             if result_url is None:
                 continue

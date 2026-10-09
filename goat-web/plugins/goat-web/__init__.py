@@ -2,7 +2,13 @@
 
 import json
 
-from .goat_tools import register as goat_handlers
+from .goat_tools import (
+    MAX_CRAWL_DEPTH,
+    MAX_CRAWL_PAGES,
+    MAX_RESULTS,
+    map_error,
+    register as goat_handlers,
+)
 
 
 _TOOL_SPECS = {
@@ -10,7 +16,13 @@ _TOOL_SPECS = {
         "description": "Search public web results with bounded output.",
         "properties": {
             "query": {"type": "string", "description": "Search query."},
-            "max_results": {"type": "integer", "description": "Maximum results, capped at 5."},
+            "max_results": {
+                "type": "integer",
+                "description": f"Maximum results (1..{MAX_RESULTS}); non-integers use the default of {MAX_RESULTS}.",
+                "minimum": 1,
+                "maximum": MAX_RESULTS,
+                "default": MAX_RESULTS,
+            },
         },
         "required": ["query"],
     },
@@ -21,7 +33,23 @@ _TOOL_SPECS = {
     },
     "goat_crawl": {
         "description": "Crawl same-origin public HTTPS pages within fixed bounds.",
-        "properties": {"url": {"type": "string", "description": "Public HTTPS start URL."}},
+        "properties": {
+            "url": {"type": "string", "description": "Public HTTPS start URL."},
+            "max_depth": {
+                "type": "integer",
+                "description": f"Maximum crawl depth (0..{MAX_CRAWL_DEPTH}).",
+                "minimum": 0,
+                "maximum": MAX_CRAWL_DEPTH,
+                "default": MAX_CRAWL_DEPTH,
+            },
+            "max_pages": {
+                "type": "integer",
+                "description": f"Maximum pages to visit (1..{MAX_CRAWL_PAGES}).",
+                "minimum": 1,
+                "maximum": MAX_CRAWL_PAGES,
+                "default": MAX_CRAWL_PAGES,
+            },
+        },
         "required": ["url"],
     },
     "goat_probe": {
@@ -34,7 +62,10 @@ _TOOL_SPECS = {
 
 def _json_handler(handler):
     def call(args, **_kwargs):
-        return json.dumps(handler(**(args or {})), ensure_ascii=False)
+        try:
+            return json.dumps(handler(**(args or {})), ensure_ascii=False)
+        except Exception as error:
+            return json.dumps({"error": {"code": map_error(error)}}, ensure_ascii=False)
 
     return call
 
@@ -51,6 +82,7 @@ def register(ctx):
                 "type": "object",
                 "properties": spec["properties"],
                 "required": spec["required"],
+                "additionalProperties": False,
             },
         }
         ctx.register_tool(

@@ -14,7 +14,8 @@ when the query has no applicable value.
 from collections.abc import Mapping
 import json as _json
 import re as _re
-from urllib.parse import urlsplit
+
+from ssrf_guard import GuardError, validate_public_url
 
 
 ENDPOINT = "https://api.anysearch.com/mcp"
@@ -211,9 +212,10 @@ class AnySearchClient:
 
     requires_key = False
 
-    def __init__(self, transport=None, *, api_key=None):
+    def __init__(self, transport=None, *, api_key=None, resolver=None):
         self._transport = transport
         self._api_key = api_key
+        self._resolver = resolver
         self._request_id = 0
         self._discovered_domains = set()
         self._discovered_subdomains = {}
@@ -343,16 +345,15 @@ class AnySearchClient:
         return self._call("batch_search", {"queries": normalized})
 
     def extract(self, url):
-        """Extract an HTTP(S) page as Markdown through AnySearch."""
+        """Extract a public HTTPS page as Markdown through AnySearch."""
         if not isinstance(url, str) or not url.strip():
             return _failure(INVALID_INPUT)
+        normalized = url.strip()
         try:
-            parsed = urlsplit(url.strip())
-            if parsed.scheme.lower() not in ("http", "https") or not parsed.hostname:
-                return _failure(INVALID_INPUT)
-        except ValueError:
-            return _failure(INVALID_INPUT)
-        return self._call("extract", {"url": url.strip()})
+            validate_public_url(normalized, resolver=self._resolver)
+        except GuardError:
+            return {"error": {"code": URL_BLOCKED}}
+        return self._call("extract", {"url": normalized})
 
     def vertical_discover(self, domain=None, *, domains=None):
         """Call ``get_sub_domains`` before vertical search; cache required params."""

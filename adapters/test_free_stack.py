@@ -192,6 +192,7 @@ class FreeStackTests(unittest.TestCase):
 
         result = fallback_chain(
             "topic",
+            allow_fallback=True,
             searxng_transport=searx,
             wikipedia_transport=wiki,
             ddg_transport=ddg,
@@ -202,8 +203,44 @@ class FreeStackTests(unittest.TestCase):
         self.assertEqual([len(searx.calls), len(wiki.calls), len(ddg.calls)], [1, 1, 0])
 
     def test_fallback_chain_continues_after_transport_errors_to_ddg(self):
-        searx = FakeTransport(OSError("offline"))
+        searx = FakeTransport('{"unexpected": []}')
         wiki = FakeTransport(RuntimeError("temporary API failure"))
+        ddg = FakeTransport('<a class="result__a" href="https://d.example/">D</a>')
+
+        result = fallback_chain(
+            "topic",
+            allow_fallback=True,
+            searxng_transport=searx,
+            wikipedia_transport=wiki,
+            ddg_transport=ddg,
+        )
+
+        self.assertEqual(result["ok"], True)
+        self.assertEqual(result["source"], "ddg")
+        self.assertEqual(result["results"][0]["title"], "D")
+        self.assertEqual([len(searx.calls), len(wiki.calls), len(ddg.calls)], [1, 1, 1])
+
+
+    def test_fallback_chain_missing_config_stops_even_when_fallback_is_allowed(self):
+        searx = FakeTransport('{"results": []}')
+        wiki = FakeTransport('{"query": {"search": [{"title": "W"}]}}')
+        ddg = FakeTransport('<a class="result__a" href="https://d.example/">D</a>')
+
+        result = fallback_chain(
+            "topic",
+            instance_url=None,
+            allow_fallback=True,
+            searxng_transport=searx,
+            wikipedia_transport=wiki,
+            ddg_transport=ddg,
+        )
+
+        self.assertEqual(result, {"error": {"code": MISSING_CONFIG}, "source": "searxng"})
+        self.assertEqual([len(searx.calls), len(wiki.calls), len(ddg.calls)], [0, 0, 0])
+
+    def test_fallback_chain_does_not_fallback_on_error_by_default(self):
+        searx = FakeTransport('{"unexpected": []}')
+        wiki = FakeTransport('{"query": {"search": [{"title": "W"}]}}')
         ddg = FakeTransport('<a class="result__a" href="https://d.example/">D</a>')
 
         result = fallback_chain(
@@ -213,9 +250,46 @@ class FreeStackTests(unittest.TestCase):
             ddg_transport=ddg,
         )
 
-        self.assertEqual(result["ok"], True)
+        self.assertEqual(result, {"error": {"code": URL_BLOCKED}, "source": "searxng"})
+        self.assertEqual([len(searx.calls), len(wiki.calls), len(ddg.calls)], [1, 0, 0])
+
+    def test_fallback_chain_records_error_reason_in_transition(self):
+        searx = FakeTransport('{"unexpected": []}')
+        wiki = FakeTransport('{"query": {"search": [{"title": "W", "snippet": "summary"}]}}')
+        ddg = FakeTransport('<a class="result__a" href="https://d.example/">D</a>')
+
+        result = fallback_chain(
+            "topic",
+            allow_fallback=True,
+            searxng_transport=searx,
+            wikipedia_transport=wiki,
+            ddg_transport=ddg,
+        )
+
+        self.assertEqual(result["source"], "wikipedia")
+        self.assertEqual(result["transitions"], [
+            {"from": "searxng", "to": "wikipedia", "reason": URL_BLOCKED},
+        ])
+        self.assertEqual([len(searx.calls), len(wiki.calls), len(ddg.calls)], [1, 1, 0])
+
+    def test_fallback_chain_records_each_empty_result_transition(self):
+        searx = FakeTransport('{"results": []}')
+        wiki = FakeTransport('{"query": {"search": []}}')
+        ddg = FakeTransport('<a class="result__a" href="https://d.example/">D</a>')
+
+        result = fallback_chain(
+            "topic",
+            allow_fallback=True,
+            searxng_transport=searx,
+            wikipedia_transport=wiki,
+            ddg_transport=ddg,
+        )
+
         self.assertEqual(result["source"], "ddg")
-        self.assertEqual(result["results"][0]["title"], "D")
+        self.assertEqual(result["transitions"], [
+            {"from": "searxng", "to": "wikipedia", "reason": "NO_RESULTS"},
+            {"from": "wikipedia", "to": "ddg", "reason": "NO_RESULTS"},
+        ])
         self.assertEqual([len(searx.calls), len(wiki.calls), len(ddg.calls)], [1, 1, 1])
 
 

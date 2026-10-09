@@ -8,6 +8,8 @@ tool boundary.
 from collections.abc import Mapping
 from urllib.parse import urlsplit
 
+from ssrf_guard import validate_public_url
+
 
 MISSING_CONFIG = "MISSING_CONFIG"
 URL_BLOCKED = "URL_BLOCKED"
@@ -72,7 +74,7 @@ def _truncate(value):
     return text[:MAX_CONTENT_CHARS], len(text) > MAX_CONTENT_CHARS
 
 
-def _valid_web_url(value):
+def _legacy_valid_web_url(value):
     if not isinstance(value, str) or not value:
         return False
     try:
@@ -86,6 +88,14 @@ def _valid_web_url(value):
         )
     except (ValueError, UnicodeError):
         return False
+
+
+def _valid_web_url(value, resolver=None):
+    try:
+        validate_public_url(value, resolver=resolver)
+    except Exception:
+        return False
+    return True
 
 
 def _response_error(response):
@@ -162,12 +172,12 @@ def _extract_record(response):
     return None
 
 
-def native_extract(url, web_extract=None):
+def native_extract(url, web_extract=None, *, resolver=None):
     """Extract one page via ``web_extract(urls=[url], char_limit=8000)``."""
     missing = _callable_error(web_extract)
     if missing is not None:
         return _error_result(missing)
-    if not _valid_web_url(url):
+    if not _valid_web_url(url, resolver):
         return _error_result(URL_BLOCKED)
     try:
         response = web_extract(urls=[url], char_limit=MAX_CONTENT_CHARS)
@@ -182,7 +192,7 @@ def native_extract(url, web_extract=None):
     if record.get("error") is not None or record.get("code") is not None:
         return _error_result(record)
     final_url = record.get("url", url)
-    if not _valid_web_url(final_url):
+    if not _valid_web_url(final_url, resolver):
         return _error_result(REDIRECT_BLOCKED)
     content_value = record.get("content", record.get("text"))
     if content_value is None:
@@ -194,15 +204,16 @@ def native_extract(url, web_extract=None):
 class NativeTier:
     """Small holder for injected native search and extract callables."""
 
-    def __init__(self, web_search=None, web_extract=None):
+    def __init__(self, web_search=None, web_extract=None, *, resolver=None):
         self.web_search = web_search
         self.web_extract = web_extract
+        self.resolver = resolver
 
     def search(self, query, *, max_results=MAX_RESULTS):
         return native_search(query, self.web_search, max_results=max_results)
 
     def extract(self, url):
-        return native_extract(url, self.web_extract)
+        return native_extract(url, self.web_extract, resolver=self.resolver)
 
 
 __all__ = [

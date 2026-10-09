@@ -13,6 +13,15 @@ import json
 from urllib.error import HTTPError
 from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
+from ssrf_guard import (
+    GuardError,
+    MAX_RESPONSE_BYTES,
+    REDIRECT_BLOCKED,
+    URL_BLOCKED,
+    check_url as _guard_check_url,
+    pinned_fetch,
+    validate_public_url,
+)
 
 
 MISSING_CONFIG = "MISSING_CONFIG"
@@ -60,7 +69,7 @@ def _error_result(error):
     return {"error": {"code": map_error(error)}}
 
 
-def _check_url(url):
+def _legacy_check_url(url):
     """Perform stdlib-only URL checks matching Goat's public-URL boundary."""
     if not isinstance(url, str) or not url or any(ord(char) < 32 for char in url):
         return False, URL_BLOCKED
@@ -95,6 +104,11 @@ def _check_url(url):
     return True, None
 
 
+def _check_url(url):
+    """Use the shared HTTPS/443 URL boundary without performing DNS."""
+    return _guard_check_url(url)
+
+
 def _transport_or_error(transport, provider_config):
     if provider_config is not _UNSET and provider_config is None:
         raise _URLGateError(MISSING_CONFIG)
@@ -113,7 +127,7 @@ class _SafeRedirectHandler(HTTPRedirectHandler):
         return super().redirect_request(request, fp, code, message, headers, newurl)
 
 
-def _default_transport(url):
+def _legacy_default_transport(url):
     """Fetch a URL using only urllib; redirects are rechecked before following."""
     request = Request(
         url,
@@ -136,7 +150,12 @@ def _default_transport(url):
         return {"status": error.code, "body": error.read(), "url": error.geturl()}
 
 
-def _response_parts(response):
+def _default_transport(url):
+    """Fetch with DNS validation and a connection pinned to the verified IP."""
+    return pinned_fetch(url, max_response_bytes=MAX_RESPONSE_BYTES)
+
+
+def _legacy_response_parts(response):
     if isinstance(response, (str, bytes)):
         status, body, final_url = 200, response, None
     elif isinstance(response, Mapping):
@@ -160,16 +179,69 @@ def _response_parts(response):
     return status, text, final_url
 
 
-def _fetch(url, transport):
+def _response_parts(response):
+    if isinstance(response, (str, bytes)):
+        status, body, final_url = 200, response, None
+    elif isinstance(response, Mapping):
+        status = response.get("status", 200)
+        body = response.get("body", response.get("text", ""))
+        final_url = response.get("url", response.get("final_url"))
+    else:
+        status = getattr(response, "status", 200)
+        body = getattr(response, "body", getattr(response, "text", ""))
+        final_url = getattr(response, "url", getattr(response, "final_url", None))
+    if isinstance(body, bytes):
+        if len(body) > MAX_RESPONSE_BYTES:
+            raise _URLGateError(URL_BLOCKED)
+        text = body.decode("utf-8", errors="replace")
+    elif isinstance(body, str):
+        bounded = []
+        used = 0
+        for char in body:
+            used += len(char.encode("utf-8", errors="replace"))
+            if used > MAX_RESPONSE_BYTES:
+                raise _URLGateError(URL_BLOCKED)
+            bounded.append(char)
+        text = "".join(bounded)
+    elif body is None:
+        text = ""
+    elif isinstance(body, (Mapping, list, tuple)):
+        raise _URLGateError(URL_BLOCKED)
+    else:
+        raise _URLGateError(URL_BLOCKED)
+    try:
+        status = int(status)
+    except (TypeError, ValueError, OverflowError):
+        status = 0
+    return status, text, final_url
+
+
+def _fetch(url, transport, resolver=None):
     allowed, code = _check_url(url)
     if not allowed:
         raise _URLGateError(code)
-    response = transport(url)
+    if transport is _default_transport:
+        if resolver is None:
+            response = pinned_fetch(url, max_response_bytes=MAX_RESPONSE_BYTES)
+        else:
+            response = pinned_fetch(url, resolver=resolver, max_response_bytes=MAX_RESPONSE_BYTES)
+    else:
+        if resolver is not None:
+            try:
+                validate_public_url(url, resolver=resolver)
+            except GuardError as error:
+                raise _URLGateError(error.code) from None
+        response = transport(url)
     _status, text, final_url = _response_parts(response)
     if final_url:
-        allowed, _code = _check_url(final_url)
-        if not allowed:
-            raise _URLGateError(REDIRECT_BLOCKED)
+        try:
+            allowed, _code = _check_url(final_url)
+            if not allowed:
+                raise _URLGateError(REDIRECT_BLOCKED)
+            if resolver is not None and transport is not _default_transport:
+                validate_public_url(final_url, resolver=resolver)
+        except GuardError:
+            raise _URLGateError(REDIRECT_BLOCKED) from None
     return text, final_url or url
 
 
@@ -274,14 +346,21 @@ def _query_or_error(query):
     return query.strip()
 
 
-def duckduckgo_search(query, transport=None, *, max_results=MAX_RESULTS, provider_config=_UNSET):
+def duckduckgo_search(
+    query,
+    transport=None,
+    *,
+    max_results=MAX_RESULTS,
+    provider_config=_UNSET,
+    resolver=None,
+):
     """Search DuckDuckGo's public HTML endpoint without an API key."""
     try:
         fetch = _transport_or_error(transport, provider_config)
         search_text = _query_or_error(query)
         limit = _limit(max_results)
         url = _DDG_ENDPOINT + "?" + urlencode({"q": search_text})
-        body, _final_url = _fetch(url, fetch)
+        body, _final_url = _fetch(url, fetch, resolver)
         parser = _SearchParser()
         parser.feed(body)
         results = []
@@ -300,7 +379,14 @@ def duckduckgo_search(query, transport=None, *, max_results=MAX_RESULTS, provide
         return _error_result(error)
 
 
-def wikipedia_search(query, transport=None, *, max_results=MAX_RESULTS, provider_config=_UNSET):
+def wikipedia_search(
+    query,
+    transport=None,
+    *,
+    max_results=MAX_RESULTS,
+    provider_config=_UNSET,
+    resolver=None,
+):
     """Search Wikipedia via the keyless MediaWiki OpenSearch API."""
     try:
         fetch = _transport_or_error(transport, provider_config)
@@ -313,7 +399,7 @@ def wikipedia_search(query, transport=None, *, max_results=MAX_RESULTS, provider
             "namespace": 0,
             "format": "json",
         })
-        body, _final_url = _fetch(url, fetch)
+        body, _final_url = _fetch(url, fetch, resolver)
         payload = _json_body(body)
         if not isinstance(payload, list) or len(payload) < 4:
             raise _URLGateError(URL_BLOCKED)
@@ -361,6 +447,7 @@ def searxng_search(
     *,
     max_results=MAX_RESULTS,
     provider_config=_UNSET,
+    resolver=None,
 ):
     """Search a configured SearXNG instance; never picks an instance implicitly."""
     try:
@@ -369,7 +456,7 @@ def searxng_search(
         search_text = _query_or_error(query)
         limit = _limit(max_results)
         url = endpoint + "?" + urlencode({"q": search_text, "format": "json"})
-        body, _final_url = _fetch(url, fetch)
+        body, _final_url = _fetch(url, fetch, resolver)
         payload = _json_body(body)
         if not isinstance(payload, Mapping) or not isinstance(payload.get("results"), list):
             raise _URLGateError(URL_BLOCKED)
@@ -399,6 +486,7 @@ wikipedia_opensearch_search = wikipedia_search
 
 __all__ = [
     "MAX_CONTENT_CHARS",
+    "MAX_RESPONSE_BYTES",
     "MAX_RESULTS",
     "MISSING_CONFIG",
     "PUBLIC_ERROR_CODES",

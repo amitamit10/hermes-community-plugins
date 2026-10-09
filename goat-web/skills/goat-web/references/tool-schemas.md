@@ -1,6 +1,6 @@
 # Tool schemas
 
-The schemas below define the public contract. Inputs are strict: reject unknown fields rather than silently changing the requested operation. Apply the URL policy in [url-policy.md](url-policy.md) wherever a URL is accepted.
+The schemas below define the public contract. Inputs are strict: each registered JSON schema sets `additionalProperties: false`, and unknown fields return the public `URL_BLOCKED` error rather than changing the requested operation. Apply the URL policy in [url-policy.md](url-policy.md) wherever a URL is accepted.
 
 ## `goat_search`
 
@@ -9,9 +9,11 @@ Input:
 ```text
 {
   query: string (required, non-empty),
-  limit: integer (optional, default 5, range 1..5)
+  max_results: integer (optional, default 5, range 1..5)
 }
 ```
+
+`max_results` values that are not integers use the default of 5. Integer values outside 1..5 return `URL_BLOCKED`.
 
 Success result:
 
@@ -23,7 +25,7 @@ Success result:
 }
 ```
 
-Search only. Do not fetch, open, probe, or crawl result URLs. The success object contains only `results`, and its count must not exceed `limit`.
+Search only. Do not fetch, open, probe, or crawl result URLs. The success object contains only `results`, and its count must not exceed `max_results`.
 
 ## `goat_extract`
 
@@ -59,6 +61,8 @@ Input:
   max_pages: integer (optional, default 10, range 1..10)
 }
 ```
+
+`max_depth` and `max_pages` must be integers within their documented ranges; other types or out-of-range values return `URL_BLOCKED`.
 
 Success result:
 

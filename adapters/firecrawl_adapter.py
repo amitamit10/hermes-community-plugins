@@ -2,6 +2,8 @@
 
 import json as _json
 
+from ssrf_guard import GuardError, URL_BLOCKED, validate_public_url
+
 
 API_BASE_URL = "https://api.firecrawl.dev/v2"
 SCRAPE_ENDPOINT = API_BASE_URL + "/scrape"
@@ -21,9 +23,10 @@ class FirecrawlClient:
 
     requires_key = True
 
-    def __init__(self, api_key, transport):
+    def __init__(self, api_key, transport, *, resolver=None):
         self._api_key = api_key
         self._transport = transport
+        self._resolver = resolver
 
     def scrape(self, url, **options):
         """Submit a Firecrawl v2 scrape request."""
@@ -38,6 +41,10 @@ class FirecrawlClient:
             return {"ok": False, "error": MISSING_CONFIG}
         if not isinstance(url, str) or not url.strip():
             return {"ok": False, "error": "INVALID_REQUEST"}
+        try:
+            validate_public_url(url, resolver=self._resolver)
+        except GuardError:
+            return {"error": {"code": URL_BLOCKED}}
         if not callable(self._transport):
             return {"ok": False, "error": "TRANSPORT_ERROR"}
 
@@ -45,8 +52,8 @@ class FirecrawlClient:
             "Authorization": "Bearer " + self._api_key,
             "Content-Type": "application/json",
         }
-        payload = {"url": url}
-        payload.update(options)
+        payload = dict(options)
+        payload["url"] = url
         try:
             response = self._transport(endpoint, method="POST", headers=headers, json=payload)
         except Exception:

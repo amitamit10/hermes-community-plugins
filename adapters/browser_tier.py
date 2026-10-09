@@ -12,7 +12,14 @@ import re
 from collections.abc import Mapping
 from urllib.parse import quote, urlencode, urljoin
 
-from url_gate import REDIRECT_BLOCKED, URL_BLOCKED, check_redirect, check_url
+from ssrf_guard import (
+    REDIRECT_BLOCKED,
+    URL_BLOCKED,
+    check_url as _guard_check_url,
+    pinned_fetch,
+    validate_public_url,
+)
+from url_gate import check_redirect
 
 
 MAX_REDIRECTS = 2
@@ -72,17 +79,15 @@ def _error_result(error):
     return {"ok": False, "error": _error_code(error)}
 
 
-def _require_url(url):
+def _require_url(url, resolver=None):
     try:
-        allowed, _code = check_url(url)
+        validate_public_url(url, resolver=resolver)
     except Exception:
-        allowed = False
-    if not allowed:
-        raise _TierError(URL_BLOCKED)
+        raise _TierError(URL_BLOCKED) from None
     return url
 
 
-def _redirect_target(current_url, location, hops_used):
+def _redirect_target(current_url, location, hops_used, resolver=None):
     try:
         allowed, _code = check_redirect(current_url, location, hops_used)
     except Exception:
@@ -94,7 +99,9 @@ def _redirect_target(current_url, location, hops_used):
     except (TypeError, ValueError):
         raise _TierError(REDIRECT_BLOCKED) from None
     try:
-        target_allowed, _code = check_url(target)
+        target_allowed, _code = _guard_check_url(target)
+        if target_allowed:
+            validate_public_url(target, resolver=resolver)
     except Exception:
         target_allowed = False
     if not target_allowed:
@@ -165,16 +172,20 @@ def _response_parts(response):
     return status, _to_text(body), headers, final_url, redirects
 
 
-def _fetch(transport, url):
-    """Fetch via an injected, single-hop transport; gate every request/hop."""
-    if not callable(transport):
+def _fetch(transport, url, resolver=None):
+    """Fetch one gated hop; default HTTP egress is DNS-pinned."""
+    if transport is not None and not callable(transport):
         raise _TierError(URL_BLOCKED)
-    current = _require_url(url)
+    current = _require_url(url, resolver)
     hops = 0
     while True:
-        _require_url(current)
+        _require_url(current, resolver)
         try:
-            response = transport(current)
+            response = (
+                pinned_fetch(current, resolver=resolver, max_redirects=0)
+                if transport is None
+                else transport(current)
+            )
         except Exception as error:
             raise _TierError(_error_code(error)) from None
         status, body, headers, final_url, _reported_redirects = _response_parts(response)
@@ -182,7 +193,7 @@ def _fetch(transport, url):
             location = _header(headers, "location")
             if not isinstance(location, str) or not location:
                 raise _TierError(REDIRECT_BLOCKED)
-            current = _redirect_target(current, location, hops)
+            current = _redirect_target(current, location, hops, resolver)
             hops += 1
             continue
         if not 100 <= status <= 599:
@@ -192,23 +203,26 @@ def _fetch(transport, url):
         if final_url is not None and final_url != current:
             raise _TierError(REDIRECT_BLOCKED)
         if final_url is not None:
-            _require_url(final_url)
+            _require_url(final_url, resolver)
         return status, body, current, headers
 
 
 class _RequestGate:
     """Callback supplied to an injected CDP adapter before every browser fetch."""
 
-    def __init__(self, start_url):
-        self.start_url = _require_url(start_url)
-        self.checked_urls = {start_url}
+    def __init__(self, start_url, resolver=None):
+        self.start_url = _require_url(start_url, resolver)
+        self.resolver = resolver
+        self.checked_urls = set()
+        self.gate_calls = 0
         self.redirect_targets = set()
 
     def __call__(self, url, *, redirect_from=None, redirect_hops=0):
+        self.gate_calls += 1
         if redirect_from is None:
-            checked = _require_url(url)
+            checked = _require_url(url, self.resolver)
         else:
-            checked = _redirect_target(redirect_from, url, redirect_hops)
+            checked = _redirect_target(redirect_from, url, redirect_hops, self.resolver)
             self.redirect_targets.add(checked)
         self.checked_urls.add(checked)
         return checked
@@ -261,12 +275,12 @@ def _validate_browser_observations(response, gate):
             )
 
 
-def _browser_fetch(url, browser_callable):
-    """Invoke a CDP-backed callable with a mandatory URL gate callback."""
-    _require_url(url)
+def _browser_fetch(url, browser_callable, resolver=None):
+    """Invoke CDP only with a gate and require evidence for the main request."""
+    _require_url(url, resolver)
     if not callable(browser_callable):
         raise _TierError(URL_BLOCKED)
-    gate = _RequestGate(url)
+    gate = _RequestGate(url, resolver)
     try:
         response = browser_callable(url, request_gate=gate)
     except Exception as error:
@@ -274,6 +288,8 @@ def _browser_fetch(url, browser_callable):
     if isinstance(response, Mapping) and response.get("ok") is False:
         raise _TierError(_error_code(response))
     _validate_browser_observations(response, gate)
+    if gate.start_url not in gate.checked_urls:
+        raise _TierError(URL_BLOCKED)
     status, body, _headers, final_url, _redirects = _response_parts(response)
     if not 100 <= status <= 599:
         raise _TierError(URL_BLOCKED)
@@ -284,7 +300,7 @@ def _browser_fetch(url, browser_callable):
     if final_url != url and final_url not in gate.redirect_targets:
         raise _TierError(REDIRECT_BLOCKED)
     if final_url in gate.redirect_targets:
-        _require_url(final_url)
+        _require_url(final_url, resolver)
     elif final_url != url:
         raise _TierError(REDIRECT_BLOCKED)
     if status >= 400 or _is_login_wall(body) or _is_captcha_page(body):
@@ -364,7 +380,7 @@ def _is_usable_page(status, body, *, archived=False):
     return True
 
 
-def render_js(url, browser_callable):
+def render_js(url, browser_callable, *, resolver=None):
     """Render a public HTTPS URL via an injected CDP browser callable.
 
     The callable contract is ``browser_callable(url, request_gate=callback)``.
@@ -373,7 +389,7 @@ def render_js(url, browser_callable):
     by this module.
     """
     try:
-        return _browser_fetch(url, browser_callable)
+        return _browser_fetch(url, browser_callable, resolver)
     except Exception as error:
         return _error_result(error)
 
@@ -382,7 +398,7 @@ def render_js(url, browser_callable):
 js_render = render_js
 
 
-def cloudflare_bypass(url, transport, bypass_callable):
+def cloudflare_bypass(url, transport, bypass_callable, *, resolver=None):
     """Use an injected challenge handler only for a public, non-CAPTCHA CF page.
 
     The first fetch is made by the injected single-hop transport. The injected
@@ -390,8 +406,8 @@ def cloudflare_bypass(url, transport, bypass_callable):
     credentials, headers, or browser profile are passed through this layer.
     """
     try:
-        _require_url(url)
-        status, body, final_url, headers = _fetch(transport, url)
+        _require_url(url, resolver)
+        status, body, final_url, headers = _fetch(transport, url, resolver)
         if _is_login_wall(body) or status == 401:
             raise _TierError(URL_BLOCKED)
         if not _is_cloudflare_challenge(status, body, headers):
@@ -400,7 +416,7 @@ def cloudflare_bypass(url, transport, bypass_callable):
             raise _TierError(URL_BLOCKED)
         if _is_captcha_page(body):
             raise _TierError(URL_BLOCKED)
-        result = _browser_fetch(url, bypass_callable)
+        result = _browser_fetch(url, bypass_callable, resolver)
         if not result.get("ok"):
             raise _TierError(_error_code(result))
         result["source"] = "cloudflare_bypass"
@@ -409,9 +425,9 @@ def cloudflare_bypass(url, transport, bypass_callable):
         return _error_result(error)
 
 
-def _wayback_snapshot(transport, original_url):
+def _wayback_snapshot(transport, original_url, resolver=None):
     lookup_url = WAYBACK_AVAILABLE + "?" + urlencode({"url": original_url})
-    status, body, _final_url, _headers = _fetch(transport, lookup_url)
+    status, body, _final_url, _headers = _fetch(transport, lookup_url, resolver)
     if not 200 <= status < 300:
         return None
     try:
@@ -422,19 +438,19 @@ def _wayback_snapshot(transport, original_url):
     snapshot_url = closest.get("url") if isinstance(closest, dict) else None
     if not isinstance(snapshot_url, str):
         return None
-    _require_url(snapshot_url)
-    status, content, final_url, _headers = _fetch(transport, snapshot_url)
+    _require_url(snapshot_url, resolver)
+    status, content, final_url, _headers = _fetch(transport, snapshot_url, resolver)
     if not _is_usable_page(status, content, archived=True):
         return None
     timestamp = closest.get("timestamp")
     return _success(final_url, status, content, "snapshot", snapshot_date=timestamp)
 
 
-def _archive_today(transport, original_url, domains):
+def _archive_today(transport, original_url, domains, resolver=None):
     encoded = quote(original_url, safe="/:?=&")
     for domain in domains:
         route = "https://" + domain + "/newest/" + encoded
-        status, body, final_url, _headers = _fetch(transport, route)
+        status, body, final_url, _headers = _fetch(transport, route, resolver)
         if _is_usable_page(status, body, archived=True):
             return _success(final_url, status, body, "snapshot")
     return None
@@ -450,17 +466,19 @@ class BrowserTier:
         browser_callable=None,
         cloudflare_callable=None,
         archive_domains=ARCHIVE_DOMAINS,
+        resolver=None,
     ):
         self.transport = transport
         self.browser_callable = browser_callable
         self.cloudflare_callable = cloudflare_callable
         self.archive_domains = tuple(archive_domains)
+        self.resolver = resolver
 
     def fetch(self, url):
         """Single gated fetch, returning only successful public page content."""
         try:
-            _require_url(url)
-            status, body, final_url, _headers = _fetch(self.transport, url)
+            _require_url(url, self.resolver)
+            status, body, final_url, _headers = _fetch(self.transport, url, self.resolver)
             if not _is_usable_page(status, body):
                 raise _TierError(URL_BLOCKED)
             return _success(final_url, status, body, "transport")
@@ -468,10 +486,10 @@ class BrowserTier:
             return _error_result(error)
 
     def render_js(self, url):
-        return render_js(url, self.browser_callable)
+        return render_js(url, self.browser_callable, resolver=self.resolver)
 
     def cloudflare_bypass(self, url):
-        return cloudflare_bypass(url, self.transport, self.cloudflare_callable)
+        return cloudflare_bypass(url, self.transport, self.cloudflare_callable, resolver=self.resolver)
 
     def recover_blocked_page(self, url, *, api_candidates=()):
         """Try public snapshots, a gated CF handler, API candidates, then CDP.
@@ -481,14 +499,14 @@ class BrowserTier:
         their provenance in the ``source`` field.
         """
         try:
-            _require_url(url)
+            _require_url(url, self.resolver)
         except Exception as error:
             return _error_result(error)
 
         direct = None
         direct_error = None
         try:
-            direct = _fetch(self.transport, url)
+            direct = _fetch(self.transport, url, self.resolver)
         except _TierError as error:
             if error.code == REDIRECT_BLOCKED:
                 return _error_result(error)
@@ -509,7 +527,7 @@ class BrowserTier:
 
         last_error = direct_error or URL_BLOCKED
         try:
-            snapshot = _wayback_snapshot(self.transport, url)
+            snapshot = _wayback_snapshot(self.transport, url, self.resolver)
         except _TierError as error:
             if error.code == REDIRECT_BLOCKED:
                 return _error_result(error)
@@ -522,7 +540,7 @@ class BrowserTier:
             return snapshot
 
         try:
-            archived = _archive_today(self.transport, url, self.archive_domains)
+            archived = _archive_today(self.transport, url, self.archive_domains, self.resolver)
         except _TierError as error:
             if error.code == REDIRECT_BLOCKED:
                 return _error_result(error)
@@ -537,7 +555,7 @@ class BrowserTier:
         if direct_challenge and not direct_sensitive:
             if callable(self.cloudflare_callable):
                 try:
-                    result = _browser_fetch(url, self.cloudflare_callable)
+                    result = _browser_fetch(url, self.cloudflare_callable, self.resolver)
                     result["source"] = "cloudflare_bypass"
                     return result
                 except _TierError as error:
@@ -553,7 +571,7 @@ class BrowserTier:
             return {"ok": False, "error": URL_BLOCKED}
         for candidate in candidates:
             try:
-                status, content, final_url, _headers = _fetch(self.transport, candidate)
+                status, content, final_url, _headers = _fetch(self.transport, candidate, self.resolver)
             except _TierError as error:
                 if error.code == REDIRECT_BLOCKED:
                     return _error_result(error)
@@ -569,7 +587,7 @@ class BrowserTier:
         if direct_sensitive:
             return {"ok": False, "error": URL_BLOCKED}
         if callable(self.browser_callable):
-            result = render_js(url, self.browser_callable)
+            result = render_js(url, self.browser_callable, resolver=self.resolver)
             if result.get("ok"):
                 return result
             if result.get("error") == REDIRECT_BLOCKED:
@@ -589,6 +607,7 @@ def recover_blocked_page(
     cloudflare_callable=None,
     api_candidates=(),
     archive_domains=ARCHIVE_DOMAINS,
+    resolver=None,
 ):
     """Functional wrapper around :class:`BrowserTier` recovery."""
     tier = BrowserTier(
@@ -596,6 +615,7 @@ def recover_blocked_page(
         browser_callable=browser_callable,
         cloudflare_callable=cloudflare_callable,
         archive_domains=archive_domains,
+        resolver=resolver,
     )
     return tier.recover_blocked_page(url, api_candidates=api_candidates)
 
