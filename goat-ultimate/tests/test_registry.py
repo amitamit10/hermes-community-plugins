@@ -29,17 +29,30 @@ SCHEMA_URI = "https://json-schema.org/draft/2020-12/schema"
 REGISTRY_SCHEMA = {
     "$schema": SCHEMA_URI,
     "type": "object",
-    "required": ["$schema", "schema_version", "counts", "paid_backend_gate", "capabilities"],
+    "required": ["$schema", "schema_version", "counts", "paid_backend_gate", "capabilities", "providers"],
     "additionalProperties": False,
     "properties": {
         "$schema": {"type": "string", "const": SCHEMA_URI},
-        "schema_version": {"type": "integer", "const": 1},
+        "schema_version": {"type": "integer", "const": 2},
+        "providers": {
+            "type": "object",
+            "required": ["classifications", "canonical_by_capability", "fallback_order", "fallback_policy", "entries"],
+            "properties": {
+                "classifications": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+                "canonical_by_capability": {"type": "object"},
+                "fallback_order": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+                "fallback_policy": {"type": "object"},
+                "entries": {"type": "array", "minItems": 1},
+            },
+        },
         "counts": {
             "type": "object",
-            "required": ["task_classes", "by_status", "by_source"],
+            "required": ["task_classes", "by_status", "by_source", "providers", "by_provider_classification"],
             "additionalProperties": False,
             "properties": {
                 "task_classes": {"type": "integer", "minimum": 0},
+                "providers": {"type": "integer", "minimum": 0},
+                "by_provider_classification": {"type": "object"},
                 "by_status": {
                     "type": "object",
                     "required": STATUSES,

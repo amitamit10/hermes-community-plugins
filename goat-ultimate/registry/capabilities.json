@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "schema_version": 1,
+  "schema_version": 2,
   "counts": {
     "task_classes": 11,
     "by_status": {
@@ -15,6 +15,12 @@
       "hub": 0,
       "goat": 3,
       "paid": 0
+    },
+    "providers": 11,
+    "by_provider_classification": {
+      "canonical-free": 1,
+      "route": 9,
+      "future-unavailable": 1
     }
   },
   "paid_backend_gate": {
@@ -33,9 +39,12 @@
   "capabilities": [
     {
       "name": "web-search",
-      "canonical_provider": "goat_search",
+      "canonical_provider": "anysearch",
       "source": "goat",
       "overlaps_resolved": [
+        "SearXNG (self-hosted/optional free fallback)",
+        "Wikipedia Action API (keyless fallback)",
+        "DuckDuckGo (keyless final fallback)",
         "web_search (Hermes built-in)",
         "web-ddgs (bundled plugin)",
         "web-exa (paid/keyed alternative)",
@@ -143,5 +152,160 @@
       ],
       "status": "keep"
     }
-  ]
+  ],
+  "providers": {
+    "classifications": [
+      "canonical-free",
+      "route",
+      "future-unavailable"
+    ],
+    "canonical_by_capability": {
+      "web-search": "anysearch"
+    },
+    "fallback_order": [
+      "anysearch",
+      "searxng",
+      "wikipedia",
+      "duckduckgo"
+    ],
+    "fallback_policy": {
+      "mode": "explicit",
+      "transitions_visible": true,
+      "on_paid_missing_config": "fail_closed_no_fallback"
+    },
+    "entries": [
+      {
+        "id": "anysearch",
+        "name": "AnySearch",
+        "classification": "canonical-free",
+        "capabilities": [
+          "web-search"
+        ],
+        "access": "anonymous",
+        "requires_key": false,
+        "key_optional": true,
+        "optional_key_env": "ANYSEARCH_API_KEY"
+      },
+      {
+        "id": "searxng",
+        "name": "SearXNG",
+        "classification": "route",
+        "capabilities": [
+          "web-search"
+        ],
+        "access": "self-hosted-optional",
+        "requires_key": false,
+        "key_optional": false
+      },
+      {
+        "id": "wikipedia",
+        "name": "Wikipedia Action API",
+        "classification": "route",
+        "capabilities": [
+          "web-search"
+        ],
+        "access": "anonymous",
+        "requires_key": false,
+        "key_optional": false
+      },
+      {
+        "id": "duckduckgo",
+        "name": "DuckDuckGo",
+        "classification": "route",
+        "capabilities": [
+          "web-search"
+        ],
+        "access": "anonymous",
+        "requires_key": false,
+        "key_optional": false
+      },
+      {
+        "id": "tavily",
+        "name": "Tavily",
+        "classification": "route",
+        "capabilities": [
+          "web-search"
+        ],
+        "access": "keyed",
+        "requires_key": true,
+        "key_optional": false,
+        "missing_config_error": "MISSING_CONFIG",
+        "on_missing_config": "fail_closed_no_fallback"
+      },
+      {
+        "id": "exa",
+        "name": "Exa",
+        "classification": "route",
+        "capabilities": [
+          "web-search"
+        ],
+        "access": "keyed",
+        "requires_key": true,
+        "key_optional": false,
+        "missing_config_error": "MISSING_CONFIG",
+        "on_missing_config": "fail_closed_no_fallback"
+      },
+      {
+        "id": "firecrawl",
+        "name": "Firecrawl",
+        "classification": "route",
+        "capabilities": [
+          "web-search"
+        ],
+        "access": "keyed",
+        "requires_key": true,
+        "key_optional": false,
+        "missing_config_error": "MISSING_CONFIG",
+        "on_missing_config": "fail_closed_no_fallback"
+      },
+      {
+        "id": "serper",
+        "name": "Serper",
+        "classification": "route",
+        "capabilities": [
+          "web-search"
+        ],
+        "access": "keyed",
+        "requires_key": true,
+        "key_optional": false,
+        "missing_config_error": "MISSING_CONFIG",
+        "on_missing_config": "fail_closed_no_fallback"
+      },
+      {
+        "id": "browserbase-stealth",
+        "name": "Browserbase stealth",
+        "classification": "route",
+        "capabilities": [
+          "browser"
+        ],
+        "access": "keyed",
+        "requires_key": true,
+        "key_optional": false,
+        "missing_config_error": "MISSING_CONFIG",
+        "on_missing_config": "fail_closed_no_fallback"
+      },
+      {
+        "id": "bright-data",
+        "name": "Bright Data",
+        "classification": "route",
+        "capabilities": [],
+        "access": "keyed",
+        "requires_key": true,
+        "key_optional": false,
+        "missing_config_error": "MISSING_CONFIG",
+        "on_missing_config": "fail_closed_no_fallback"
+      },
+      {
+        "id": "donsetch",
+        "name": "donsetch",
+        "classification": "future-unavailable",
+        "capabilities": [
+          "web-search"
+        ],
+        "access": "unavailable",
+        "requires_key": false,
+        "key_optional": false
+      }
+    ]
+  }
 }
