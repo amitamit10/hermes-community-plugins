@@ -1,0 +1,105 @@
+name: goat-gate
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  frontmatter-lint:
+    runs-on: ubuntu-latest
+    steps:
+      # Actions are pinned to full SHAs; comments retain the release tags.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.11"
+      - name: Lint skill-document frontmatter
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          import sys
+
+          # Reference Markdown is not a skill entrypoint and has no frontmatter contract.
+          docs = sorted(Path("skills/goat-web").rglob("SKILL.md"))
+          if not docs:
+              sys.exit("No SKILL.md documents found; frontmatter gate fails closed.")
+
+          errors = []
+          for path in docs:
+              text = path.read_text(encoding="utf-8")
+              match = re.match(r"\A---\r?\n(.*?)\r?\n---(?:\r?\n|\Z)", text, re.S)
+              if not match:
+                  errors.append(f"{path}: missing or malformed YAML frontmatter")
+                  continue
+              keys = {
+                  line.split(":", 1)[0].strip()
+                  for line in match.group(1).splitlines()
+                  if ":" in line and not line.lstrip().startswith("#")
+              }
+              missing = {"name", "description"} - keys
+              if missing:
+                  errors.append(f"{path}: missing frontmatter keys: {', '.join(sorted(missing))}")
+
+          if errors:
+              print("\n".join(errors), file=sys.stderr)
+              sys.exit(1)
+          print(f"Validated frontmatter in {len(docs)} Markdown document(s).")
+          PY
+
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.11"
+      - name: Run unit tests
+        run: python3 -m unittest discover -s tests
+
+  secret-path-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.11"
+      - name: Audit staged files
+        run: python3 scripts/audit_staging.py
+
+  provenance-license:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.11"
+      - name: Check provenance and license metadata
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import sys
+
+          license_text = Path("LICENSE").read_text(encoding="utf-8")
+          provenance = Path("PROVENANCE.md").read_text(encoding="utf-8")
+          errors = []
+
+          if "MIT License" not in license_text or "Copyright (c) 2026 Hermes Community Contributors" not in license_text:
+              errors.append("LICENSE is missing the required MIT heading or copyright line")
+          required_rows = (
+              "`url_gate`", "Audit script", "Test 1", "Test 2", "Test 3", "Test 4", "Test 5",
+              "Skill docs", "MIT license text", "Mozilla-Readability-inspired extraction approach",
+          )
+          for component in required_rows:
+              if f"| {component} |" not in provenance:
+                  errors.append(f"PROVENANCE.md is missing component row: {component}")
+          if "https://github.com/mozilla/readability" not in provenance or "Apache-2.0" not in provenance:
+              errors.append("PROVENANCE.md is missing the Mozilla Readability source or Apache-2.0 identifier")
+          if errors:
+              print("\n".join(errors), file=sys.stderr)
+              sys.exit(1)
+          print("Provenance and license metadata checks passed.")
+          PY

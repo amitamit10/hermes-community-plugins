@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "registry": "../goat-ultimate/registry/capabilities.json",
+  "classification_basis": "goat-packs/skill-coverage.json; unmapped means no direct current router class",
+  "skills": [
+    {
+      "name": "arxiv",
+      "source": "research/arxiv/SKILL.md; upstream: arXiv REST API and Semantic Scholar Graph API",
+      "provides": "חיפוש מאמרים ותקצירים לפי נושא, מחבר, קטגוריה או מזהה; מטא־דאטה וציטוטים דרך Semantic Scholar.",
+      "router_class": "web-search",
+      "requires_key": false
+    },
+    {
+      "name": "blogwatcher",
+      "source": "research/blogwatcher/SKILL.md; public blog RSS/Atom feeds via blogwatcher-cli",
+      "provides": "סריקת בלוגים ופידים, גילוי פיד או scraping חלופי, ניהול מאמרים שלא נקראו וסימון read/unread עם מצב מקומי.",
+      "router_class": "rss",
+      "requires_key": false
+    },
+    {
+      "name": "rss-feeds",
+      "source": "research/rss-feeds/SKILL.md; RSS 2.0, RSS 1.0/RDF, Atom, JSON Feed",
+      "provides": "קריאת פיד וגילוי כתובת פיד מתוך אתר; רשומות מסודרות עם כותרת, קישור, תאריך, מחבר ותקציר.",
+      "router_class": "rss",
+      "requires_key": false
+    },
+    {
+      "name": "competitor-news-monitor",
+      "source": "research/competitor-news-monitor/SKILL.md; company newsrooms, changelogs, filings and reputable press via web_search/web_extract; optional feeds",
+      "provides": "ניטור רשימת חברות ואירועים, דירוג חשיבות, איחוד כפילויות ודיג׳סט עם מקורות ראשוניים; תומך בתהליך מתוזמן.",
+      "router_class": "web-search",
+      "requires_key": false
+    },
+    {
+      "name": "polymarket",
+      "source": "research/polymarket/SKILL.md; public Polymarket Gamma, CLOB and Data REST APIs",
+      "provides": "קריאה בלבד של שווקים, מחירים כהסתברויות, order books, היסטוריית מחירים, עסקאות ו-open interest; אינו מבצע מסחר.",
+      "router_class": "unmapped",
+      "requires_key": false
+    },
+    {
+      "name": "maps",
+      "source": "productivity/maps/SKILL.md; OpenStreetMap/Nominatim, Overpass, OSRM and TimeAPI.io",
+      "provides": "Geocoding ו-reverse geocoding, נקודות עניין, מרחקים, מסלולים, הוראות נסיעה, אזור גאוגרפי ואזורי זמן.",
+      "router_class": "maps",
+      "requires_key": false
+    },
+    {
+      "name": "weather",
+      "source": "openclaw-imports/weather/SKILL.md; wttr.in and Open-Meteo",
+      "provides": "מזג אוויר נוכחי ותחזיות, עם wttr.in כמקור ראשי ו-Open-Meteo כחלופה.",
+      "router_class": "unmapped",
+      "requires_key": false
+    },
+    {
+      "name": "youtube-content",
+      "source": "media/youtube-content/SKILL.md; YouTube transcript/caption retrieval via youtube-transcript-api",
+      "provides": "שליפת תמלול והפיכתו לסיכום, פרקים, שרשור, פוסט בלוג או ציטוטים עם חותמות זמן.",
+      "router_class": "media",
+      "requires_key": false
+    }
+  ],
+  "counts": {
+    "skills": 8,
+    "mapped": 6,
+    "unmapped": 2,
+    "requires_key_true": 0,
+    "requires_key_false": 8,
+    "by_router_class": {
+      "maps": 1,
+      "media": 1,
+      "rss": 2,
+      "unmapped": 2,
+      "web-search": 2
+    }
+  }
+}

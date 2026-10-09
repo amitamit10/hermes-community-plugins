@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": 1,
+  "counts": {
+    "task_classes": 11,
+    "by_status": {
+      "keep": 4,
+      "route": 7,
+      "future": 0
+    },
+    "by_source": {
+      "builtin": 2,
+      "bundled": 0,
+      "local": 6,
+      "hub": 0,
+      "goat": 3,
+      "paid": 0
+    }
+  },
+  "paid_backend_gate": {
+    "requires_key": true,
+    "missing_config_error": "MISSING_CONFIG",
+    "on_missing_config": "fail_closed_no_fallback",
+    "providers": [
+      "Firecrawl",
+      "Exa",
+      "Tavily",
+      "Serper",
+      "Browserbase stealth",
+      "Bright Data"
+    ]
+  },
+  "capabilities": [
+    {
+      "name": "web-search",
+      "canonical_provider": "goat_search",
+      "source": "goat",
+      "overlaps_resolved": [
+        "web_search (Hermes built-in)",
+        "web-ddgs (bundled plugin)",
+        "web-exa (paid/keyed alternative)",
+        "web-tavily (paid/keyed alternative)",
+        "Firecrawl (paid/keyed alternative)",
+        "Serper (paid/keyed alternative)"
+      ],
+      "status": "route"
+    },
+    {
+      "name": "extraction",
+      "canonical_provider": "goat_extract",
+      "source": "goat",
+      "overlaps_resolved": [
+        "web_extract (Hermes built-in)",
+        "web-exa (paid/keyed alternative)",
+        "web-firecrawl (paid/keyed alternative)",
+        "web-tavily (paid/keyed alternative)"
+      ],
+      "status": "route"
+    },
+    {
+      "name": "browser",
+      "canonical_provider": "browser_exec",
+      "source": "builtin",
+      "overlaps_resolved": [
+        "browser-browser-use (bundled support layer, not a second target)",
+        "Browserbase stealth (paid/keyed alternative)"
+      ],
+      "status": "keep"
+    },
+    {
+      "name": "crawl",
+      "canonical_provider": "goat_crawl",
+      "source": "goat",
+      "overlaps_resolved": [
+        "web_crawl (reference MCP tool)",
+        "web-firecrawl (paid/keyed alternative)",
+        "ultimate-sitemap-parser (external-only; not vendored)"
+      ],
+      "status": "route"
+    },
+    {
+      "name": "rss",
+      "canonical_provider": "rss-feeds",
+      "source": "local",
+      "overlaps_resolved": [
+        "RSSHub (external-only; not bundled)"
+      ],
+      "status": "keep"
+    },
+    {
+      "name": "api-automation",
+      "canonical_provider": "web-api-automation",
+      "source": "local",
+      "overlaps_resolved": [],
+      "status": "keep"
+    },
+    {
+      "name": "media",
+      "canonical_provider": "youtube-content",
+      "source": "local",
+      "overlaps_resolved": [
+        "youtube-downloader (specialized download workflow)",
+        "gif-search (specialized GIF lookup)",
+        "songsee (specialized audio analysis)",
+        "ascii-video (specialized visualization)"
+      ],
+      "status": "route"
+    },
+    {
+      "name": "docs-artifacts",
+      "canonical_provider": "hermes-doc-artifacts",
+      "source": "local",
+      "overlaps_resolved": [
+        "hermes-book-artifacts (specialized book generation, not the default document route)"
+      ],
+      "status": "route"
+    },
+    {
+      "name": "sheets",
+      "canonical_provider": "hermes-xlsx-artifacts",
+      "source": "local",
+      "overlaps_resolved": [
+        "xlsx (generic spreadsheet skill; specialized artifact route selected)"
+      ],
+      "status": "route"
+    },
+    {
+      "name": "maps",
+      "canonical_provider": "hermes-map-artifacts",
+      "source": "local",
+      "overlaps_resolved": [
+        "maps (OSM/OSRM geocoding and route lookup; not the map-artifact target)"
+      ],
+      "status": "route"
+    },
+    {
+      "name": "memory",
+      "canonical_provider": "memory",
+      "source": "builtin",
+      "overlaps_resolved": [
+        "mempalace (risk-D, staged-only in the collection; not canonical here)",
+        "memory-wiki (derived read-only dashboard, not the memory provider)"
+      ],
+      "status": "keep"
+    }
+  ]
+}

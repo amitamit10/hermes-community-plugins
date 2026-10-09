@@ -1,0 +1,17 @@
+name: hermes-goat-web
+version: 0.1.0
+description: Dependency-free Hermes plugin for bounded public-web search, extraction, crawling, and probing.
+entrypoint: __init__:register
+tools:
+  - goat_search
+  - goat_extract
+  - goat_crawl
+  - goat_probe
+provides_tools:
+  - goat_search
+  - goat_extract
+  - goat_crawl
+  - goat_probe
+capabilities: []
+dependencies: []
+python_dependencies: []

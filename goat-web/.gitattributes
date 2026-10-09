@@ -1,0 +1,16 @@
+# Text normalization; all source, tests, and documentation remain in source archives.
+* text=auto
+*.md text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.py text eol=lf
+
+# Source-archive boundary: omit local environment secrets, runtime state, and logs only.
+.env export-ignore
+.env.* export-ignore
+.env.example -export-ignore
+.env.sample -export-ignore
+/state/** export-ignore
+/logs/** export-ignore
+*.log export-ignore

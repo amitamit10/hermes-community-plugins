@@ -1,0 +1,16 @@
+{
+  "name": "hermes-goat-web",
+  "version": "0.1.0",
+  "risk_tier": "B",
+  "entrypoint": "goat_tools.register",
+  "tools": [
+    "goat_search",
+    "goat_extract",
+    "goat_crawl",
+    "goat_probe"
+  ],
+  "credentials": [],
+  "network_services": [
+    "pinned-https-egress"
+  ]
+}
