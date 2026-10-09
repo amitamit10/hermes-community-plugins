@@ -41,10 +41,10 @@
 
 ## מקורות פנימיים שנבדקו
 
-- `/opt/data/cache/scratch/goat-browser-staging/plugins/goat-web/goat_tools.py` ו־`plugin.yaml` — ארבעת הכלים, גבולות crawl וה־DDG parser.
-- `/opt/data/cache/scratch/goat-packs/free_stack.py`, `free_search.py`, `search-fallback-chain.md` — free stack, פרמטרי הקריאה בפועל וכללי router.
-- `/opt/data/cache/scratch/goat-packs/anysearch_adapter.py`, `tavily_adapter.py`, `exa_adapter.py`, `firecrawl_adapter.py`, `serper_you_adapter.py` — מה כבר קיים ב־client adapters.
-- `/opt/data/cache/scratch/goat-ultimate/registry/capabilities.json` ו־`references/paid-adapters.md` — paid gate, מצב אינטגרציה ואימות ספקים. בפרט, Serper נשאר לא מאומת.
+- `goat-web/plugins/goat-web/goat_tools.py` ו־`plugin.yaml` — ארבעת הכלים, גבולות crawl וה־DDG parser.
+- `adapters/free_stack.py`, `free_search.py`, `search-fallback-chain.md` — free stack, פרמטרי הקריאה בפועל וכללי router.
+- `adapters/anysearch_adapter.py`, `tavily_adapter.py`, `exa_adapter.py`, `firecrawl_adapter.py`, `serper_you_adapter.py` — מה כבר קיים ב־client adapters.
+- `goat-ultimate/registry/capabilities.json` ו־`references/paid-adapters.md` — paid gate, מצב אינטגרציה ואימות ספקים. בפרט, Serper נשאר לא מאומת.
 
 ## Sources
 
