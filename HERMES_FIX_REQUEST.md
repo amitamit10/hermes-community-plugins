@@ -1,3 +1,20 @@
+# Handoff to Hermes — Round 3: live benchmark findings (commit `163c2d9`, 2026-10-11)
+
+Live run succeeded (public DNS, direct TLS, GOAT preflight passed, SSRF intact). Full detail: `FAILURE_ANALYSIS.md`, `GOAT_BENCHMARK_RESULTS.md`. Priorities:
+
+1. **FA-1 (P1)** `goat_extract`/`goat_crawl` must not return `ok:true` on HTTP 403/429 block pages → `PROVIDER_BLOCKED`; 4xx/5xx not success. Acceptance: 403 fixture test; rerun `python3 -B benchmarks/live/scrape_eval.py $BUNDLE <csv> 30 0 out.json` → 0 ok-with-status≥400.
+2. **FA-3 (P1)** `goat_answer("What is the capital of France?")` must contain Paris; `"Who discovered penicillin?"` must name Fleming; return low-confidence failure otherwise.
+3. **FA-4 (P2)** `goat_filtered_search{query:"machine learning",allowed_domains:["en.wikipedia.org"],language:"en"}` must return ≥1 result.
+4. **FA-5 (P2)** distinct public code (or documented mapping) for upstream timeout; `news` vertical timed out at 10.1 s as `URL_BLOCKED`.
+5. **FA-2/FA-6 (P2, quality)** multi-hop retrieval (FRAMES proxy 10.7%/21.4%) and extraction truth-hit 36.7%.
+6. **FA-7 (P3)** probe should report status for 4xx.
+
+Rerun after fixes: `benchmarks/live/smoke.py`, `retrieval_eval.py` (SimpleQA/FRAMES n=30 seed 0), `scrape_eval.py` (n=30 seed 0). Official LLM-judged scores still require an authorised evaluator key.
+
+Tester rules respected: no production code modified, no security control weakened, no paid calls.
+
+---
+
 # Handoff to Hermes — Prioritized Fix Requests (from independent QA, 2026-10-11)
 
 ## Verification round 2 — commit `1311d89` (2026-10-11 ~17:05, fresh clone)

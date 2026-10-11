@@ -1,0 +1,1103 @@
+{
+ "utc": "2026-10-11T15:59:59.915519+00:00",
+ "summary": {
+  "dataset": "frames",
+  "n_requested": 30,
+  "seed": 0,
+  "n_valid": 28,
+  "n_provider_blocked": 2,
+  "n_other_error": 0,
+  "snippet_recall": 0.10714285714285714,
+  "empty_result_rate": 0.0,
+  "page_recall": 0.21428571428571427,
+  "search_p50_ms": 859.5,
+  "search_p95_ms": 1060.9
+ },
+ "cases": [
+  {
+   "i": 0,
+   "query": "What was the average launch mass of Apollo 11, Apollo 12, and Apollo 13 in kilograms, rounded to the nearest integer?",
+   "gold": "The average launch mass in kilograms rounded to the nearest integer of Apollo 11, Apollo 12, and Apollo 13 is 47,906 kilograms.",
+   "search_ms": 859.5,
+   "ok": true,
+   "error_code": null,
+   "n_results": 4,
+   "urls": [
+    "https://en.wikipedia.org/wiki/Apollo_11",
+    "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-059A",
+    "https://space.stackexchange.com/questions/64079/what-was-the-mass-of-each-of-the-12-completed-apollo-lunar-modules",
+    "https://en.wikipedia.org/wiki/Apollo_command_and_service_module"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/Apollo_11",
+     "ok": true,
+     "code": null,
+     "ms": 547.1
+    },
+    {
+     "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-059A",
+     "ok": false,
+     "code": "URL_BLOCKED",
+     "ms": 10209.9
+    },
+    {
+     "url": "https://space.stackexchange.com/questions/64079/what-was-the-mass-of-each-of-the-12-completed-apollo-lunar-modules",
+     "ok": true,
+     "code": null,
+     "ms": 158.4
+    }
+   ],
+   "gold_in_snippets_or_pages": false
+  },
+  {
+   "i": 1,
+   "query": "One of Jane Auten's novels was released in 1813, which was later adapted into a film in 2005. When was the director of that film born?",
+   "gold": "Joe Wright was born on August 25th, 1972.",
+   "search_ms": 710.4,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://www.britannica.com/topic/List-of-Jane-Austen-Film-and-TV-Adaptations",
+    "https://en.wikipedia.org/wiki/Jane_Austen",
+    "https://en.wikipedia.org/wiki/Pride_and_Prejudice",
+    "https://people.com/best-jane-austen-movie-tv-adaptations-11856569",
+    "https://austen.com/adaptations/"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://www.britannica.com/topic/List-of-Jane-Austen-Film-and-TV-Adaptations",
+     "ok": true,
+     "code": null,
+     "ms": 246.7
+    },
+    {
+     "url": "https://en.wikipedia.org/wiki/Jane_Austen",
+     "ok": true,
+     "code": null,
+     "ms": 308.0
+    },
+    {
+     "url": "https://en.wikipedia.org/wiki/Pride_and_Prejudice",
+     "ok": true,
+     "code": null,
+     "ms": 307.6
+    }
+   ],
+   "gold_in_snippets_or_pages": false
+  },
+  {
+   "i": 2,
+   "query": "Whose memoir was co-written with the author of Pill Head: The Secret Life of a Painkiller Addict and published post-humously 2 years after her death?",
+   "gold": "Edith Windsor",
+   "search_ms": 968.1,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://www.librarything.com/author/lyonjoshua",
+    "https://us.macmillan.com/author/joshualyon",
+    "https://grokipedia.com/page/joshua_lyon",
+    "https://www.thriftbooks.com/a/joshua-lyon/306639/",
+    "https://en.wikipedia.org/wiki/Joshua_Lyon"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://www.librarything.com/author/lyonjoshua",
+     "ok": true,
+     "code": null,
+     "ms": 245.5
+    },
+    {
+     "url": "https://us.macmillan.com/author/joshualyon",
+     "ok": true,
+     "code": null,
+     "ms": 336.1
+    },
+    {
+     "url": "https://grokipedia.com/page/joshua_lyon",
+     "ok": true,
+     "code": null,
+     "ms": 340.6
+    }
+   ],
+   "gold_in_snippets_or_pages": false
+  },
+  {
+   "i": 3,
+   "query": "What Formula One car was driven in 1994 by the nephew of a racing driver from Italy who drove a Ferrari 312T and shares a last name with a common cocktail drink?",
+   "gold": "Minardi M194",
+   "search_ms": 847.8,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/1994_Formula_One_World_Championship",
+    "https://www.f1-fansite.com/f1-teams/1994-f1-teams/",
+    "https://www.famousfix.com/list/1994-formula-one-season-cars",
+    "https://en.wikipedia.org/wiki/List_of_Formula_One_drivers",
+    "https://commons.wikimedia.org/wiki/Category:1994_Formula_One_season_cars"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/1994_Formula_One_World_Championship",
+     "ok": true,
+     "code": null,
+     "ms": 645.7
+    },
+    {
+     "url": "https://www.f1-fansite.com/f1-teams/1994-f1-teams/",
+     "ok": true,
+     "code": null,
+     "ms": 450.3
+    },
+    {
+     "url": "https://www.famousfix.com/list/1994-formula-one-season-cars",
+     "ok": true,
+     "code": null,
+     "ms": 740.5
+    }
+   ],
+   "gold_in_snippets_or_pages": false
+  },
+  {
+   "i": 4,
+   "query": "What is the average height of Mount Everest, Mount Thor, Mount Denali and The Matterhorn?",
+   "gold": "17382 ft.",
+   "search_ms": 809.4,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://sizegraf.com/tools/mountain-height-comparison-tool/",
+    "https://en.wikipedia.org/wiki/Mount_Everest",
+    "https://en.wikipedia.org/wiki/List_of_mountains_by_elevation",
+    "https://www.size-explorer.com/en/compare/mountains/mount+everest/denali/",
+    "https://mountainfyi.com/tools/elevation-comparison/"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://sizegraf.com/tools/mountain-height-comparison-tool/",
+     "ok": true,
+     "code": null,
+     "ms": 647.5
+    },
+    {
+     "url": "https://en.wikipedia.org/wiki/Mount_Everest",
+     "ok": true,
+     "code": null,
+     "ms": 542.8
+    },
+    {
+     "url": "https://en.wikipedia.org/wiki/List_of_mountains_by_elevation",
+     "ok": true,
+     "code": null,
+     "ms": 496.6
+    }
+   ],
+   "gold_in_snippets_or_pages": false
+  },
+  {
+   "i": 5,
+   "query": "How many letters were in the name of the first single by the artist who played the first concert at Principality Stadium?",
+   "gold": "12",
+   "search_ms": 809.1,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://www.concertarchives.org/venues/principality-stadium",
+    "https://nytcrossword.org/nyt-clues/guitarist-who-played-the-first-ever-rock-concert-at-the-sistine-chapel-nyt-crossword/",
+    "https://www.concertarchives.org/venues/principality-stadium--5",
+    "https://www.thewordfinder.com/crossword-solver/nyt-daily/guitarist-who-played-the-first-ever-rock-concert-at-the-sistine-chapel?date=2026-06-19&len=7",
+    "https://www.facebook.com/principalitystadium/videos/the-first-names-on-wal-y-s%C3%AAr-%EF%B8%8Ftake-that-are-the-first-artists-to-sign-wal-y-s%C3%AAr-/1498242684685462/"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://www.concertarchives.org/venues/principality-stadium",
+     "ok": true,
+     "code": null,
+     "ms": 239.0
+    },
+    {
+     "url": "https://nytcrossword.org/nyt-clues/guitarist-who-played-the-first-ever-rock-concert-at-the-sistine-chapel-nyt-crossword/",
+     "ok": true,
+     "code": null,
+     "ms": 1998.6
+    },
+    {
+     "url": "https://www.concertarchives.org/venues/principality-stadium--5",
+     "ok": true,
+     "code": null,
+     "ms": 160.9
+    }
+   ],
+   "gold_in_snippets_or_pages": false
+  },
+  {
+   "i": 6,
+   "query": "Fossils of the extinct sea snail, Alvania belgica, were originally found in a European country. What is the capital of that country?",
+   "gold": "City of Brussels",
+   "search_ms": 808.5,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/Alvania_belgica",
+    "https://www.wikiwand.com/en/articles/Alvania_belgica",
+    "https://grokipedia.com/page/alvania_alfredbelli",
+    "https://en.wikipedia.org/wiki/Alvania_antwerpiensis",
+    "https://grokipedia.com/page/alvania_belli"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/Alvania_belgica",
+     "ok": true,
+     "code": null,
+     "ms": 320.4
+    },
+    {
+     "url": "https://www.wikiwand.com/en/articles/Alvania_belgica",
+     "ok": true,
+     "code": null,
+     "ms": 347.9
+    },
+    {
+     "url": "https://grokipedia.com/page/alvania_alfredbelli",
+     "ok": true,
+     "code": null,
+     "ms": 293.7
+    }
+   ],
+   "gold_in_snippets_or_pages": false
+  },
+  {
+   "i": 7,
+   "query": "Which U.S. National Park was the first to be established after the Portland Trail Blazers won their only playoff series with LaMarcus Aldridge on the team?",
+   "gold": "Gateway Arch National Park",
+   "search_ms": 988.1,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://www.dirtinmyshoes.com/list-of-us-national-parks-date-established/",
+    "https://www.history.com/this-day-in-history/March-1/yellowstone-park-established",
+    "https://www.national-park.com/list-of-u-s-national-parks-in-chronological-order/",
+    "https://www.nps.gov/subjects/npscelebrates/park-anniversaries.htm",
+    "https://www.ebsco.com/research-starters/history/yellowstone-becomes-first-us-national-park"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://www.dirtinmyshoes.com/list-of-us-national-parks-date-established/",
+     "ok": true,
+     "code": null,
+     "ms": 374.6
+    },
+    {
+     "url": "https://www.history.com/this-day-in-history/March-1/yellowstone-park-established",
+     "ok": true,
+     "code": null,
+     "ms": 547.5
+    },
+    {
+     "url": "https://www.national-park.com/list-of-u-s-national-parks-in-chronological-order/",
+     "ok": true,
+     "code": null,
+     "ms": 2357.5
+    }
+   ],
+   "gold_in_snippets_or_pages": false
+  },
+  {
+   "i": 8,
+   "query": "The artist, MadLib, released Mind Fusion Vol. 1 as a collaboration with several other artists. The track, \"I Got A Right Ta (Madlib Remix)\" features an artist other than MadLib. This artist received a Bachelor's of Science degree from a university in Florida. How many years after the establishment of this university was the album Mind Fusion Vol. 1 released?",
+   "gold": "117",
+   "search_ms": 234.5,
+   "ok": false,
+   "error_code": "PROVIDER_BLOCKED",
+   "n_results": 0,
+   "urls": [],
+   "gold_in_snippets": null
+  },
+  {
+   "i": 9,
+   "query": "I'm thinking of a sport that a University in the midwest USA won the championship for in 1974. The University suffered a defeat in football in 2005, losing to the University where the 18th honourary citizen of Beijing obtained his Bachelor's degree. What is the sport I'm thinking of?",
+   "gold": "Cross country",
+   "search_ms": 869.9,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/List_of_college_athletics_championship_game_outcomes",
+    "https://www.ncaa.org/news/media-center-new-ncaa-historical-database-provides-wealth-of-information-on-championships/",
+    "https://en.wikipedia.org/wiki/Intercollegiate_sports_team_champions",
+    "https://www.ncaa.org/championships/statistics-and-records/",
+    "https://www.espn.com/ncaa/almanac.html"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/List_of_college_athletics_championship_game_outcomes",
+     "ok": true,
+     "code": null,
+     "ms": 673.7
+    },
+    {
+     "url": "https://www.ncaa.org/news/media-center-new-ncaa-historical-database-provides-wealth-of-information-on-championships/",
+     "ok": true,
+     "code": null,
+     "ms": 295.8
+    },
+    {
+     "url": "https://en.wikipedia.org/wiki/Intercollegiate_sports_team_champions",
+     "ok": true,
+     "code": null,
+     "ms": 1152.3
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 10,
+   "query": "Who became the prime minister of Canada in the same year that Jonathan Tremblay's re-election bid as representative for the electoral district of Montmorency—Charlevoix—Haute-Côte-Nord ended in defeat?",
+   "gold": "Justin Trudeau",
+   "search_ms": 1060.9,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/Justin_Trudeau",
+    "https://en.wikipedia.org/wiki/Electoral_history_of_Justin_Trudeau",
+    "https://canada-quiz.com/prime-ministers-of-canada.html",
+    "https://www.wikiwand.com/en/Premiership_of_Justin_Trudeau",
+    "https://simple.wikipedia.org/wiki/List_of_Prime_Ministers_of_Canada"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/Justin_Trudeau",
+     "ok": true,
+     "code": null,
+     "ms": 444.6
+    },
+    {
+     "url": "https://en.wikipedia.org/wiki/Electoral_history_of_Justin_Trudeau",
+     "ok": true,
+     "code": null,
+     "ms": 400.7
+    },
+    {
+     "url": "https://canada-quiz.com/prime-ministers-of-canada.html",
+     "ok": true,
+     "code": null,
+     "ms": 897.2
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 11,
+   "query": "What year was the band leader of the group who originally performed the song sampled in Kayne West's song Power born?",
+   "gold": "1946",
+   "search_ms": 853.5,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/Power_(Kanye_West_song)",
+    "https://www.digitalmusicnews.com/2024/05/14/king-crimson-kanye-west-sample-power-lawsuit/",
+    "https://genius.com/Kanye-west-power-sample/interpolations",
+    "https://www.whosampled.com/Kanye-West/Power/",
+    "https://genius.com/Kanye-west-power-sample/samples"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/Power_(Kanye_West_song)",
+     "ok": true,
+     "code": null,
+     "ms": 415.5
+    },
+    {
+     "url": "https://www.digitalmusicnews.com/2024/05/14/king-crimson-kanye-west-sample-power-lawsuit/",
+     "ok": true,
+     "code": null,
+     "ms": 231.1
+    },
+    {
+     "url": "https://genius.com/Kanye-west-power-sample/interpolations",
+     "ok": true,
+     "code": null,
+     "ms": 242.6
+    }
+   ],
+   "gold_in_snippets_or_pages": false
+  },
+  {
+   "i": 12,
+   "query": "As of August 3rd 2024, what's the name of the university in the city right off exit 183 on I-94 in Michigan?",
+   "gold": "Eastern Michigan University",
+   "search_ms": 816.3,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://maps.google.com/",
+    "https://outlook.live.com/owa/?path=/mail/inbox/rp/",
+    "https://uiowa.edu/",
+    "https://nces.ed.gov/ipeds/CollegeMap/",
+    "https://uscollegemap.org/"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://maps.google.com/",
+     "ok": true,
+     "code": null,
+     "ms": 423.7
+    },
+    {
+     "url": "https://outlook.live.com/owa/?path=/mail/inbox/rp/",
+     "ok": true,
+     "code": null,
+     "ms": 514.1
+    },
+    {
+     "url": "https://uiowa.edu/",
+     "ok": true,
+     "code": null,
+     "ms": 322.2
+    }
+   ],
+   "gold_in_snippets_or_pages": false
+  },
+  {
+   "i": 13,
+   "query": "After Meat Loaf legally changed his name due to a commercial, what was the first new brand launched by the company to whom the commercial belonged?",
+   "gold": "Dockers",
+   "search_ms": 877.5,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/Meat_Loaf",
+    "https://nostalgiacentral.com/music/artists-l-to-z/artists-m/meat-loaf/",
+    "https://www.express.co.uk/entertainment/music/1553658/meat-loaf-musician-change-name-veg-vegan-vegetarian",
+    "https://www.the-sun.com/entertainment/4509352/what-was-meat-loafs-real-name/",
+    "https://stylecaster.com/entertainment/celebrity-news/1248918/meat-loaf-real-name/"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/Meat_Loaf",
+     "ok": true,
+     "code": null,
+     "ms": 399.5
+    },
+    {
+     "url": "https://nostalgiacentral.com/music/artists-l-to-z/artists-m/meat-loaf/",
+     "ok": true,
+     "code": null,
+     "ms": 609.0
+    },
+    {
+     "url": "https://www.express.co.uk/entertainment/music/1553658/meat-loaf-musician-change-name-veg-vegan-vegetarian",
+     "ok": true,
+     "code": null,
+     "ms": 283.7
+    }
+   ],
+   "gold_in_snippets_or_pages": false
+  },
+  {
+   "i": 14,
+   "query": "Which film featuring a solar eclipse in its opening scene is adapted from the same source material as a David Lynch movie?",
+   "gold": "Dune: Part Two",
+   "search_ms": 917.2,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/List_of_films_featuring_eclipses",
+    "https://en.wikipedia.org/wiki/Dune_(2021_film)",
+    "https://www.instagram.com/popular/which-film-featuring-a-solar-eclipse-in-its-opening-scene-is-adapted-from-the-same-source-material-as-a-david-lynch-movie/",
+    "https://www.instagram.com/popular/film-opening-scene-solar-eclipse-adapted-from-same-source-as-david-lynch-movie/",
+    "https://www.wordplays.com/crossword-solver/film-solar-eclipse-opening-scene-adapted-from-novel-David-Lynch"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/List_of_films_featuring_eclipses",
+     "ok": true,
+     "code": null,
+     "ms": 344.4
+    },
+    {
+     "url": "https://en.wikipedia.org/wiki/Dune_(2021_film)",
+     "ok": true,
+     "code": null,
+     "ms": 671.1
+    },
+    {
+     "url": "https://www.instagram.com/popular/which-film-featuring-a-solar-eclipse-in-its-opening-scene-is-adapted-from-the-same-source-material-as-a-david-lynch-movie/",
+     "ok": true,
+     "code": null,
+     "ms": 401.6
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 15,
+   "query": "As of August 5, 2024, what is the name of the federal law that was found to be violated by the company that Brian Bergstein is employed by?",
+   "gold": "The Sherman Antitrust Act",
+   "search_ms": 825.2,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://www.linkedin.com/jobs/brian-bergstein-sued-company-violated-federal-law-%27found-to-be-violated%27-%27august-5-2024%27-%27brian-bergstein%27-%27company-violated-federal-law%27-jobs",
+    "https://www.stblaw.com/about-us/publications/view/2024/08/12/d.c.-district-court-rules-against-google-in-search-antitrust-case",
+    "https://www.wordplays.com/crossword-solver/brain-berg-stein-employer-'brian-bergstein'-'employer'-'company'-news-'violated-federal-law'-'august-5,-2024'",
+    "https://www.wordplays.com/crossword-solver/brian-bergstein-company-violated-federal-law-'found-to-be-violated'-'august-5,-2024'",
+    "https://www.linkedin.com/jobs/as-of-august-5-2024-what-is-the-name-of-the-federal-law-that-was-found-to-be-violated-by-the-company-that-brian-bergstein-is-employed-by%3F-jobs"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://www.linkedin.com/jobs/brian-bergstein-sued-company-violated-federal-law-%27found-to-be-violated%27-%27august-5-2024%27-%27brian-bergstein%27-%27company-violated-federal-law%27-jobs",
+     "ok": true,
+     "code": null,
+     "ms": 1112.5
+    },
+    {
+     "url": "https://www.stblaw.com/about-us/publications/view/2024/08/12/d.c.-district-court-rules-against-google-in-search-antitrust-case",
+     "ok": true,
+     "code": null,
+     "ms": 2012.8
+    },
+    {
+     "url": "https://www.wordplays.com/crossword-solver/brain-berg-stein-employer-'brian-bergstein'-'employer'-'company'-news-'violated-federal-law'-'august-5,-2024'",
+     "ok": true,
+     "code": null,
+     "ms": 564.0
+    }
+   ],
+   "gold_in_snippets_or_pages": false
+  },
+  {
+   "i": 16,
+   "query": "What album by the band named 'The Band' was released on the same day as the Nuclear Non-Proliferation Treaty was opened for signature?",
+   "gold": "Music from Big Pink",
+   "search_ms": 887.9,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/The_Band_(album)",
+    "https://en.wikipedia.org/wiki/The_Band_discography",
+    "https://turnupthevolume.blog/2019/09/22/the-band-released-their-highly-praised-self-titled-second-album-50-years-ago-today/",
+    "https://www.loc.gov/static/programs/national-recording-preservation-board/documents/TheBand.pdf",
+    "https://www.last.fm/music/The+Band/The+Band/+wiki"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/The_Band_(album)",
+     "ok": true,
+     "code": null,
+     "ms": 273.8
+    },
+    {
+     "url": "https://en.wikipedia.org/wiki/The_Band_discography",
+     "ok": true,
+     "code": null,
+     "ms": 265.7
+    },
+    {
+     "url": "https://turnupthevolume.blog/2019/09/22/the-band-released-their-highly-praised-self-titled-second-album-50-years-ago-today/",
+     "ok": true,
+     "code": null,
+     "ms": 1089.8
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 17,
+   "query": "How many more votes did the Conservatives receive in the Highlands and Islands region in the 2021 Scottish Parliamentary Elections than in 2016?",
+   "gold": "16,086",
+   "search_ms": 879.2,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/Results_of_the_2021_Scottish_Parliament_election",
+    "https://www.parliament.scot/msps/elections/2021-election-results",
+    "https://www.bbc.com/news/election/2021/scotland/regions/S17000011",
+    "https://www.highland.gov.uk/elections-voting/scottish-parliamentary-elections/8",
+    "https://www.shetland.gov.uk/election-results/scottish-parliamentary-election-2021"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/Results_of_the_2021_Scottish_Parliament_election",
+     "ok": true,
+     "code": null,
+     "ms": 507.5
+    },
+    {
+     "url": "https://www.parliament.scot/msps/elections/2021-election-results",
+     "ok": true,
+     "code": null,
+     "ms": 1590.4
+    },
+    {
+     "url": "https://www.bbc.com/news/election/2021/scotland/regions/S17000011",
+     "ok": true,
+     "code": null,
+     "ms": 92.7
+    }
+   ],
+   "gold_in_snippets_or_pages": false
+  },
+  {
+   "i": 18,
+   "query": "When was the last team that Miloš Beleslin played for dissolved?",
+   "gold": "1945",
+   "search_ms": 727.5,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/Milo%C5%A1_Beleslin",
+    "https://www.wikiwand.com/en/articles/Milo%C5%A1_Beleslin",
+    "https://alchetron.com/Milo%C5%A1-Beleslin",
+    "https://www.wikiwand.com/en/Milo%C5%A1_Beleslin",
+    "https://www.national-football-teams.com/player/44715/Milos_Beleslin.html"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/Milo%C5%A1_Beleslin",
+     "ok": true,
+     "code": null,
+     "ms": 296.3
+    },
+    {
+     "url": "https://www.wikiwand.com/en/articles/Milo%C5%A1_Beleslin",
+     "ok": true,
+     "code": null,
+     "ms": 166.9
+    },
+    {
+     "url": "https://alchetron.com/Milo%C5%A1-Beleslin",
+     "ok": true,
+     "code": null,
+     "ms": 426.6
+    }
+   ],
+   "gold_in_snippets_or_pages": false
+  },
+  {
+   "i": 19,
+   "query": "In the Eurovision Song Contest 2024, one country scored a combined total (jury and televoting results) of 268 - as did another country in the contest the year before. Which countries are they?",
+   "gold": "Italy and Norway",
+   "search_ms": 984.2,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/Eurovision_Song_Contest_2024",
+    "https://eurovisionworld.com/eurovision/2024",
+    "https://www.chroniclelive.co.uk/news/tv/eurovision-final-results-juries-public-29153500",
+    "https://eurovisioncentral.com/history/2024",
+    "https://www.liverpoolecho.co.uk/news/tv/eurovision-2024-results-points-leaderboard-29147008"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/Eurovision_Song_Contest_2024",
+     "ok": true,
+     "code": null,
+     "ms": 581.6
+    },
+    {
+     "url": "https://eurovisionworld.com/eurovision/2024",
+     "ok": true,
+     "code": null,
+     "ms": 238.9
+    },
+    {
+     "url": "https://www.chroniclelive.co.uk/news/tv/eurovision-final-results-juries-public-29153500",
+     "ok": true,
+     "code": null,
+     "ms": 338.2
+    }
+   ],
+   "gold_in_snippets_or_pages": false
+  },
+  {
+   "i": 20,
+   "query": "There is a famous Texas city where a Stadium built in 1930 hosted six games for the 1994 World Cup, but only after widening the field and permanently installing natural grass on the playing surface. What was the average (mean) number of attendance for these six games?",
+   "gold": "58,692",
+   "search_ms": 849.9,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/Cotton_Bowl_(stadium)",
+    "https://culturalheritageonline.com/places/cotton-bowl-stadium-1930-1936-fair-park-dallas-texas/",
+    "https://www.star-telegram.com/sports/fifa-world-cup/article313427249.html",
+    "https://www.dallasobserver.com/news/dallas-world-cup-changes-from-1994-to-now-40677789/",
+    "https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026/articles/usa-1994-three-memorable-games-dallas-texas"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/Cotton_Bowl_(stadium)",
+     "ok": true,
+     "code": null,
+     "ms": 426.6
+    },
+    {
+     "url": "https://culturalheritageonline.com/places/cotton-bowl-stadium-1930-1936-fair-park-dallas-texas/",
+     "ok": true,
+     "code": null,
+     "ms": 2026.4
+    },
+    {
+     "url": "https://www.star-telegram.com/sports/fifa-world-cup/article313427249.html",
+     "ok": true,
+     "code": null,
+     "ms": 156.0
+    }
+   ],
+   "gold_in_snippets_or_pages": false
+  },
+  {
+   "i": 21,
+   "query": "Who was the Catholic Pope eleven years after Emperor Charlemagne died?",
+   "gold": "Eugene II",
+   "search_ms": 759.2,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/List_of_popes",
+    "https://www.newadvent.org/cathen/09157b.htm",
+    "https://www.britannica.com/biography/Saint-Leo-III",
+    "https://www.catholic.com/encyclopedia/Pope-Leo-III-Saint",
+    "https://posts.terabox.com/hub/how-pope-leo-iii-crowned-charlemagne-and-changed-the-course-of-european-history"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/List_of_popes",
+     "ok": true,
+     "code": null,
+     "ms": 471.9
+    },
+    {
+     "url": "https://www.newadvent.org/cathen/09157b.htm",
+     "ok": true,
+     "code": null,
+     "ms": 348.8
+    },
+    {
+     "url": "https://www.britannica.com/biography/Saint-Leo-III",
+     "ok": true,
+     "code": null,
+     "ms": 1462.5
+    }
+   ],
+   "gold_in_snippets_or_pages": false
+  },
+  {
+   "i": 22,
+   "query": "The name of which supernova remnant nebula spelled backwards (not including the word \"nubula\") is a homonym for a large sailing ship?",
+   "gold": "Crab Nebula (\"barc\" is a homonym for \"barque\")",
+   "search_ms": 164.9,
+   "ok": false,
+   "error_code": "PROVIDER_BLOCKED",
+   "n_results": 0,
+   "urls": [],
+   "gold_in_snippets": null
+  },
+  {
+   "i": 23,
+   "query": "How many published literary works had 1998's Nobel Prize in Literatures' recipient have at the time they received the award? Only count publications in the author's native language.",
+   "gold": "21",
+   "search_ms": 881.7,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/1998_Nobel_Prize_in_Literature",
+    "https://en.wikipedia.org/wiki/1998_Nobel_Prizes",
+    "https://www.nobelprize.org/prizes/literature/1998/summary/%E2%81%A3%E2%81%A3/",
+    "https://www.nobelprize.org/prizes/literature/1998/saramago/facts/",
+    "https://historydata.com/nobel-prizes/year/1998"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/1998_Nobel_Prize_in_Literature",
+     "ok": true,
+     "code": null,
+     "ms": 396.5
+    },
+    {
+     "url": "https://en.wikipedia.org/wiki/1998_Nobel_Prizes",
+     "ok": true,
+     "code": null,
+     "ms": 366.1
+    },
+    {
+     "url": "https://www.nobelprize.org/prizes/literature/1998/summary/%E2%81%A3%E2%81%A3/",
+     "ok": true,
+     "code": null,
+     "ms": 981.4
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 24,
+   "query": "In September 1607, two Earls and their followers left Rathmullan for Rome. The event was first called a \"flight\" in a book published in 1868. What is the name of the book?",
+   "gold": "The Fate and Fortunes of Hugh O'Neill, Earl of Tyrone and Rory O'Donnel, Earl of Tyrconnel; their flight from Ireland, and death in exile (or \"Fate and Fortunes of the Earls of Tyrone and Tyrconnell\") by Charles Patrick Meehan",
+   "search_ms": 845.2,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/Flight_of_the_Earls",
+    "https://ancientclans.org/heritage-site/the-flight-of-the-earls-rathmullen/",
+    "https://ancientclans.org/irish-clans/flight-of-the-earls/",
+    "https://www.cotyroneireland.com/misc/earls.html",
+    "https://www.cambridge.org/core/journals/irish-historical-studies/article/abs/flight-of-the-earls-1607/C05113CE414869FD28243B4AF18DBD74"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/Flight_of_the_Earls",
+     "ok": true,
+     "code": null,
+     "ms": 554.9
+    },
+    {
+     "url": "https://ancientclans.org/heritage-site/the-flight-of-the-earls-rathmullen/",
+     "ok": true,
+     "code": null,
+     "ms": 1401.1
+    },
+    {
+     "url": "https://ancientclans.org/irish-clans/flight-of-the-earls/",
+     "ok": true,
+     "code": null,
+     "ms": 1022.6
+    }
+   ],
+   "gold_in_snippets_or_pages": false
+  },
+  {
+   "i": 25,
+   "query": "As of 2024, how many times could the country where shogi was invented fit inside the country where xiangqi was invented? Round to the nearest whole number.",
+   "gold": "25",
+   "search_ms": 894.8,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/Xiangqi",
+    "https://en.wikipedia.org/wiki/History_of_shogi",
+    "https://ancientgames.org/chess-shogi-xiangqi-three-paths-from-chaturanga/",
+    "https://xiangqimaster.com/history-of-xiangqi",
+    "https://xiangqi.one/articles/history-of-xiangqi"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/Xiangqi",
+     "ok": true,
+     "code": null,
+     "ms": 627.8
+    },
+    {
+     "url": "https://en.wikipedia.org/wiki/History_of_shogi",
+     "ok": true,
+     "code": null,
+     "ms": 366.9
+    },
+    {
+     "url": "https://ancientgames.org/chess-shogi-xiangqi-three-paths-from-chaturanga/",
+     "ok": true,
+     "code": null,
+     "ms": 1155.4
+    }
+   ],
+   "gold_in_snippets_or_pages": false
+  },
+  {
+   "i": 26,
+   "query": "Where was the rapper behind the song \"Hind's Hall\" born? ",
+   "gold": "Seattle, Washington",
+   "search_ms": 801.7,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/Hind%27s_Hall",
+    "https://tribune.com.pk/story/2465631/hinds-hall-macklemore-is-willin-to-risk-all-in-unflinching-song-for-palestine",
+    "https://www.islamicity.org/101639/macklemores-hinds-hall-a-song-for-the-liberation-of-palestine/",
+    "https://www.amazon.com/HINDS-HALL-Explicit-Macklemore/dp/B0D3QRB3MM",
+    "https://neonmusic.co.uk/hinds-hall-macklemore-lyrics-meaning"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/Hind%27s_Hall",
+     "ok": true,
+     "code": null,
+     "ms": 359.6
+    },
+    {
+     "url": "https://tribune.com.pk/story/2465631/hinds-hall-macklemore-is-willin-to-risk-all-in-unflinching-song-for-palestine",
+     "ok": true,
+     "code": null,
+     "ms": 268.5
+    },
+    {
+     "url": "https://www.islamicity.org/101639/macklemores-hinds-hall-a-song-for-the-liberation-of-palestine/",
+     "ok": true,
+     "code": null,
+     "ms": 614.8
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 27,
+   "query": "The man who owned The Washington Post in 1932 broke the trust established by his father to gain control of the paper, only to run into the ground, lose it, and get committed to a psychiatric hospital where he died. How many days after his death did the man who purchased it in 1933 die?",
+   "gold": "6563 days",
+   "search_ms": 1069.1,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/Eugene_Meyer_(financier)",
+    "https://www.britannica.com/biography/Eugene-Meyer",
+    "https://www.newworldencyclopedia.org/entry/Eugene_Meyer",
+    "https://www.mikegravel.org/who-bought-the-washington-post-in-1933/",
+    "https://www.washingtonpost.com/archive/politics/1983/06/01/eugene-meyer-bought-post-50-years-ago/910a718e-e71f-46bd-9ad7-78ad9e2107b2/"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/Eugene_Meyer_(financier)",
+     "ok": true,
+     "code": null,
+     "ms": 388.6
+    },
+    {
+     "url": "https://www.britannica.com/biography/Eugene-Meyer",
+     "ok": true,
+     "code": null,
+     "ms": 183.5
+    },
+    {
+     "url": "https://www.newworldencyclopedia.org/entry/Eugene_Meyer",
+     "ok": true,
+     "code": null,
+     "ms": 775.5
+    }
+   ],
+   "gold_in_snippets_or_pages": false
+  },
+  {
+   "i": 28,
+   "query": "In the first movie that Emma Stone won an Academy Award for Best Actress in, did her costar win an Academy Award for Best Actor?",
+   "gold": "Ryan Gosling was nominated for an Academy Award for Best Actor in La La Land, but didn't win.",
+   "search_ms": 890.3,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/List_of_awards_and_nominations_received_by_Emma_Stone",
+    "https://ew.com/oscars/2017/02/27/oscars-2017-emma-stone-best-actress/",
+    "https://www.imdb.com/name/nm1297015/awards/",
+    "https://en.wikipedia.org/wiki/Academy_Award_for_Best_Actress",
+    "https://showsnob.com/posts/emma-stone-does-have-an-oscar-every-emma-stone-oscar-nomination-and-win-over-the-years-01hrn7hqd2he"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/List_of_awards_and_nominations_received_by_Emma_Stone",
+     "ok": true,
+     "code": null,
+     "ms": 544.1
+    },
+    {
+     "url": "https://ew.com/oscars/2017/02/27/oscars-2017-emma-stone-best-actress/",
+     "ok": true,
+     "code": null,
+     "ms": 198.3
+    },
+    {
+     "url": "https://www.imdb.com/name/nm1297015/awards/",
+     "ok": true,
+     "code": null,
+     "ms": 266.4
+    }
+   ],
+   "gold_in_snippets_or_pages": false
+  },
+  {
+   "i": 29,
+   "query": "What is the burial place of the most successful racehorse in the Grand National's history, as of 2024?",
+   "gold": "The winning post at Aintree Racecourse",
+   "search_ms": 816.7,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://www.findagrave.com/memorial/15037154/red_rum",
+    "https://en.wikipedia.org/wiki/Red_Rum",
+    "https://www.atlasobscura.com/places/montpelier-horse-cemetery",
+    "https://www.nhrm.co.uk/the-history-of-the-grand-national/",
+    "https://www.independent.co.uk/news/red-rum-passes-final-post-1578262.html"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://www.findagrave.com/memorial/15037154/red_rum",
+     "ok": true,
+     "code": null,
+     "ms": 295.9
+    },
+    {
+     "url": "https://en.wikipedia.org/wiki/Red_Rum",
+     "ok": true,
+     "code": null,
+     "ms": 265.7
+    },
+    {
+     "url": "https://www.atlasobscura.com/places/montpelier-horse-cemetery",
+     "ok": true,
+     "code": null,
+     "ms": 455.9
+    }
+   ],
+   "gold_in_snippets_or_pages": false
+  }
+ ]
+}

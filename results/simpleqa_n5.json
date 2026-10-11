@@ -1,0 +1,181 @@
+{
+ "utc": "2026-10-11T15:57:46.590759+00:00",
+ "summary": {
+  "dataset": "simpleqa",
+  "n_requested": 5,
+  "seed": 0,
+  "n_valid": 4,
+  "n_provider_blocked": 1,
+  "n_other_error": 0,
+  "snippet_recall": 0.75,
+  "empty_result_rate": 0.0,
+  "page_recall": 1.0,
+  "search_p50_ms": 785.8,
+  "search_p95_ms": 841.6
+ },
+ "cases": [
+  {
+   "i": 0,
+   "query": "In which city of Pakistan was Muhammad Rafiq Tarar, a Pakistani politician, born?",
+   "gold": "Mandi Bahauddin, Punjab",
+   "search_ms": 220.7,
+   "ok": false,
+   "error_code": "PROVIDER_BLOCKED",
+   "n_results": 0,
+   "urls": [],
+   "gold_in_snippets": null
+  },
+  {
+   "i": 1,
+   "query": "How old was Aniol Serrasolses when he kayaked for the first time down the largest glacial waterfall ever recorded in Norway?",
+   "gold": "32",
+   "search_ms": 783.6,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://www.nst.com.my/world/world/2023/11/984748/kayaker-completes-biggest-descent-glacial-waterfall-nsttv",
+    "https://www.bbc.com/news/world-67578559",
+    "https://icenews.is/2023/12/02/biggest-ever-ice-waterfall-decent-in-kayak-recorded-in-svalbard-norway/",
+    "https://news.cgtn.com/news/2023-11-30/Kayaker-Serrasolses-completes-biggest-descent-of-glacial-waterfall-1p9DitUHEAw/index.html",
+    "https://www.reuters.com/sports/kayaking-aventurer-completes-biggest-descent-glacial-waterfall-2023-11-29/"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://www.nst.com.my/world/world/2023/11/984748/kayaker-completes-biggest-descent-glacial-waterfall-nsttv",
+     "ok": true,
+     "code": null,
+     "ms": 841.9
+    },
+    {
+     "url": "https://www.bbc.com/news/world-67578559",
+     "ok": true,
+     "code": null,
+     "ms": 205.3
+    },
+    {
+     "url": "https://icenews.is/2023/12/02/biggest-ever-ice-waterfall-decent-in-kayak-recorded-in-svalbard-norway/",
+     "ok": true,
+     "code": null,
+     "ms": 656.9
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 2,
+   "query": "Who was Japan's Prime Minister after Ichirō Hatoyama left office on December 23, 1956?",
+   "gold": "Tanzan Ishibashi",
+   "search_ms": 759.4,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/Tanzan_Ishibashi",
+    "https://simple.wikipedia.org/wiki/Tanzan_Ishibashi",
+    "https://en.wikipedia.org/wiki/1956_in_Japan",
+    "https://grokipedia.com/page/ishibashi_cabinet",
+    "https://historica.fandom.com/wiki/Tanzan_Ishibashi"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/Tanzan_Ishibashi",
+     "ok": true,
+     "code": null,
+     "ms": 427.4
+    },
+    {
+     "url": "https://simple.wikipedia.org/wiki/Tanzan_Ishibashi",
+     "ok": true,
+     "code": null,
+     "ms": 443.2
+    },
+    {
+     "url": "https://en.wikipedia.org/wiki/1956_in_Japan",
+     "ok": true,
+     "code": null,
+     "ms": 485.4
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 3,
+   "query": "How many more votes did Freeman Freeman-Thomas win than George Sandys in the 1906 Bodmin by-election?",
+   "gold": "1,093",
+   "search_ms": 785.8,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/1906_Bodmin_by-election",
+    "https://paperspast.natlib.govt.nz/newspapers/NZH19060727.2.71",
+    "https://grokipedia.com/page/Freeman_Freeman-Thomas,_1st_Marquess_of_Willingdon",
+    "https://www.wikiwand.com/en/1906_Bodmin_by-election",
+    "https://trove.nla.gov.au/newspaper/article/104774435"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/1906_Bodmin_by-election",
+     "ok": true,
+     "code": null,
+     "ms": 362.0
+    },
+    {
+     "url": "https://paperspast.natlib.govt.nz/newspapers/NZH19060727.2.71",
+     "ok": true,
+     "code": null,
+     "ms": 207.3
+    },
+    {
+     "url": "https://grokipedia.com/page/Freeman_Freeman-Thomas,_1st_Marquess_of_Willingdon",
+     "ok": true,
+     "code": null,
+     "ms": 383.2
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 4,
+   "query": "While Henri d'Angoulême served as the governor of Provence, who was his secretary?",
+   "gold": "François de Malherbe.",
+   "search_ms": 841.6,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/Henri_d%27Angoul%C3%AAme",
+    "https://www.geni.com/people/Henri-d-Angoul%C3%AAme-Baron-de-Fontette/6000000000905010305",
+    "https://everything.explained.today/Henri_d%27Angoul%C3%AAme/",
+    "https://gw.geneanet.org/imelainenh?lang=en&n=d+angouleme&p=henri",
+    "https://gw.geneanet.org/pattisalt92?lang=en&n=d+angouleme&p=henri"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/Henri_d%27Angoul%C3%AAme",
+     "ok": true,
+     "code": null,
+     "ms": 280.3
+    },
+    {
+     "url": "https://www.geni.com/people/Henri-d-Angoul%C3%AAme-Baron-de-Fontette/6000000000905010305",
+     "ok": true,
+     "code": null,
+     "ms": 207.9
+    },
+    {
+     "url": "https://everything.explained.today/Henri_d%27Angoul%C3%AAme/",
+     "ok": true,
+     "code": null,
+     "ms": 363.1
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  }
+ ]
+}

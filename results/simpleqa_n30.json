@@ -1,0 +1,1156 @@
+{
+ "utc": "2026-10-11T15:59:55.744221+00:00",
+ "summary": {
+  "dataset": "simpleqa",
+  "n_requested": 30,
+  "seed": 0,
+  "n_valid": 30,
+  "n_provider_blocked": 0,
+  "n_other_error": 0,
+  "snippet_recall": 0.8333333333333334,
+  "empty_result_rate": 0.0,
+  "page_recall": 0.9333333333333333,
+  "search_p50_ms": 816.4,
+  "search_p95_ms": 996.4
+ },
+ "cases": [
+  {
+   "i": 0,
+   "query": "In which city of Pakistan was Muhammad Rafiq Tarar, a Pakistani politician, born?",
+   "gold": "Mandi Bahauddin, Punjab",
+   "search_ms": 960.5,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/Rafiq_Tarar",
+    "https://historica.fandom.com/wiki/Muhammad_Rafiq_Tarar",
+    "https://www.nndb.com/people/466/000355398/",
+    "https://profilepk.com/muhammad-rafiq-tarar",
+    "https://factsupdate.com/muhammad-rafiq-tarar/"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/Rafiq_Tarar",
+     "ok": true,
+     "code": null,
+     "ms": 482.1
+    },
+    {
+     "url": "https://historica.fandom.com/wiki/Muhammad_Rafiq_Tarar",
+     "ok": true,
+     "code": null,
+     "ms": 186.3
+    },
+    {
+     "url": "https://www.nndb.com/people/466/000355398/",
+     "ok": true,
+     "code": null,
+     "ms": 289.1
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 1,
+   "query": "How old was Aniol Serrasolses when he kayaked for the first time down the largest glacial waterfall ever recorded in Norway?",
+   "gold": "32",
+   "search_ms": 757.6,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://www.nst.com.my/world/world/2023/11/984748/kayaker-completes-biggest-descent-glacial-waterfall-nsttv",
+    "https://www.bbc.com/news/world-67578559",
+    "https://icenews.is/2023/12/02/biggest-ever-ice-waterfall-decent-in-kayak-recorded-in-svalbard-norway/",
+    "https://news.cgtn.com/news/2023-11-30/Kayaker-Serrasolses-completes-biggest-descent-of-glacial-waterfall-1p9DitUHEAw/index.html",
+    "https://www.reuters.com/sports/kayaking-aventurer-completes-biggest-descent-glacial-waterfall-2023-11-29/"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://www.nst.com.my/world/world/2023/11/984748/kayaker-completes-biggest-descent-glacial-waterfall-nsttv",
+     "ok": true,
+     "code": null,
+     "ms": 323.4
+    },
+    {
+     "url": "https://www.bbc.com/news/world-67578559",
+     "ok": true,
+     "code": null,
+     "ms": 226.3
+    },
+    {
+     "url": "https://icenews.is/2023/12/02/biggest-ever-ice-waterfall-decent-in-kayak-recorded-in-svalbard-norway/",
+     "ok": true,
+     "code": null,
+     "ms": 222.1
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 2,
+   "query": "Who was Japan's Prime Minister after Ichirō Hatoyama left office on December 23, 1956?",
+   "gold": "Tanzan Ishibashi",
+   "search_ms": 792.2,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/Tanzan_Ishibashi",
+    "https://simple.wikipedia.org/wiki/Tanzan_Ishibashi",
+    "https://en.wikipedia.org/wiki/List_of_prime_ministers_of_Japan",
+    "https://www.britannica.com/biography/Ishibashi-Tanzan",
+    "https://grokipedia.com/page/ishibashi_cabinet"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/Tanzan_Ishibashi",
+     "ok": true,
+     "code": null,
+     "ms": 368.1
+    },
+    {
+     "url": "https://simple.wikipedia.org/wiki/Tanzan_Ishibashi",
+     "ok": true,
+     "code": null,
+     "ms": 378.4
+    },
+    {
+     "url": "https://en.wikipedia.org/wiki/List_of_prime_ministers_of_Japan",
+     "ok": true,
+     "code": null,
+     "ms": 662.3
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 3,
+   "query": "How many more votes did Freeman Freeman-Thomas win than George Sandys in the 1906 Bodmin by-election?",
+   "gold": "1,093",
+   "search_ms": 732.9,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/1906_Bodmin_by-election",
+    "https://paperspast.natlib.govt.nz/newspapers/NZH19060727.2.71",
+    "https://grokipedia.com/page/Freeman_Freeman-Thomas,_1st_Marquess_of_Willingdon",
+    "https://trove.nla.gov.au/newspaper/article/104774435",
+    "https://alchetron.com/Bodmin-by-election%2C-1906"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/1906_Bodmin_by-election",
+     "ok": true,
+     "code": null,
+     "ms": 344.4
+    },
+    {
+     "url": "https://paperspast.natlib.govt.nz/newspapers/NZH19060727.2.71",
+     "ok": true,
+     "code": null,
+     "ms": 313.9
+    },
+    {
+     "url": "https://grokipedia.com/page/Freeman_Freeman-Thomas,_1st_Marquess_of_Willingdon",
+     "ok": true,
+     "code": null,
+     "ms": 389.1
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 4,
+   "query": "While Henri d'Angoulême served as the governor of Provence, who was his secretary?",
+   "gold": "François de Malherbe.",
+   "search_ms": 762.5,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/Henri_d%27Angoul%C3%AAme",
+    "https://www.geni.com/people/Henri-d-Angoul%C3%AAme-Baron-de-Fontette/6000000000905010305",
+    "https://everything.explained.today/Henri_d%27Angoul%C3%AAme/",
+    "https://gw.geneanet.org/imelainenh?lang=en&n=d+angouleme&p=henri",
+    "https://prabook.com/web/francois.de_malherbe/3736236"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/Henri_d%27Angoul%C3%AAme",
+     "ok": true,
+     "code": null,
+     "ms": 272.5
+    },
+    {
+     "url": "https://www.geni.com/people/Henri-d-Angoul%C3%AAme-Baron-de-Fontette/6000000000905010305",
+     "ok": true,
+     "code": null,
+     "ms": 152.6
+    },
+    {
+     "url": "https://everything.explained.today/Henri_d%27Angoul%C3%AAme/",
+     "ok": true,
+     "code": null,
+     "ms": 352.8
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 5,
+   "query": "What year did Yohji Yamamoto's mother sell her dressmaking shop?",
+   "gold": "1972.",
+   "search_ms": 1249.8,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://fashiongtonpost.com/yohji-yamamoto/",
+    "https://musemagazine.it/articles/yohji-yamamoto-letter-to-the-future-en/",
+    "https://en.wikipedia.org/wiki/Yohji_Yamamoto",
+    "https://asia.nikkei.com/spotlight/my-personal-history/yohji-yamamoto/mother-s-dressmaking-shop-in-the-ruins-of-the-war-yohji-yamamoto-2",
+    "https://usedinternetshop.com/blogs/blog/mothers-dressmaking-shop-in-the-ruins-of-war-yohji-yamamoto-2"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://fashiongtonpost.com/yohji-yamamoto/",
+     "ok": true,
+     "code": null,
+     "ms": 2233.1
+    },
+    {
+     "url": "https://musemagazine.it/articles/yohji-yamamoto-letter-to-the-future-en/",
+     "ok": true,
+     "code": null,
+     "ms": 1261.6
+    },
+    {
+     "url": "https://en.wikipedia.org/wiki/Yohji_Yamamoto",
+     "ok": true,
+     "code": null,
+     "ms": 450.9
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 6,
+   "query": "In which country was the 4th edition of the ASEAN-India Grassroots Innovation Forum (AIGIF) launched?",
+   "gold": "Malaysia",
+   "search_ms": 858.2,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://pib.gov.in/PressReleaseIframePage.aspx?PRID=1980525",
+    "https://asean.org/asean-india-collaboration-fosters-grassroots-innovation-at-aigif-2023/",
+    "https://www.fintechbiznews.com/speechinterview/4th-edition-of-asean-india-grassroots-innovation-forum-launched",
+    "https://currentaffairs.adda247.com/4th-edition-of-asean-india-grassroots-innovation-forum-aigif-launched/",
+    "https://indiaaseaninnovation.com/upload/download/4th_AIGIF_(2023)-Project_Report.pdf"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://pib.gov.in/PressReleaseIframePage.aspx?PRID=1980525",
+     "ok": true,
+     "code": null,
+     "ms": 5366.4
+    },
+    {
+     "url": "https://asean.org/asean-india-collaboration-fosters-grassroots-innovation-at-aigif-2023/",
+     "ok": true,
+     "code": null,
+     "ms": 1231.2
+    },
+    {
+     "url": "https://www.fintechbiznews.com/speechinterview/4th-edition-of-asean-india-grassroots-innovation-forum-launched",
+     "ok": true,
+     "code": null,
+     "ms": 1638.5
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 7,
+   "query": "Three years after joining Comme des Garçons, Junya Watanabe started designing which CdG line?",
+   "gold": "Tricot line",
+   "search_ms": 953.4,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://antidotestyle.com/blogs/anti-mag/junya-watanabe-story-behind-the-style",
+    "https://en.wikipedia.org/wiki/Junya_Watanabe",
+    "https://www.fashionmodeldirectory.com/brands/junya-watanabe/",
+    "https://www.showstudio.com/contributors/junya_watanabe",
+    "https://wardatrobe.com/editorial/comme-des-garcons-lines-explained"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://antidotestyle.com/blogs/anti-mag/junya-watanabe-story-behind-the-style",
+     "ok": true,
+     "code": null,
+     "ms": 801.9
+    },
+    {
+     "url": "https://en.wikipedia.org/wiki/Junya_Watanabe",
+     "ok": true,
+     "code": null,
+     "ms": 343.5
+    },
+    {
+     "url": "https://www.fashionmodeldirectory.com/brands/junya-watanabe/",
+     "ok": true,
+     "code": null,
+     "ms": 874.1
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 8,
+   "query": "What was the name of the cannibal in the Whistleblower DLC of the 2013 video game \"Outlast\"?",
+   "gold": "Frank Manera",
+   "search_ms": 842.4,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://outlast.fandom.com/wiki/Frank_Manera",
+    "https://villains.fandom.com/wiki/Frank_Manera",
+    "https://the-dead-meat.fandom.com/wiki/Frank_Manera",
+    "https://villainous-benchmark.fandom.com/wiki/Frank_Manera",
+    "https://www.youtube.com/watch?v=QA_kj76vPM8"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://outlast.fandom.com/wiki/Frank_Manera",
+     "ok": true,
+     "code": null,
+     "ms": 193.8
+    },
+    {
+     "url": "https://villains.fandom.com/wiki/Frank_Manera",
+     "ok": true,
+     "code": null,
+     "ms": 331.9
+    },
+    {
+     "url": "https://the-dead-meat.fandom.com/wiki/Frank_Manera",
+     "ok": true,
+     "code": null,
+     "ms": 309.2
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 9,
+   "query": "What was the Sky EPG number of Game Network when it launched in the United Kingdom in May 2001?",
+   "gold": "223.",
+   "search_ms": 761.5,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/Game_Network",
+    "https://www.proquest.com/docview/197280261",
+    "https://www.wikiwand.com/en/Game_Network",
+    "https://everything.explained.today/Game_Network/",
+    "https://www.digitalspy.com/tech/a3942/game-network-vanishes-from-epg/"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/Game_Network",
+     "ok": true,
+     "code": null,
+     "ms": 265.1
+    },
+    {
+     "url": "https://www.proquest.com/docview/197280261",
+     "ok": false,
+     "code": "REDIRECT_BLOCKED",
+     "ms": 924.4
+    },
+    {
+     "url": "https://www.wikiwand.com/en/Game_Network",
+     "ok": true,
+     "code": null,
+     "ms": 149.5
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 10,
+   "query": "What is the month, day, and year that the United States removed Eritrea from the \"Counterterror Non-Cooperation List\"?",
+   "gold": "May, 28, and 2019",
+   "search_ms": 839.4,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://apnews.com/general-news-3a8cd4480d92477ca328d8da2c51535a",
+    "https://www.njherald.com/story/news/nation-world/2019/05/28/us-removing-eritrea-from-counterterror/4269701007/",
+    "https://www.voanews.com/a/us-removing-eritrea-from-counterterror-non-cooperation-list/4935716.html",
+    "https://borkena.com/eritrea-to-be-erased-from-us-counterterror-non-cooperation-list/",
+    "https://hiiraan.com/news4/2019/May/164087/us_removes_eritrea_from_counterterror_non_cooperation_list.aspx"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://apnews.com/general-news-3a8cd4480d92477ca328d8da2c51535a",
+     "ok": true,
+     "code": null,
+     "ms": 157.9
+    },
+    {
+     "url": "https://www.njherald.com/story/news/nation-world/2019/05/28/us-removing-eritrea-from-counterterror/4269701007/",
+     "ok": true,
+     "code": null,
+     "ms": 241.2
+    },
+    {
+     "url": "https://www.voanews.com/a/us-removing-eritrea-from-counterterror-non-cooperation-list/4935716.html",
+     "ok": true,
+     "code": null,
+     "ms": 661.4
+    }
+   ],
+   "gold_in_snippets_or_pages": false
+  },
+  {
+   "i": 11,
+   "query": "What is the name of track 10 on disc 2 of the Sen no Kiseki IV - The End of Saga - original soundtrack?",
+   "gold": "Break In",
+   "search_ms": 832.2,
+   "ok": true,
+   "error_code": null,
+   "n_results": 4,
+   "urls": [
+    "https://kiseki.fandom.com/wiki/Sen_no_Kiseki_IV_-The_End_of_Saga-_Original_Soundtrack",
+    "https://falcom.wiki/wiki/Sen_no_Kiseki_IV_-The_End_of_Saga-_Original_Soundtrack",
+    "https://www.discogs.com/release/28340392-Falcom-Sound-Team-jdk-The-Legend-Of-Heroes-Sen-No-Kiseki-IV-The-End-Of-Saga-Original-Soundtrack-%E8%8B%B1",
+    "https://www.discogs.com/sell/release/28340392"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://kiseki.fandom.com/wiki/Sen_no_Kiseki_IV_-The_End_of_Saga-_Original_Soundtrack",
+     "ok": true,
+     "code": null,
+     "ms": 360.3
+    },
+    {
+     "url": "https://falcom.wiki/wiki/Sen_no_Kiseki_IV_-The_End_of_Saga-_Original_Soundtrack",
+     "ok": true,
+     "code": null,
+     "ms": 251.1
+    },
+    {
+     "url": "https://www.discogs.com/release/28340392-Falcom-Sound-Team-jdk-The-Legend-Of-Heroes-Sen-No-Kiseki-IV-The-End-Of-Saga-Original-Soundtrack-%E8%8B%B1",
+     "ok": true,
+     "code": null,
+     "ms": 255.5
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 12,
+   "query": "In what year did Jon Kleinberg become a fellow of the Association for Computing Machinery?",
+   "gold": "2013",
+   "search_ms": 920.4,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/Jon_Kleinberg",
+    "https://prabook.com/web/jon.kleinberg/2241365",
+    "https://www.wikiwand.com/en/articles/Jon_M._Kleinberg",
+    "https://www.usna.edu/CS/_files/documents/16MichelsonLecture.pdf",
+    "https://handwiki.org/wiki/Biography:Jon_Kleinberg"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/Jon_Kleinberg",
+     "ok": true,
+     "code": null,
+     "ms": 353.5
+    },
+    {
+     "url": "https://prabook.com/web/jon.kleinberg/2241365",
+     "ok": true,
+     "code": null,
+     "ms": 254.7
+    },
+    {
+     "url": "https://www.wikiwand.com/en/articles/Jon_M._Kleinberg",
+     "ok": true,
+     "code": null,
+     "ms": 253.0
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 13,
+   "query": "In what month and year did Bakshi Ghulam Mohammad announce his retirement from politics?",
+   "gold": "June 1965",
+   "search_ms": 746.5,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://kashmirnetwork.com/bgm/life.htm",
+    "https://en.wikipedia.org/wiki/Bakshi_Ghulam_Mohammad",
+    "https://economictimes.indiatimes.com/topic/bakshi-ghulam-mohammad-announced-retirement-from-politics-september/videos",
+    "https://economictimes.indiatimes.com/topic/bakshi-ghulam-mohammad-announced-retirement-from-politics-september",
+    "https://economictimes.indiatimes.com/topic/bakshi-ghulam-mohammad-announced-retirement-from-politics-september/news"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://kashmirnetwork.com/bgm/life.htm",
+     "ok": true,
+     "code": null,
+     "ms": 872.9
+    },
+    {
+     "url": "https://en.wikipedia.org/wiki/Bakshi_Ghulam_Mohammad",
+     "ok": true,
+     "code": null,
+     "ms": 348.0
+    },
+    {
+     "url": "https://economictimes.indiatimes.com/topic/bakshi-ghulam-mohammad-announced-retirement-from-politics-september/videos",
+     "ok": true,
+     "code": null,
+     "ms": 193.1
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 14,
+   "query": "What year was the municipality of Tarso, Antioquia, Colombia, founded?",
+   "gold": "1912",
+   "search_ms": 940.6,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://es.wikipedia.org/wiki/Tarso_(Antioquia)",
+    "https://corregimientos.antioquia.gov.co/tarso/",
+    "https://infolocal.comfenalcoantioquia.com/index.php/tarso",
+    "https://vexillology.miraheze.org/wiki/Municipality_of_Tarso",
+    "https://www.wikidata.org/wiki/Q1578758"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://es.wikipedia.org/wiki/Tarso_(Antioquia)",
+     "ok": true,
+     "code": null,
+     "ms": 422.6
+    },
+    {
+     "url": "https://corregimientos.antioquia.gov.co/tarso/",
+     "ok": true,
+     "code": null,
+     "ms": 436.6
+    },
+    {
+     "url": "https://infolocal.comfenalcoantioquia.com/index.php/tarso",
+     "ok": true,
+     "code": null,
+     "ms": 1783.6
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 15,
+   "query": "For the original Groove Coaster game for iOS, all the original songs were by Hirokazu Koshio (COSIO) and whom?",
+   "gold": "Shohei Tsuchiya",
+   "search_ms": 802.6,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://vgmdb.net/album/27600",
+    "https://vgmdb.net/album/47109",
+    "https://myfigurecollection.net/item/3360884",
+    "https://alchetron.com/Groove-Coaster",
+    "https://www.discogs.com/release/6131302-Zuntata-Groove-Coaster-Original-Soundtrack"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://vgmdb.net/album/27600",
+     "ok": true,
+     "code": null,
+     "ms": 318.6
+    },
+    {
+     "url": "https://vgmdb.net/album/47109",
+     "ok": true,
+     "code": null,
+     "ms": 206.2
+    },
+    {
+     "url": "https://myfigurecollection.net/item/3360884",
+     "ok": true,
+     "code": null,
+     "ms": 260.2
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 16,
+   "query": "What's the full name of the first female Finance Minister in Zambia?",
+   "gold": "Edith Zewelani Nawakwi",
+   "search_ms": 808.7,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/Edith_Nawakwi",
+    "https://icutvzm.com/articles/zambias-former-finance-minister-edith-nawakwi-dies-at-66",
+    "https://www.zambiamonitor.com/troubled-nawakwi-first-female-finance-minister-dies-here-are-10-things-to-remember-about-her/",
+    "https://zambianeye.com/first-female-finance-minister-dies/",
+    "https://www.facebook.com/Zambianaccurateinformation/posts/zambias-first-female-minister-of-finance-and-president-of-the-opposition-fdd-edi/1065739305600010/"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/Edith_Nawakwi",
+     "ok": true,
+     "code": null,
+     "ms": 364.5
+    },
+    {
+     "url": "https://icutvzm.com/articles/zambias-former-finance-minister-edith-nawakwi-dies-at-66",
+     "ok": true,
+     "code": null,
+     "ms": 1013.3
+    },
+    {
+     "url": "https://www.zambiamonitor.com/troubled-nawakwi-first-female-finance-minister-dies-here-are-10-things-to-remember-about-her/",
+     "ok": true,
+     "code": null,
+     "ms": 1451.1
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 17,
+   "query": "How many times did Bil Keane win Best Syndicated Panel by the National Cartoonists Society's Award?",
+   "gold": "four times",
+   "search_ms": 809.1,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/Bil_Keane",
+    "https://back2retro.wordpress.com/2011/11/10/bill-keane/",
+    "https://www.findagrave.com/memorial/80145497/bil-keane",
+    "https://www.archbalt.org/bil-keane-creator-of-family-circus-comic-strip-dies-at-age-89/?print=print",
+    "https://notablepeopleproject.org/bil_keane"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/Bil_Keane",
+     "ok": true,
+     "code": null,
+     "ms": 275.6
+    },
+    {
+     "url": "https://back2retro.wordpress.com/2011/11/10/bill-keane/",
+     "ok": true,
+     "code": null,
+     "ms": 514.6
+    },
+    {
+     "url": "https://www.findagrave.com/memorial/80145497/bil-keane",
+     "ok": true,
+     "code": null,
+     "ms": 285.8
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 18,
+   "query": "On June 24, 2021, which political party did Hong Joon-pyo rejoin?",
+   "gold": "People Power Party.",
+   "search_ms": 800.6,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/Hong_Joon-pyo",
+    "https://www.koreatimes.co.kr/southkorea/politics/20210624/5-term-lawmaker-hong-joon-pyo-admitted-back-to-main-opposition-party",
+    "https://en.yna.co.kr/view/AEN20210624007000315",
+    "https://www.asiae.co.kr/en/article/2021062410121328926",
+    "https://en.yna.co.kr/view/PYH20210624106300315"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/Hong_Joon-pyo",
+     "ok": true,
+     "code": null,
+     "ms": 433.6
+    },
+    {
+     "url": "https://www.koreatimes.co.kr/southkorea/politics/20210624/5-term-lawmaker-hong-joon-pyo-admitted-back-to-main-opposition-party",
+     "ok": true,
+     "code": null,
+     "ms": 469.3
+    },
+    {
+     "url": "https://en.yna.co.kr/view/AEN20210624007000315",
+     "ok": true,
+     "code": null,
+     "ms": 461.9
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 19,
+   "query": "In which month and year did Apple add the ability for users to speak \"Hey Siri\" to enable the assistant without the requirement of physically handling the device?",
+   "gold": "September 2014.",
+   "search_ms": 675.4,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://www.factsnippet.com/site/facts-about-apple-siri.html",
+    "https://machinelearning.apple.com/research/personalized-hey-siri",
+    "https://www.techtarget.com/enterprise-software/definition/Siri",
+    "https://www.techtarget.com/searchmobilecomputing/definition/Siri",
+    "https://www.wxii12.com/article/apple-may-be-working-on-a-hey-siri-change/41891607"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://www.factsnippet.com/site/facts-about-apple-siri.html",
+     "ok": true,
+     "code": null,
+     "ms": 471.5
+    },
+    {
+     "url": "https://machinelearning.apple.com/research/personalized-hey-siri",
+     "ok": true,
+     "code": null,
+     "ms": 590.9
+    },
+    {
+     "url": "https://www.techtarget.com/enterprise-software/definition/Siri",
+     "ok": true,
+     "code": null,
+     "ms": 288.4
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 20,
+   "query": "For what career did Eddie Marsan leave school at 16?",
+   "gold": " apprentice printer",
+   "search_ms": 816.4,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/Eddie_Marsan",
+    "https://www.factsnippet.com/site/facts-about-eddie-marsan.html",
+    "https://celebfaqs.com/where-did-eddie-marsan-go-to-college-and-high-school-did-eddie-marsan-go-to-film-school/",
+    "https://ffrf.org/publications/day/eddie-marsan/",
+    "https://thebiography.org/eddie-marsans-biography-wife-net-worth-children-education/"
+   ],
+   "gold_in_snippets": false,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/Eddie_Marsan",
+     "ok": true,
+     "code": null,
+     "ms": 306.5
+    },
+    {
+     "url": "https://www.factsnippet.com/site/facts-about-eddie-marsan.html",
+     "ok": true,
+     "code": null,
+     "ms": 351.9
+    },
+    {
+     "url": "https://celebfaqs.com/where-did-eddie-marsan-go-to-college-and-high-school-did-eddie-marsan-go-to-film-school/",
+     "ok": true,
+     "code": null,
+     "ms": 594.2
+    }
+   ],
+   "gold_in_snippets_or_pages": false
+  },
+  {
+   "i": 21,
+   "query": "What was the original name of the town of Dolores, Abra, Philippines?",
+   "gold": "Bucao",
+   "search_ms": 811.4,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://philippines123.com/wiki/Dolores_Abra",
+    "https://en.wikipedia.org/wiki/Dolores,_Abra",
+    "https://everything.explained.today/Dolores%2C_Abra/",
+    "https://grokipedia.com/page/dolores_abra",
+    "https://alchetron.com/Dolores%2C-Abra"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://philippines123.com/wiki/Dolores_Abra",
+     "ok": true,
+     "code": null,
+     "ms": 870.9
+    },
+    {
+     "url": "https://en.wikipedia.org/wiki/Dolores,_Abra",
+     "ok": true,
+     "code": null,
+     "ms": 341.6
+    },
+    {
+     "url": "https://everything.explained.today/Dolores%2C_Abra/",
+     "ok": true,
+     "code": null,
+     "ms": 353.3
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 22,
+   "query": "How many people were involved in making the largest human DNA helix, achieved by the Medical University of Varna (Bulgaria) in Varna, Bulgaria, on April 23, 2016?",
+   "gold": "4,000",
+   "search_ms": 991.2,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://www.guinnessworldrecords.com/news/2016/5/medical-students-in-bulgaria-break-record-for-largest-human-dna-helix-427372",
+    "https://worldrecordacademy.com/medical/largest_human_DNA_helix_Bulgaria_breaks_Guinness_World_Records_record_216215.html",
+    "https://www.novinite.com/articles/174184/Bulgaria%27s+Varna+Sets+Guinness+World+Record+for+Largest+Human+DNA+Helix",
+    "https://www.mu-varna.bg/EN/Pages/rekord-mu-varna.aspx",
+    "https://worldrecordsauthority.com/records/medical-university-varna-largest-human-dna-helix/"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://www.guinnessworldrecords.com/news/2016/5/medical-students-in-bulgaria-break-record-for-largest-human-dna-helix-427372",
+     "ok": true,
+     "code": null,
+     "ms": 722.2
+    },
+    {
+     "url": "https://worldrecordacademy.com/medical/largest_human_DNA_helix_Bulgaria_breaks_Guinness_World_Records_record_216215.html",
+     "ok": true,
+     "code": null,
+     "ms": 608.1
+    },
+    {
+     "url": "https://www.novinite.com/articles/174184/Bulgaria%27s+Varna+Sets+Guinness+World+Record+for+Largest+Human+DNA+Helix",
+     "ok": true,
+     "code": null,
+     "ms": 857.1
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 23,
+   "query": "What was the name of Project Zero Dawn's Extinction Failsafe Protocol in the video game Horizon Zero Dawn (2017)?",
+   "gold": "HADES",
+   "search_ms": 839.5,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://hzd.fandom.com/wiki/HADES",
+    "https://horizon.fandom.com/wiki/HADES",
+    "https://www.reddit.com/r/horizon/comments/60smia/question_about_zero_dawn_spoilers_in_comments/",
+    "https://hzd.fandom.com/wiki/Subordinate_Function",
+    "https://www.reddit.com/r/horizon/comments/bkrf7z/can_someone_explain_the_story_to_me_please/"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://hzd.fandom.com/wiki/HADES",
+     "ok": true,
+     "code": null,
+     "ms": 263.4
+    },
+    {
+     "url": "https://horizon.fandom.com/wiki/HADES",
+     "ok": true,
+     "code": null,
+     "ms": 158.4
+    },
+    {
+     "url": "https://www.reddit.com/r/horizon/comments/60smia/question_about_zero_dawn_spoilers_in_comments/",
+     "ok": true,
+     "code": null,
+     "ms": 117.6
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 24,
+   "query": "In what year was the Penny Crane Award for Distinguished Service established?",
+   "gold": "2000",
+   "search_ms": 849.9,
+   "ok": true,
+   "error_code": null,
+   "n_results": 4,
+   "urls": [
+    "https://siguccs.hosting.acm.org/wp/?page_id=414",
+    "https://siguccs.org/wp/category/awards/page/2/",
+    "https://www.wikiwand.com/en/Penny_Crane_Award_for_Distinguished_Service",
+    "https://siguccs.org/wp/participate/siguccs-awards/penny-crane-award/"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://siguccs.hosting.acm.org/wp/?page_id=414",
+     "ok": true,
+     "code": null,
+     "ms": 1316.5
+    },
+    {
+     "url": "https://siguccs.org/wp/category/awards/page/2/",
+     "ok": true,
+     "code": null,
+     "ms": 910.6
+    },
+    {
+     "url": "https://www.wikiwand.com/en/Penny_Crane_Award_for_Distinguished_Service",
+     "ok": true,
+     "code": null,
+     "ms": 192.4
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 25,
+   "query": "On what date, month, and year did Mussolini declare before 60,000 people at the Fascist Congress in Naples, \"Our program is simple: we want to rule Italy\"?",
+   "gold": "October 24, 1922",
+   "search_ms": 778.2,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/March_on_Rome",
+    "https://en.wikipedia.org/wiki/1924_Italian_general_election",
+    "https://www.cpusa.org/article/on-togliattis-lectures-on-fascism/",
+    "https://www.italiaoutdoors.com/index.php/764-history-of-italy/history-modern/1296-history-fascism",
+    "https://military-history.fandom.com/wiki/March_on_Rome"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/March_on_Rome",
+     "ok": true,
+     "code": null,
+     "ms": 455.7
+    },
+    {
+     "url": "https://en.wikipedia.org/wiki/1924_Italian_general_election",
+     "ok": true,
+     "code": null,
+     "ms": 372.6
+    },
+    {
+     "url": "https://www.cpusa.org/article/on-togliattis-lectures-on-fascism/",
+     "ok": true,
+     "code": null,
+     "ms": 875.8
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 26,
+   "query": "In what year did the Computer History Museum have its first exhibit?",
+   "gold": "1975",
+   "search_ms": 824.4,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/Computer_History_Museum",
+    "https://tcm.computerhistory.org/outoftheclosetV2.3.pdf",
+    "https://link.springer.com/chapter/10.1007/978-3-642-24541-1_11",
+    "https://computerhistory.org/press-releases/revolution-opening/",
+    "https://theclio.com/entry/11288"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/Computer_History_Museum",
+     "ok": true,
+     "code": null,
+     "ms": 557.0
+    },
+    {
+     "url": "https://tcm.computerhistory.org/outoftheclosetV2.3.pdf",
+     "ok": true,
+     "code": null,
+     "ms": 1118.8
+    },
+    {
+     "url": "https://link.springer.com/chapter/10.1007/978-3-642-24541-1_11",
+     "ok": false,
+     "code": "REDIRECT_BLOCKED",
+     "ms": 1065.8
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 27,
+   "query": "Who kills Daryl Garrs in Happy Valley?",
+   "gold": "Alison Garrs",
+   "search_ms": 996.4,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://listofdeaths.fandom.com/wiki/Daryl_Garrs",
+    "https://www.goodto.com/entertainment/why-did-alison-kill-son-happy-valley",
+    "https://listofdeaths.fandom.com/wiki/Happy_Valley",
+    "https://www.radiotimes.com/tv/drama/5-clues-to-the-happy-valley-killer-that-you-probably-missed/",
+    "https://happy-valley.fandom.com/wiki/Alison_Garrs"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://listofdeaths.fandom.com/wiki/Daryl_Garrs",
+     "ok": true,
+     "code": null,
+     "ms": 352.3
+    },
+    {
+     "url": "https://www.goodto.com/entertainment/why-did-alison-kill-son-happy-valley",
+     "ok": true,
+     "code": null,
+     "ms": 656.1
+    },
+    {
+     "url": "https://listofdeaths.fandom.com/wiki/Happy_Valley",
+     "ok": true,
+     "code": null,
+     "ms": 152.9
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 28,
+   "query": "Sir Isaac Julien's installation piece 'Lost Boundaries' is from which year?",
+   "gold": "2003",
+   "search_ms": 764.5,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://www.isaacjulien.com/projects/33/",
+    "https://letterboxd.com/film/lost-boundaries-2003/",
+    "https://www.themoviedb.org/movie/1167575-lost-boundaries",
+    "https://www.tview.co.uk/movie/1167575-lost-boundaries-2003",
+    "https://brooklynrail.org/2023/06/artseen/Isaac-Julien-What-Freedom-Is-To-Me/"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://www.isaacjulien.com/projects/33/",
+     "ok": true,
+     "code": null,
+     "ms": 1285.1
+    },
+    {
+     "url": "https://letterboxd.com/film/lost-boundaries-2003/",
+     "ok": true,
+     "code": null,
+     "ms": 374.1
+    },
+    {
+     "url": "https://www.themoviedb.org/movie/1167575-lost-boundaries",
+     "ok": true,
+     "code": null,
+     "ms": 472.0
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  },
+  {
+   "i": 29,
+   "query": "What year was the Süleymaniye damaged in the great fire?",
+   "gold": "1660",
+   "search_ms": 760.4,
+   "ok": true,
+   "error_code": null,
+   "n_results": 5,
+   "urls": [
+    "https://en.wikipedia.org/wiki/S%C3%BCleymaniye_Mosque",
+    "https://hum54-15.omeka.fas.harvard.edu/exhibits/show/suleymaniye/deterioration",
+    "https://www.discoverwalks.com/blog/turkey/10-remarkable-facts-about-suleymaniye-mosque/",
+    "https://istanbuljoy.com/suleymaniye-mosque-history-facts-and-more/",
+    "https://madainproject.com/suleymaniye_mosque"
+   ],
+   "gold_in_snippets": true,
+   "extract": [
+    {
+     "url": "https://en.wikipedia.org/wiki/S%C3%BCleymaniye_Mosque",
+     "ok": true,
+     "code": null,
+     "ms": 554.4
+    },
+    {
+     "url": "https://hum54-15.omeka.fas.harvard.edu/exhibits/show/suleymaniye/deterioration",
+     "ok": true,
+     "code": null,
+     "ms": 482.6
+    },
+    {
+     "url": "https://www.discoverwalks.com/blog/turkey/10-remarkable-facts-about-suleymaniye-mosque/",
+     "ok": true,
+     "code": null,
+     "ms": 437.1
+    }
+   ],
+   "gold_in_snippets_or_pages": true
+  }
+ ]
+}
