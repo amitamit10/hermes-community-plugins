@@ -1,0 +1,626 @@
+{
+ "utc": "2026-10-11T15:56:44.000509Z",
+ "rows": [
+  {
+   "tool": "goat_search",
+   "args": {
+    "query": "python programming language"
+   },
+   "latency_ms": 742.1,
+   "ok": true,
+   "error_code": null,
+   "output": {
+    "results": [
+     {
+      "title": "Welcome to Python.org",
+      "url": "https://www.python.org/",
+      "snippet": "Python is a versatile and easy-to-learn language that lets you work quickly and integrate systems more effectively. Learn more about Python, download the latest version, access documentation, find jobs, events, success stories and more."
+     },
+     {
+      "title": "Download Python | Python.org",
+      "url": "https://www.python.org/downloads/",
+      "snippet": "The official home of the Python Programming Language"
+     },
+     {
+      "title": "Python (programming language) - Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Python_(programming_language)",
+      "snippet": "Python is a high-level, general-purpose programming language that emphasizes code readability, simplicity, and ease-of-writing with the use of significant indentation, [38] an extensive (\"batteries-included\") standard library, and garbage collection. Python supports multiple programming paradigms but with an emphasis on object-oriented programming and dynamic typing. Guido van Rossum began ..."
+     },
+     {
+      "title": "Python Tutorial - W3Schools",
+      "url": "https://www.w3schools.com/python/",
+      "snippet": "Python is a popular programming language. Python can be used on a server to create web applications. Python is easy to learn - You will enjoy it!"
+     },
+     {
+      "title": "Python Tutorial - GeeksforGeeks",
+      "url": "https://www.geeksforgeeks.org/python/python-programming-language-tutorial/",
+      "snippet": "Python is one of the most popular programming languages. It's simple to use, packed with features and supported by a wide range of libraries and frameworks. Its clean syntax makes it beginner-friendly. A high-level language used in data science, automation, AI, web development and more. Known for its readability, which means code is easier to write, understand and maintain. Backed by strong ..."
+     }
+    ],
+    "ok": true
+   }
+  },
+  {
+   "tool": "goat_search",
+   "args": {
+    "query": "who wrote the Rust borrow checker RFC",
+    "max_results": 3
+   },
+   "latency_ms": 773.1,
+   "ok": true,
+   "error_code": null,
+   "output": {
+    "results": [
+     {
+      "title": "Non-Lexical Lifetimes: How Rust Taught the Borrow Checker Where a ...",
+      "url": "https://www.javacodegeeks.com/2026/09/non-lexical-lifetimes-how-rust-taught-the-borrow-checker-where-a-reference-actually-dies.html",
+      "snippet": "The actual fix, tracked from July 2017 and formalized in RFC 2094 that August, moved borrow checking off the AST entirely and onto MIR, Rust's mid-level intermediate representation, where the compiler could run a proper liveness analysis over the control-flow graph and compute, per variable, the exact set of program points where a borrow was ..."
+     },
+     {
+      "title": "History of the Borrow Checker : r/rust - Reddit",
+      "url": "https://www.reddit.com/r/rust/comments/12z3dmw/history_of_the_borrow_checker/",
+      "snippet": "History of the Borrow Checker Is there a place to read up on the history of the borrow checker? I'm finding very few articles online that explain the history of it."
+     },
+     {
+      "title": "2094-nll - The Rust RFC Book - GitHub Pages",
+      "url": "https://rust-lang.github.io/rfcs/2094-nll.html",
+      "snippet": "The RFC also describes a few other extensions to the borrow checker, the total effect of which is to eliminate many common cases where small, function-local code modifications would be required to pass the borrow check."
+     }
+    ],
+    "ok": true
+   }
+  },
+  {
+   "tool": "goat_search",
+   "args": {
+    "query": "capital of Australia"
+   },
+   "latency_ms": 806.3,
+   "ok": true,
+   "error_code": null,
+   "output": {
+    "results": [
+     {
+      "title": "Canberra - Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Canberra",
+      "snippet": "On 1 January 1901, federation of the colonies of Australia was achieved. The capital city was founded and formally named as Canberra in 1913. Unusual among Australian cities, it is an entirely planned city, grounded in a design by American architects Walter Burley Griffin and Marion Mahony Griffin."
+     },
+     {
+      "title": "Canberra | History, Map, Population, Climate, & Facts | Britannica",
+      "url": "https://www.britannica.com/place/Canberra",
+      "snippet": "Canberra, federal capital of the Commonwealth of Australia. It occupies part of the Australian Capital Territory, in southern Australia, and is about 150 miles (240 km) southwest of Sydney."
+     },
+     {
+      "title": "List of Australian capital cities - Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/List_of_Australian_capital_cities",
+      "snippet": "Learn about the eight capital cities in Australia, each of which is the seat of government for a state or territory. Find out which one is also the national capital and how the population and history of each capital city vary."
+     },
+     {
+      "title": "Australia | History, Cities, Population, Capital, Map, & Facts | Britannica",
+      "url": "https://www.britannica.com/place/Australia",
+      "snippet": "Australia is the smallest continent and one of the largest countries on Earth, lying between the Pacific and Indian oceans in the Southern Hemisphere. Its capital city is Canberra, and its most important economic and cultural centers are Sydney and Melbourne."
+     },
+     {
+      "title": "What is the Capital of Australia? - Mappr",
+      "url": "https://www.mappr.co/capital-cities/australia/",
+      "snippet": "Learn about the history, location, features, and economy of Canberra, the planned city that became the capital of Australia in 1913. Find out why Sydney and Melbourne were not chosen as the capital and how Canberra is known for its coffee, wine, and natural beauty."
+     }
+    ],
+    "ok": true
+   }
+  },
+  {
+   "tool": "goat_search",
+   "args": {
+    "query": "zxqvbnmw98123 qqqplmkj nonsense"
+   },
+   "latency_ms": 688.1,
+   "ok": true,
+   "error_code": null,
+   "output": {
+    "results": [
+     {
+      "title": "qwertzuiopasdfghjklyxcvbnm song - YouTube",
+      "url": "https://www.youtube.com/watch?v=1sgfODcZm6s",
+      "snippet": "qwertzuiopasdfghjklyxcvbnmqwertzuiopasdfghjklyxcvbnm qwertzuiopasdfghjklyxcvbnmqwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnm qwertyuiopasdfghjklzxcvbn..."
+     },
+     {
+      "title": "Phonics Song | ABC | (Official Video) - LooLoo Kids Nursery Rhymes ...",
+      "url": "https://www.youtube.com/watch?v=fGVH-OVqXNA",
+      "snippet": "Hello kids! Do you know all of the letters of the alphabet? Learning is easy and fun with Johny and kindergarten friends. Alphabet Song for kids, \"Phonics So..."
+     },
+     {
+      "title": "Nonsense Word Generator - Phonics Decoding Practice Tool",
+      "url": "https://teachquill.com/nonsense-word-generator",
+      "snippet": "Create pronounceable nonsense words and phonics lists by pattern for decoding practice, fluency checks, intervention work, and reading assessment prep."
+     },
+     {
+      "title": "Nonsense Word Generator - soybomb.com",
+      "url": "https://www.soybomb.com/tricks/words/",
+      "snippet": "This page generates nonsense words based on a frequency list of phonemes as they occur in legitimate English words. Generated words are checked against a list of approximately 500,000 English words."
+     }
+    ],
+    "ok": true
+   }
+  },
+  {
+   "tool": "goat_search",
+   "args": {
+    "query": "openai gpt latest release",
+    "max_results": 5
+   },
+   "latency_ms": 764.7,
+   "ok": true,
+   "error_code": null,
+   "output": {
+    "results": [
+     {
+      "title": "Release Notes | OpenAI",
+      "url": "https://openai.com/products/release-notes/",
+      "snippet": "OpenAI release notes for ChatGPT, API Platform, and Codex. Explore the latest features, updates, and improvements across OpenAI products."
+     },
+     {
+      "title": "OpenAI Research | Release",
+      "url": "https://openai.com/research/index/release/",
+      "snippet": "GPT-6 Astra: A new generation of intelligence Introducing GPT-6 Astra, our most intelligent and aligned model yet, with state-of-the-art capabilities across computer use, coding, cybersecurity, and science."
+     },
+     {
+      "title": "ChatGPT release notes - OpenAI Help Center",
+      "url": "https://help.openai.com/en/articles/6825453-chatgpt-release-notes",
+      "snippet": "Review the latest updates and release notes for ChatGPT."
+     },
+     {
+      "title": "OpenAI Release Notes - October 2026 Latest Updates - Releasebot",
+      "url": "https://releasebot.io/updates/openai",
+      "snippet": "Complete list of OpenAI latest updates for October 2026: get every product news, release note, and changelog from OpenAI summarized in one timeline."
+     },
+     {
+      "title": "OpenAI launches GPT-6.1 Sol, says it nearly matches GPT-6 Astra and ...",
+      "url": "https://techcrunch.com/2026/09/29/openai-launches-gpt-6-1-sol-says-it-nearly-matches-gpt-6-astra-and-costs-less/",
+      "snippet": "At OpenAI's DevDay event on Tuesday, the company showed off GPT-6.1 Sol, a mere week after it launched GPT-6 Sol. OpenAI says the new model delivers nearly the same level of intelligence as GPT ..."
+     }
+    ],
+    "ok": true
+   }
+  },
+  {
+   "tool": "goat_extract",
+   "args": {
+    "url": "https://example.com"
+   },
+   "latency_ms": 133.2,
+   "ok": true,
+   "error_code": null,
+   "output": {
+    "url": "https://example.com",
+    "final_url": "https://example.com",
+    "status": 200,
+    "title": "Example Domain",
+    "text": "This domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes.",
+    "truncated": false,
+    "ok": true
+   }
+  },
+  {
+   "tool": "goat_extract",
+   "args": {
+    "url": "https://en.wikipedia.org/wiki/Alan_Turing"
+   },
+   "latency_ms": 488.7,
+   "ok": true,
+   "error_code": null,
+   "output": {
+    "url": "https://en.wikipedia.org/wiki/Alan_Turing",
+    "final_url": "https://en.wikipedia.org/wiki/Alan_Turing",
+    "status": 200,
+    "title": "Alan Turing - Wikipedia",
+    "text": "Jump to content From Wikipedia, the free encyclopedia English computer scientist (1912–1954) For the Oregon artwork, see Alan Turing (sculpture). \"Turing\" redirects here. For other uses, see Turing (disambiguation). Alan Turing OBE FRS Turing in 1951 Born Alan Mathison Turing (1912-06-23)23 June 1912 Maida Vale, London, England Died 7 June 1954(1954-06-07) (aged 41) Wilmslow, Cheshire, England Cause of death Suicide by cyanide poisoning[note 1] Education University of Cambridge (MA) Princeton University (PhD) Known for Cryptanalysis of the Enigma Turing's proof Turing machine Turing test Unorganized machine Turing pattern Turing reduction \"The Chemical Basis of Morphogenesis\" Turing paradox Partner Joan Clarke (engaged in 1941 but did not marry) Awards Smith's Prize (1936) Scientific career Fields Logic mathematics cryptanalysis computer science mathematical and theoretical biology[2] Workplaces University of Manchester Government Code and Cypher School National Physical Laboratory Thesis Systems of Logic Based on Ordinals (1938) Doctoral advisor Alonzo Church[3] Doctoral students Robin Gandy[3][4] Beatrice Worsley[5] Signature Alan Mathison Turing (/ˈtjʊərɪŋ/; 23 June 1912 – 7 June 1954) was an English mathematician and logician[6] widely regarded as the father of theoretical computer science.[7] He formalised the concepts of algorithm and computation with the Turing machine, a model of a general-purpose computer,[8][9][10] and his contributions to cryptanalysis helped the Allies of World War II decipher messages encrypted by the German Enigma machine. He also contributed the Turing test to philosophy of artificial intelligence and the Turing pattern concept to mathematical and theoretical biology. Born in London and raised in southern England, Turing graduated from King's College, Cambridge, and earned a doctorate from Princeton University in 1938. During World War II, he worked at the Government Code and Cypher School at Bletchley Park, Britain's codebreaking centre, and focused on decrypting German naval messages as the head of Hut 8. His techniques improved on the pre-war Polish bomba method and hastened cryptanalysis of the Enigma ciphering system. The resulting intelligence, known as Ultra, proved helpful in the Battle of the Atlantic.[11][12] After the war, Turing joined the National Physical Laboratory, where he designed the Automatic Computing Engine, an early stored-program computer. In 1948, he joined Max Newman's Computing Machine Laboratory at the University of Manchester, contributing to the development of early Manchester computers.[13] He also turned to mathematical biology, working on the chemical basis of morphogenesis[14][2] and theorizing chemical oscillators independently of their experimental observation.[15] In 1952, after acknowledging a sexual relationship with another man, Turing was prosecuted for gross indecency. He received probation conditional on chemical castration and lost his security clearance. He died on 7 June 1954, aged 41, by cyanide poisoning. The inquest ruled his death a suicide. Turing left a lasting legacy in mathematics, computing, and codebreaking. His wartime work, covered by the Official Secrets Act, went unrecognised during his lifetime. He later received numerous honors and memorials.[15] His death was examined and interpreted by his family and biographers, who variously accepted, supported, questioned, or disputed the inquest's verdict. Following a 2009 campaign, British prime minister Gordon Brown officially apologised for the \"appalling way [Turing] was treated\", and Queen Elizabeth II granted Turing a pardon in 2013. The Alan Turing law refers to part of a 2017 UK law that retroactively pardoned men cautioned or convicted under the criminalisation of homosexual acts.[16] Early life and education Family English Heritage blue plaque in Maida Vale, London, marking Turing's birthplace in 1912 Turing was born in Maida Vale, London, while his father, Julius Mathison Turing, was on leave from his position with the Indian Civil Service (ICS) of the British Raj government at Chatrapur, then in the Madras Presidency and presently in Odisha state, in India.[17][18] Turing's father was the son of the clergyman Rev. John Robert Turing, from a Scottish family of merchants that had been based in the Netherlands and included a baronet. Turing's mother, Julius's wife, was Ethel Sara Turing (née Stoney), daughter of Edward Waller Stoney, chief engineer of the Madras Railways. The Stoneys were a Protestant Anglo-Irish gentry family from both County Tipperary and County Longford, while Ethel herself had spent much of her childhood in County Clare.[19] Julius and Ethel married on 1 October 1907 at the Church of Ireland St. Bartholomew's Church on Clyde Road in Ballsbridge, Dublin.[20] Julius's work with the ICS brought the family to British India, where his grandfather had been a general in the Bengal Army. However, both Julius and Ethel wanted their children to be brought up in Britain, so they moved to Maida Vale,[21] London, where Alan Turing was born on 23 June 1912, as recorded by a blue plaque on the outside of the nursing home where he was born,[22][23] which later became the Colonnade Hotel.[17][24] Turing had an elder brother, John Ferrier Turing, father of Dermot Turing, 12th Baronet of the Turing baronets.[25] In 1922, he discovered Natural Wonders Every Child Should Know by Edwin Tenney Brewster. He credited it with opening his eyes to science.[26] Turing's father's civil service commission was still active during Turing's childhood years, and his parents travelled between Hastings in the United Kingdom[27] and India, leaving their two sons to stay with a retired Army couple. At Hastings, Turing stayed at Baston Lodge, Upper Maze Hill, St Leonards-on-Sea, now marked with a blue plaque.[28] The plaque was unveiled on 23 June 2012, the centenary of Turing's birth.[29] Very early in life, Turing's parents purchased a house in Guildford in 1927, and Turing lived there during school holidays. The location is also marked with a blue plaque.[30] School Turing at age 16, c. 1928 – c. 1929 Turing's parents enrolled him at St Michael's, a primary school at 20 Charles Road, St Leonards-on-Sea, from the age of six to nine. The headmistress recognised his talent, noting that she \"...had clever boys and hardworking boys, but Alan is a genius\".[31] Between January 1922 and 1926, Turing was educated at Hazelhurst Preparatory School, an independent school in the village of Frant in Sussex (now East Sussex).[32] In 1926, at the age of 13, he went on to Sherborne School,[33] an independent boarding school in the market town of Sherborne in Dorset, where he boarded at Westcott House. The first day of term coincided with the 1926 General Strike, in Britain, but Turing was so determined to attend that he rode his bicycle unaccompanied 60 miles (97 km) from Southampton to Sherborne, stopping overnight at an inn.[34] Turing's natural inclination towards mathematics and science did not earn him respect from some of the teachers at Sherborne, whose definition of education placed more emphasis on the classics. His headmaster wrote to his parents: \"I hope he will not fall between two stools. If he is to stay at public school, he must aim at becoming educated. If he is to be solely a Scientific Specialist, he is wasting his time at a public school\".[26] Despite this, Turing continued to show remarkable ability in the studies he loved, solving advanced problems in 1927 without having studied even elementary calculus. In 1928, aged 16, Turing encountered Albert Einstein's work; not only did he grasp it, but it is possible that he managed to deduce Einstein's questioning of Newton's laws of motion from a text in which this was never made explicit.[35] Turing (seated second from left) in Cornwall, with fellow Shirburnians: Edwin Davis, John Bennett, Peter White, Peter Hogg (seated second from right), and Duncan Carse, in April 1930. Ch",
+    "truncated": true,
+    "ok": true
+   }
+  },
+  {
+   "tool": "goat_extract",
+   "args": {
+    "url": "https://docs.python.org/3/library/json.html"
+   },
+   "latency_ms": 282.5,
+   "ok": true,
+   "error_code": null,
+   "output": {
+    "url": "https://docs.python.org/3/library/json.html",
+    "final_url": "https://docs.python.org/3/library/json.html",
+    "status": 200,
+    "title": "json — JSON encoder and decoder — Python 3.15.0 documentation",
+    "text": "Navigation index modules | next | previous | Python » 3.15.0 Documentation » The Python standard library » Internet Data Handling » json — JSON encoder and decoder | Theme Auto Light Dark | json — JSON encoder and decoder¶ Source code: Lib/json/__init__.py JSON (JavaScript Object Notation), specified by RFC 7159 (which obsoletes RFC 4627) and by ECMA-404, is a lightweight data interchange format inspired by JavaScript object literal syntax (although it is not a strict subset of JavaScript [1] ). Note The term “object” in the context of JSON processing in Python can be ambiguous. All values in Python are objects. In JSON, an object refers to any data wrapped in curly braces, similar to a Python dictionary. Warning Be cautious when parsing JSON data from untrusted sources. A malicious JSON string may cause the decoder to consume considerable CPU and memory resources. Limiting the size of data to be parsed is recommended. This module exposes an API familiar to users of the standard library marshal and pickle modules. Encoding basic Python object hierarchies: >>> import json >>> json.dumps(['foo', {'bar': ('baz', None, 1.0, 2)}]) '[\"foo\", {\"bar\": [\"baz\", null, 1.0, 2]}]' >>> print(json.dumps(\"\\\"foo\\bar\")) \"\\\"foo\\bar\" >>> print(json.dumps('\\u1234')) \"\\u1234\" >>> print(json.dumps('\\\\')) \"\\\\\" >>> print(json.dumps({\"c\": 0, \"b\": 0, \"a\": 0}, sort_keys=True)) {\"a\": 0, \"b\": 0, \"c\": 0} >>> from io import StringIO >>> io = StringIO() >>> json.dump(['streaming API'], io) >>> io.getvalue() '[\"streaming API\"]' Compact encoding: >>> import json >>> json.dumps([1, 2, 3, {'4': 5, '6': 7}], separators=(',', ':')) '[1,2,3,{\"4\":5,\"6\":7}]' Pretty printing: >>> import json >>> print(json.dumps({'6': 7, '4': 5}, sort_keys=True, indent=4)) { \"4\": 5, \"6\": 7 } Customizing JSON object encoding: >>> import json >>> def custom_json(obj): ... if isinstance(obj, complex): ... return {'__complex__': True, 'real': obj.real, 'imag': obj.imag} ... raise TypeError(f'Cannot serialize object of {type(obj)}') ... >>> json.dumps(1 + 2j, default=custom_json) '{\"__complex__\": true, \"real\": 1.0, \"imag\": 2.0}' Decoding JSON: >>> import json >>> json.loads('[\"foo\", {\"bar\":[\"baz\", null, 1.0, 2]}]') ['foo', {'bar': ['baz', None, 1.0, 2]}] >>> json.loads('\"\\\\\"foo\\\\bar\"') '\"foo\\x08ar' >>> from io import StringIO >>> io = StringIO('[\"streaming API\"]') >>> json.load(io) ['streaming API'] Customizing JSON object decoding: >>> import json >>> def as_complex(dct): ... if '__complex__' in dct: ... return complex(dct['real'], dct['imag']) ... return dct ... >>> json.loads('{\"__complex__\": true, \"real\": 1, \"imag\": 2}', ... object_hook=as_complex) (1+2j) >>> import decimal >>> json.loads('1.1', parse_float=decimal.Decimal) Decimal('1.1') Extending JSONEncoder: >>> import json >>> class ComplexEncoder(json.JSONEncoder): ... def default(self, obj): ... if isinstance(obj, complex): ... return [obj.real, obj.imag] ... # Let the base class default method raise the TypeError ... return super().default(obj) ... >>> json.dumps(2 + 1j, cls=ComplexEncoder) '[2.0, 1.0]' >>> ComplexEncoder().encode(2 + 1j) '[2.0, 1.0]' >>> list(ComplexEncoder().iterencode(2 + 1j)) ['[2.0', ', 1.0', ']'] Using json from the shell to validate and pretty-print: $ echo '{\"json\":\"obj\"}' | python -m json { \"json\": \"obj\" } $ echo '{1.2:3.4}' | python -m json Expecting property name enclosed in double quotes: line 1 column 2 (char 1) See Command-line interface for detailed documentation. Note JSON is a subset of YAML 1.2. The JSON produced by this module’s default settings (in particular, the default separators value) is also a subset of YAML 1.0 and 1.1. This module can thus also be used as a YAML serializer. Note This module’s encoders and decoders preserve input and output order by default. Order is only lost if the underlying containers are unordered. Basic Usage¶ json.dump(obj, fp, *, skipkeys=False, ensure_ascii=True, check_circular=True, allow_nan=True, cls=None, indent=None, separators=None, default=None, sort_keys=False, **kw)¶ Serialize obj as a JSON formatted stream to fp (a .write()-supporting file-like object) using this Python-to-JSON conversion table. Note Unlike pickle and marshal, JSON is not a framed protocol, so trying to serialize multiple objects with repeated calls to dump() using the same fp will result in an invalid JSON file. Parameters: obj (object) – The Python object to be serialized. fp (file-like object) – The file-like object obj will be serialized to. The json module always produces str objects, not bytes objects, therefore fp.write() must support str input. skipkeys (bool) – If True, keys that are not of a basic type (str, int, float, bool, None) will be skipped instead of raising a TypeError. Default False. ensure_ascii (bool) – If True (the default), the output is guaranteed to have all incoming non-ASCII and non-printable characters escaped. If False, all characters will be outputted as-is, except for the characters that must be escaped: quotation mark, reverse solidus, and the control characters U+0000 through U+001F. check_circular (bool) – If False, the circular reference check for container types is skipped and a circular reference will result in a RecursionError (or worse). Default True. allow_nan (bool) – If False, serialization of out-of-range float values (nan, inf, -inf) will result in a ValueError, in strict compliance with the JSON specification. If True (the default), their JavaScript equivalents (NaN, Infinity, -Infinity) are used. cls (a JSONEncoder subclass) – If set, a custom JSON encoder with the default() method overridden, for serializing into custom datatypes. If None (the default), JSONEncoder is used. indent (int | str | None) – If a positive integer or string, JSON array elements and object members will be pretty-printed with that indent level. A positive integer indents that many spaces per level; a string (such as \"\\t\") is used to indent each level. If zero, negative, or \"\" (the empty string), only newlines are inserted. If None (the default), no newlines are inserted. separators (tuple | None) – A two-tuple: (item_separator, key_separator). If None (the default), separators defaults to (', ', ': ') if indent is None, and (',', ': ') otherwise. For the most compact JSON, specify (',', ':') to eliminate whitespace. default (callable | None) – A function that is called for objects that can’t otherwise be serialized. It should return a JSON encodable version of the object or raise a TypeError. If None (the default), TypeError is raised. sort_keys (bool) – If True, dictionaries will be outputted sorted by key. Default False. Note Keys in key/value pairs of JSON are always of the type str. When a dictionary is converted into JSON, all the keys of the dictionary are converted to strings. As a result of this, if a dictionary is converted into JSON and then back into a dictionary, the dictionary may not equal the original one. That is, loads(dumps(x)) != x if x has non-string keys. sort_keys sorts the keys before they are converted to strings, so numeric keys are sorted by value, not by their string representation. Changed in version 3.2: Allow strings for indent in addition to integers. Changed in version 3.4: Use (',', ': ') as default if indent is not None. Changed in version 3.6: All optional parameters are now keyword-only. json.dumps(obj, *, skipkeys=False, ensure_ascii=True, check_circular=True, allow_nan=True, cls=None, indent=None, separators=None, default=None, sort_keys=False, **kw)¶ Serialize obj to a JSON formatted str using this conversion table. The arguments have the same meaning as in dump(). json.load(fp, *, cls=None, object_hook=None, parse_float=None, parse_int=None, parse_constant=None, object_pairs_hook=None, array_hook=None, **kw)¶ Deserialize fp to a Python object using the JSON-to-Python conversion table. Parameters: fp (file-like object) – A .read()-supporting text file or binary file containing the JSON document to be deserialized. cls (a JSONDecoder subclass) – If ",
+    "truncated": true,
+    "ok": true
+   }
+  },
+  {
+   "tool": "goat_crawl",
+   "args": {
+    "url": "https://example.com",
+    "max_depth": 1,
+    "max_pages": 3
+   },
+   "latency_ms": 171.5,
+   "ok": true,
+   "error_code": null,
+   "output": {
+    "pages": [
+     {
+      "url": "https://example.com",
+      "depth": 0,
+      "status": 200,
+      "title": "Example Domain",
+      "text": "This domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes.",
+      "truncated": false
+     }
+    ],
+    "ok": true
+   }
+  },
+  {
+   "tool": "goat_crawl",
+   "args": {
+    "url": "https://docs.python.org/3/",
+    "max_depth": 1,
+    "max_pages": 5
+   },
+   "latency_ms": 777.9,
+   "ok": true,
+   "error_code": null,
+   "output": {
+    "pages": [
+     {
+      "url": "https://docs.python.org/3/",
+      "depth": 0,
+      "status": 200,
+      "title": "3.15.0 Documentation",
+      "text": "Navigation index modules | Python » 3.15.0 Documentation » | Theme Auto Light Dark | Python 3.15.0 documentation Welcome! This is the official documentation for Python 3.15.0. Documentation sections: What's new in Python 3.15? Or all \"What's new\" documents since Python 2.0 Tutorial Start here: a tour of Python's syntax and features Built-ins reference Built-in functions and classes Library reference Standard library modules Language reference Syntax and language elements Python setup and usage How to install, configure, and use Python Python HOWTOs In-depth topic manuals Installing Python modules Third-party modules and PyPI.org Extending and embedding For C/C++ programmers Python's C API C API reference FAQs Frequently asked questions (with answers!) Deprecations Deprecated functionality Other resources: Python developer's guide Information on contributing to Python Python Packaging User Guide Resources relating to Python packaging Audio/visual talks Podcasts, talks, and video presentations from the community Python Enhancement Proposals Index of proposed improvements to Python Static Typing with Python Information and guides about Python type safety Indices, glossary, and search: Global module index All modules and libraries General index All functions, classes, and terms Glossary Terms explained Search page Search this documentation Complete table of contents All sections and subsections Project information: Reporting issues Contributing to docs Download the documentation History and license of Python Copyright About the documentation Download Download these documents Docs by version Python 3.16 (in development) Python 3.15 (stable) Python 3.14 (stable) Python 3.13 (security-fixes) Python 3.12 (security-fixes) Python 3.11 (security-fixes) Python 3.10 (EOL) Python 3.9 (EOL) Python 3.8 (EOL) Python 3.7 (EOL) Python 3.6 (EOL) Python 3.5 (EOL) Python 3.4 (EOL) Python 3.3 (EOL) Python 3.2 (EOL) Python 3.1 (EOL) Python 3.0 (EOL) Python 2.7 (EOL) Python 2.6 (EOL) All versions Other resources PEP Index Beginner's Guide Book List Audio/Visual Talks Python Developer’s Guide « Navigation index modules | Python » 3.15.0 Documentation » | Theme Auto Light Dark | © Copyright 2001 Python Software Foundation. This page is licensed under the Python Software Foundation License Version 2. Examples, recipes, and other code in the documentation are additionally licensed under the Zero Clause BSD License. See History and License for more information. The Python Software Foundation is a non-profit corporation. Please donate. Last updated on Oct 11, 2026 (14:47 UTC). Found a bug? Created using Sphinx 8.2.3.",
+      "truncated": false
+     },
+     {
+      "url": "https://docs.python.org/3/download.html",
+      "depth": 1,
+      "status": 200,
+      "title": "Download — Python 3.15.0 documentation",
+      "text": "Navigation index modules | Python » 3.15.0 Documentation » Download | Theme Auto Light Dark | Download Python 3.15 documentation Last updated on: Oct 11, 2026 (14:47 UTC). Download an archive containing all the documentation for this version of Python: Format Packed as .zip Packed as .tar.bz2 HTML Download Download Plain text Download Download Texinfo Download Download EPUB Download We no longer provide pre-built PDFs of the documentation. To build a PDF archive, follow the instructions in the Developer's Guide and run make dist-pdf in the Doc/ directory of a copy of the CPython repository. See the directory listing for file sizes. Problems Open an issue if you have comments or suggestions for the Python documentation. « Navigation index modules | Python » 3.15.0 Documentation » Download | Theme Auto Light Dark | © Copyright 2001 Python Software Foundation. This page is licensed under the Python Software Foundation License Version 2. Examples, recipes, and other code in the documentation are additionally licensed under the Zero Clause BSD License. See History and License for more information. The Python Software Foundation is a non-profit corporation. Please donate. Last updated on Oct 11, 2026 (14:47 UTC). Found a bug? Created using Sphinx 8.2.3.",
+      "truncated": false
+     },
+     {
+      "url": "https://docs.python.org/3.16/",
+      "depth": 1,
+      "status": 200,
+      "title": "3.16.0a0 Documentation",
+      "text": "Navigation index modules | Python » 3.16.0a0 Documentation » | Theme Auto Light Dark | Python 3.16.0a0 documentation Welcome! This is the official documentation for Python 3.16.0a0. Documentation sections: What's new in Python 3.16? Or all \"What's new\" documents since Python 2.0 Tutorial Start here: a tour of Python's syntax and features Built-ins reference Built-in functions and classes Library reference Standard library modules Language reference Syntax and language elements Python setup and usage How to install, configure, and use Python Python HOWTOs In-depth topic manuals Installing Python modules Third-party modules and PyPI.org Extending and embedding For C/C++ programmers Python's C API C API reference FAQs Frequently asked questions (with answers!) Deprecations Deprecated functionality Other resources: Python developer's guide Information on contributing to Python Python Packaging User Guide Resources relating to Python packaging Audio/visual talks Podcasts, talks, and video presentations from the community Python Enhancement Proposals Index of proposed improvements to Python Static Typing with Python Information and guides about Python type safety Indices, glossary, and search: Global module index All modules and libraries General index All functions, classes, and terms Glossary Terms explained Search page Search this documentation Complete table of contents All sections and subsections Project information: Reporting issues Contributing to docs Download the documentation History and license of Python Copyright About the documentation Download Download these documents Docs by version Python 3.16 (in development) Python 3.15 (stable) Python 3.14 (stable) Python 3.13 (security-fixes) Python 3.12 (security-fixes) Python 3.11 (security-fixes) Python 3.10 (EOL) Python 3.9 (EOL) Python 3.8 (EOL) Python 3.7 (EOL) Python 3.6 (EOL) Python 3.5 (EOL) Python 3.4 (EOL) Python 3.3 (EOL) Python 3.2 (EOL) Python 3.1 (EOL) Python 3.0 (EOL) Python 2.7 (EOL) Python 2.6 (EOL) All versions Other resources PEP Index Beginner's Guide Book List Audio/Visual Talks Python Developer’s Guide « Navigation index modules | Python » 3.16.0a0 Documentation » | Theme Auto Light Dark | © Copyright 2001 Python Software Foundation. This page is licensed under the Python Software Foundation License Version 2. Examples, recipes, and other code in the documentation are additionally licensed under the Zero Clause BSD License. See History and License for more information. The Python Software Foundation is a non-profit corporation. Please donate. Last updated on Oct 11, 2026 (11:02 UTC). Found a bug? Created using Sphinx 8.2.3.",
+      "truncated": false
+     },
+     {
+      "url": "https://docs.python.org/3.15/",
+      "depth": 1,
+      "status": 200,
+      "title": "3.15.0 Documentation",
+      "text": "Navigation index modules | Python » 3.15.0 Documentation » | Theme Auto Light Dark | Python 3.15.0 documentation Welcome! This is the official documentation for Python 3.15.0. Documentation sections: What's new in Python 3.15? Or all \"What's new\" documents since Python 2.0 Tutorial Start here: a tour of Python's syntax and features Built-ins reference Built-in functions and classes Library reference Standard library modules Language reference Syntax and language elements Python setup and usage How to install, configure, and use Python Python HOWTOs In-depth topic manuals Installing Python modules Third-party modules and PyPI.org Extending and embedding For C/C++ programmers Python's C API C API reference FAQs Frequently asked questions (with answers!) Deprecations Deprecated functionality Other resources: Python developer's guide Information on contributing to Python Python Packaging User Guide Resources relating to Python packaging Audio/visual talks Podcasts, talks, and video presentations from the community Python Enhancement Proposals Index of proposed improvements to Python Static Typing with Python Information and guides about Python type safety Indices, glossary, and search: Global module index All modules and libraries General index All functions, classes, and terms Glossary Terms explained Search page Search this documentation Complete table of contents All sections and subsections Project information: Reporting issues Contributing to docs Download the documentation History and license of Python Copyright About the documentation Download Download these documents Docs by version Python 3.16 (in development) Python 3.15 (stable) Python 3.14 (stable) Python 3.13 (security-fixes) Python 3.12 (security-fixes) Python 3.11 (security-fixes) Python 3.10 (EOL) Python 3.9 (EOL) Python 3.8 (EOL) Python 3.7 (EOL) Python 3.6 (EOL) Python 3.5 (EOL) Python 3.4 (EOL) Python 3.3 (EOL) Python 3.2 (EOL) Python 3.1 (EOL) Python 3.0 (EOL) Python 2.7 (EOL) Python 2.6 (EOL) All versions Other resources PEP Index Beginner's Guide Book List Audio/Visual Talks Python Developer’s Guide « Navigation index modules | Python » 3.15.0 Documentation » | Theme Auto Light Dark | © Copyright 2001 Python Software Foundation. This page is licensed under the Python Software Foundation License Version 2. Examples, recipes, and other code in the documentation are additionally licensed under the Zero Clause BSD License. See History and License for more information. The Python Software Foundation is a non-profit corporation. Please donate. Last updated on Oct 11, 2026 (14:47 UTC). Found a bug? Created using Sphinx 8.2.3.",
+      "truncated": false
+     },
+     {
+      "url": "https://docs.python.org/3.14/",
+      "depth": 1,
+      "status": 200,
+      "title": "3.14.8 Documentation",
+      "text": "Navigation index modules | Python » 3.14.8 Documentation » | Theme Auto Light Dark | Python 3.14.8 documentation Welcome! This is the official documentation for Python 3.14.8. Documentation sections: What's new in Python 3.14? Or all \"What's new\" documents since Python 2.0 Tutorial Start here: a tour of Python's syntax and features Built-ins reference Built-in functions and classes Library reference Standard library modules Language reference Syntax and language elements Python setup and usage How to install, configure, and use Python Python HOWTOs In-depth topic manuals Installing Python modules Third-party modules and PyPI.org Extending and embedding For C/C++ programmers Python's C API C API reference FAQs Frequently asked questions (with answers!) Deprecations Deprecated functionality Other resources: Python developer's guide Information on contributing to Python Python Packaging User Guide Resources relating to Python packaging Audio/visual talks Podcasts, talks, and video presentations from the community Python Enhancement Proposals Index of proposed improvements to Python Static Typing with Python Information and guides about Python type safety Indices, glossary, and search: Global module index All modules and libraries General index All functions, classes, and terms Glossary Terms explained Search page Search this documentation Complete table of contents All sections and subsections Project information: Reporting issues Contributing to docs Download the documentation History and license of Python Copyright About the documentation Download Download these documents Docs by version Python 3.16 (in development) Python 3.15 (stable) Python 3.14 (stable) Python 3.13 (security-fixes) Python 3.12 (security-fixes) Python 3.11 (security-fixes) Python 3.10 (EOL) Python 3.9 (EOL) Python 3.8 (EOL) Python 3.7 (EOL) Python 3.6 (EOL) Python 3.5 (EOL) Python 3.4 (EOL) Python 3.3 (EOL) Python 3.2 (EOL) Python 3.1 (EOL) Python 3.0 (EOL) Python 2.7 (EOL) Python 2.6 (EOL) All versions Other resources PEP Index Beginner's Guide Book List Audio/Visual Talks Python Developer’s Guide « Navigation index modules | Python » 3.14.8 Documentation » | Theme Auto Light Dark | © Copyright 2001 Python Software Foundation. This page is licensed under the Python Software Foundation License Version 2. Examples, recipes, and other code in the documentation are additionally licensed under the Zero Clause BSD License. See History and License for more information. The Python Software Foundation is a non-profit corporation. Please donate. Last updated on Oct 11, 2026 (13:42 UTC). Found a bug? Created using Sphinx 8.2.3.",
+      "truncated": false
+     }
+    ],
+    "ok": true
+   }
+  },
+  {
+   "tool": "goat_probe",
+   "args": {
+    "url": "https://example.com"
+   },
+   "latency_ms": 110.8,
+   "ok": true,
+   "error_code": null,
+   "output": {
+    "ok": true,
+    "status": 200,
+    "host": "example.com"
+   }
+  },
+  {
+   "tool": "goat_probe",
+   "args": {
+    "url": "https://httpbin.org/status/404"
+   },
+   "latency_ms": 211.5,
+   "ok": false,
+   "error_code": "URL_BLOCKED",
+   "output": {
+    "ok": false,
+    "error": {
+     "code": "URL_BLOCKED"
+    }
+   }
+  },
+  {
+   "tool": "goat_answer",
+   "args": {
+    "query": "Who discovered penicillin?"
+   },
+   "latency_ms": 323.9,
+   "ok": true,
+   "error_code": null,
+   "output": {
+    "answer": "penicillins have been discovered , but only two purified compounds are in clinical use: penicillin G (intramuscular or intravenous use) and penicillin [1]\nThe discovery of penicillin was one of the most important scientific discoveries in the history of medicine. [2]\nAncient societies used moulds to treat infections [2]\nThe history of penicillin traces how observations of antibiotic activity in the mould Penicillium led to the development of penicillins , a family of widely [3]\nthe discovery of penicillin and its curative effect in various infectious diseases\". [4]\nThis was the first antibiotic substance discovered . [4]\nHis discovery in [4]\nneeded] There were four named penicillins at the time penicillin V was discovered ( penicillins I, II, III, IV), however, Penicillin V was named \"V\" for Vertraulich [5]",
+    "sources": [
+     {
+      "index": 1,
+      "title": "Penicillin",
+      "url": "https://en.wikipedia.org/wiki/Penicillin"
+     },
+     {
+      "index": 2,
+      "title": "Discovery of penicillin",
+      "url": "https://en.wikipedia.org/wiki/Discovery_of_penicillin"
+     },
+     {
+      "index": 3,
+      "title": "History of penicillin",
+      "url": "https://en.wikipedia.org/wiki/History_of_penicillin"
+     },
+     {
+      "index": 4,
+      "title": "Alexander Fleming",
+      "url": "https://en.wikipedia.org/wiki/Alexander_Fleming"
+     },
+     {
+      "index": 5,
+      "title": "Phenoxymethylpenicillin",
+      "url": "https://en.wikipedia.org/wiki/Phenoxymethylpenicillin"
+     }
+    ],
+    "ok": true,
+    "source": "wikipedia",
+    "source_url": "https://en.wikipedia.org/w/api.php",
+    "truncated": false
+   }
+  },
+  {
+   "tool": "goat_answer",
+   "args": {
+    "query": "What is the capital of France?"
+   },
+   "latency_ms": 543.5,
+   "ok": true,
+   "error_code": null,
+   "output": {
+    "answer": "In the United States, capital punishment (also known as the death penalty) is a legal penalty in 27 states ( of which two, Oregon and Wyoming, have no [1]\nvariants of the above closed-ended questions that possess specific responses are: On what day were you born? [2]\n(\"Saturday.\") What is the capital of France ? [2]\n(\"Paris [2]\n\" What Is a Nation?\" ( French : Qu'est-ce qu'une nation ?) is an 1882 lecture by French historian Ernest Renan (1823–1892) at the Sorbonne, known for the [3]\nCapital punishment, also known as the death penalty and formerly called judicial homicide, is the state-sanctioned killing of a person as punishment for [4]\nand 1894. [5]\nThe central argument of Capital is that the motivating force of capitalism is in the exploitation of labour, whose unpaid work is the ultimate [5]",
+    "sources": [
+     {
+      "index": 1,
+      "title": "Capital punishment in the United States",
+      "url": "https://en.wikipedia.org/wiki/Capital_punishment_in_the_United_States"
+     },
+     {
+      "index": 2,
+      "title": "Closed-ended question",
+      "url": "https://en.wikipedia.org/wiki/Closed-ended_question"
+     },
+     {
+      "index": 3,
+      "title": "What Is a Nation?",
+      "url": "https://en.wikipedia.org/wiki/What_Is_a_Nation%3F"
+     },
+     {
+      "index": 4,
+      "title": "Capital punishment",
+      "url": "https://en.wikipedia.org/wiki/Capital_punishment"
+     },
+     {
+      "index": 5,
+      "title": "Das Kapital",
+      "url": "https://en.wikipedia.org/wiki/Das_Kapital"
+     }
+    ],
+    "ok": true,
+    "source": "wikipedia",
+    "source_url": "https://en.wikipedia.org/w/api.php",
+    "truncated": false
+   }
+  },
+  {
+   "tool": "goat_filtered_search",
+   "args": {
+    "query": "machine learning",
+    "allowed_domains": [
+     "en.wikipedia.org"
+    ],
+    "language": "en"
+   },
+   "latency_ms": 352.2,
+   "ok": true,
+   "error_code": null,
+   "output": {
+    "ok": true,
+    "results": [],
+    "truncated": false,
+    "source": "wikipedia",
+    "source_url": "https://en.wikipedia.org/w/api.php"
+   }
+  },
+  {
+   "tool": "goat_vertical_search",
+   "args": {
+    "vertical": "scholar",
+    "query": "transformer attention",
+    "max_results": 3
+   },
+   "latency_ms": 263.3,
+   "ok": true,
+   "error_code": null,
+   "output": {
+    "ok": true,
+    "results": [
+     {
+      "title": "Figure 10: Proposed model with different fusion methods: (A) parallel CNNs with transformer using concatenation fusion. (B) Parallel CNNs with a transformer using concatenation and co-attention fusion. (C) Parallel CNNs with transformer using a hierarchical co-attention fusion. (D) Parallel CNNs with transformer using one co-attention fusion.",
+      "url": "https://doi.org/10.7717/peerj-cs.3254/fig-10",
+      "doi": "10.7717/peerj-cs.3254/fig-10",
+      "authors": [],
+      "year": null,
+      "venue": ""
+     },
+     {
+      "title": "Figure 3: Synergistic multi-attention transformer structure.",
+      "url": "https://doi.org/10.7717/peerj-cs.3473/fig-3",
+      "doi": "10.7717/peerj-cs.3473/fig-3",
+      "authors": [],
+      "year": null,
+      "venue": ""
+     },
+     {
+      "title": "The Triple Attention Transformer: Advancing Contextual Coherence in Transformer Models",
+      "url": "https://doi.org/10.21203/rs.3.rs-3916608/v1",
+      "doi": "10.21203/rs.3.rs-3916608/v1",
+      "authors": [
+       "Shadi Ghaith"
+      ],
+      "year": 2024,
+      "venue": ""
+     }
+    ],
+    "truncated": false,
+    "vertical": "scholar",
+    "source": "crossref",
+    "source_url": "https://www.crossref.org/"
+   }
+  },
+  {
+   "tool": "goat_vertical_search",
+   "args": {
+    "vertical": "news",
+    "query": "inflation",
+    "max_results": 3
+   },
+   "latency_ms": 10139.4,
+   "ok": false,
+   "error_code": "URL_BLOCKED",
+   "output": {
+    "ok": false,
+    "error": {
+     "code": "URL_BLOCKED"
+    }
+   }
+  },
+  {
+   "tool": "goat_vertical_search",
+   "args": {
+    "vertical": "images",
+    "query": "red panda",
+    "max_results": 3
+   },
+   "latency_ms": 536.1,
+   "ok": true,
+   "error_code": null,
+   "output": {
+    "ok": true,
+    "results": [
+     {
+      "title": "File:Red Panda.JPG",
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c6/Red_Panda.JPG/960px-Red_Panda.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "page_url": "https://commons.wikimedia.org/wiki/File:Red_Panda.JPG",
+      "description": "Red panda ( Ailurus fulgens ) in Munich Zoo",
+      "creator": "User Bernard Landgraf on de.wikipedia.org",
+      "license": "CC BY-SA 3.0",
+      "license_url": ""
+     },
+     {
+      "title": "File:Red Panda (24986761703).jpg",
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e6/Red_Panda_%2824986761703%29.jpg/960px-Red_Panda_%2824986761703%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "page_url": "https://commons.wikimedia.org/wiki/File:Red_Panda_(24986761703).jpg",
+      "description": "Red Panda at a zoo",
+      "creator": "Mathias Appel",
+      "license": "CC0",
+      "license_url": ""
+     },
+     {
+      "title": "File:Two Red Panda Cubs in the Tree 01.jpg",
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/80/Two_Red_Panda_Cubs_in_the_Tree_01.jpg/960px-Two_Red_Panda_Cubs_in_the_Tree_01.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "page_url": "https://commons.wikimedia.org/wiki/File:Two_Red_Panda_Cubs_in_the_Tree_01.jpg",
+      "description": "Two curious Red pandas (Ailurus fulgens) cubs are perched high in a tree, gazing down at their surroundings in the tranquil forest of Mangingoth, Langtang National Park, Nepal. Their playful yet cautious demeanor captures the charm and rarity of this elusive Himalayan species. It's known as Lesser Pand, Red Bear-cat, Red Cat-bear and Habre (हाब्रे) in Nepali.",
+      "creator": "Original: Ganga Raj Sunuwar Derivative work: UnpetitproleX",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0"
+     }
+    ],
+    "truncated": false,
+    "vertical": "images",
+    "source": "wikimedia-commons",
+    "source_url": "https://commons.wikimedia.org/"
+   }
+  },
+  {
+   "tool": "goat_probe",
+   "args": {
+    "url": "https://127.0.0.1"
+   },
+   "latency_ms": 0.3,
+   "ok": false,
+   "error_code": "URL_BLOCKED",
+   "output": {
+    "ok": false,
+    "error": {
+     "code": "URL_BLOCKED"
+    }
+   }
+  },
+  {
+   "tool": "goat_extract",
+   "args": {
+    "url": "http://example.com"
+   },
+   "latency_ms": 0.1,
+   "ok": false,
+   "error_code": "URL_BLOCKED",
+   "output": {
+    "ok": false,
+    "error": {
+     "code": "URL_BLOCKED"
+    }
+   }
+  },
+  {
+   "tool": "goat_extract",
+   "args": {
+    "url": "https://169.254.169.254/latest/meta-data/"
+   },
+   "latency_ms": 0.1,
+   "ok": false,
+   "error_code": "URL_BLOCKED",
+   "output": {
+    "ok": false,
+    "error": {
+     "code": "URL_BLOCKED"
+    }
+   }
+  },
+  {
+   "tool": "goat_search",
+   "args": {
+    "query": ""
+   },
+   "latency_ms": 0.0,
+   "ok": false,
+   "error_code": "URL_BLOCKED",
+   "output": {
+    "ok": false,
+    "error": {
+     "code": "URL_BLOCKED"
+    }
+   }
+  }
+ ]
+}

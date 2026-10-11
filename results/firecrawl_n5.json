@@ -1,0 +1,82 @@
+{
+ "utc": "2026-10-11T15:58:17.829879+00:00",
+ "dataset_sha": "aad2b002cd74147236ee6fb4fd7e2bcf28955c3c",
+ "summary": {
+  "n": 5,
+  "coverage_ok": 1.0,
+  "errors": {},
+  "truth_hit_rate_of_ok": 0.2,
+  "mean_truth_recall_of_ok": 0.4370432526273914,
+  "lie_leak_rate_of_ok": 0.0,
+  "truncated_rate": 0.4,
+  "p50_ms": 672.8,
+  "p95_ms": 2512.1
+ },
+ "cases": [
+  {
+   "i": 0,
+   "url": "https://alexkademusic.com/links",
+   "ms": 620.5,
+   "ok": true,
+   "error_code": null,
+   "status": 200,
+   "text_len": 0,
+   "truncated": false,
+   "truth_recall": 0.0,
+   "lie_hit": false,
+   "truth_hit": false
+  },
+  {
+   "i": 1,
+   "url": "https://www.policygenius.com/auto-insurance/best-car-insurance-in-loganville-ga/",
+   "ms": 672.8,
+   "ok": true,
+   "error_code": null,
+   "status": 200,
+   "text_len": 8000,
+   "truncated": true,
+   "truth_recall": 0.9453924914675768,
+   "lie_hit": false,
+   "truth_hit": true
+  },
+  {
+   "i": 2,
+   "url": "https://www.claas.com/",
+   "ms": 2512.1,
+   "ok": true,
+   "error_code": null,
+   "status": 200,
+   "text_len": 3939,
+   "truncated": false,
+   "truth_recall": 0.5228426395939086,
+   "lie_hit": false,
+   "truth_hit": false
+  },
+  {
+   "i": 3,
+   "url": "https://www.gourmetpro.co/blog/uk-top-food-beverage-distributors",
+   "ms": 697.5,
+   "ok": true,
+   "error_code": null,
+   "status": 200,
+   "text_len": 8000,
+   "truncated": true,
+   "truth_recall": 0.7169811320754716,
+   "lie_hit": false,
+   "truth_hit": false
+  },
+  {
+   "i": 4,
+   "url": "https://www.cipfa.org/cipfa-thinks/articles/provisional-settlement-2025",
+   "ms": 305.0,
+   "ok": true,
+   "error_code": null,
+   "status": 403,
+   "text_len": 0,
+   "truncated": false,
+   "truth_recall": 0.0,
+   "lie_hit": false,
+   "truth_hit": false
+  }
+ ]
+}
