@@ -23,7 +23,7 @@ class ExaClientTests(unittest.TestCase):
 
         result = client.search("test")
 
-        self.assertEqual(result, {"ok": False, "error": MISSING_CONFIG})
+        self.assertEqual(result, {"ok": False, "error": {"code": MISSING_CONFIG}})
         self.assertEqual(transport.calls, [])
         self.assertTrue(client.requires_key)
 
@@ -77,23 +77,26 @@ class ExaClientTests(unittest.TestCase):
 
         result = client.search("topic")
 
-        self.assertEqual(result, {"ok": False, "error": "HTTP_ERROR", "status": 429, "body": "rate limited"})
+        self.assertEqual(result, {"ok": False, "error": {"code": "URL_BLOCKED"}})
         self.assertEqual(len(transport.calls), 1)
+        self.assertNotIn("rate limited", repr(result))
 
-    def test_transport_exception_propagates_without_retry_or_fallback(self):
+    def test_transport_exception_is_sanitized_without_retry_or_fallback(self):
         error = RuntimeError("offline")
         transport = FakeTransport(error)
         client = ExaClient(api_key="key", transport=transport)
 
-        with self.assertRaisesRegex(RuntimeError, "offline"):
-            client.search("topic")
+        result = client.search("topic")
+
+        self.assertEqual(result, {"ok": False, "error": {"code": "URL_BLOCKED"}})
+        self.assertNotIn("offline", repr(result))
 
         self.assertEqual(len(transport.calls), 1)
 
     def test_missing_transport_does_not_create_a_default_network_transport(self):
         client = ExaClient(api_key="key", transport=None)
 
-        self.assertEqual(client.search("topic"), {"ok": False, "error": MISSING_CONFIG})
+        self.assertEqual(client.search("topic"), {"ok": False, "error": {"code": MISSING_CONFIG}})
 
 
 if __name__ == "__main__":

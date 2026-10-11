@@ -18,17 +18,32 @@ from html.parser import HTMLParser
 import json
 from urllib.parse import quote, urlencode
 
-from ssrf_guard import (
-    BAD_PORT,
-    BAD_SCHEME,
-    CREDENTIALS_IN_URL,
-    MAX_RESPONSE_BYTES,
-    PRIVATE_HOST,
-    REDIRECT_BLOCKED,
-    URL_BLOCKED,
-    check_url,
-    pinned_fetch,
-)
+if __package__:
+    from .ssrf_guard import (
+        BAD_PORT,
+        BAD_SCHEME,
+        CREDENTIALS_IN_URL,
+        MAX_RESPONSE_BYTES,
+        PRIVATE_HOST,
+        REDIRECT_BLOCKED,
+        URL_BLOCKED,
+        check_url,
+        pinned_fetch,
+    )
+    from .result_contract import result_operation
+else:
+    from ssrf_guard import (
+        BAD_PORT,
+        BAD_SCHEME,
+        CREDENTIALS_IN_URL,
+        MAX_RESPONSE_BYTES,
+        PRIVATE_HOST,
+        REDIRECT_BLOCKED,
+        URL_BLOCKED,
+        check_url,
+        pinned_fetch,
+    )
+    from result_contract import result_operation
 
 
 MISSING_CONFIG = 'MISSING_CONFIG'
@@ -252,6 +267,7 @@ def _scholar_results(payload, limit):
     return {'ok': True, 'results': results, 'truncated': truncated}
 
 
+@result_operation
 def scholar_search(query, transport=None, *, limit=MAX_RESULTS, provider_config=_UNSET):
     try:
         fetch = _transport_or_error(transport, provider_config)
@@ -300,6 +316,7 @@ def _news_results(payload, limit):
     return {'ok': True, 'results': results, 'truncated': truncated}
 
 
+@result_operation
 def news_search(query, transport=None, *, limit=MAX_RESULTS, provider_config=_UNSET):
     try:
         fetch = _transport_or_error(transport, provider_config)
@@ -373,6 +390,7 @@ def _image_results(payload, limit):
     return {'ok': True, 'results': results, 'truncated': truncated}
 
 
+@result_operation
 def image_search(query, transport=None, *, limit=MAX_RESULTS, provider_config=_UNSET):
     try:
         fetch = _transport_or_error(transport, provider_config)

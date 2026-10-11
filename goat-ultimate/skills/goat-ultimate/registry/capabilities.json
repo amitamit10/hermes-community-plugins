@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "schema_version": 2,
+  "schema_version": 3,
   "counts": {
     "task_classes": 11,
     "by_status": {
@@ -16,10 +16,10 @@
       "goat": 3,
       "paid": 0
     },
-    "providers": 11,
+    "providers": 14,
     "by_provider_classification": {
       "canonical-free": 1,
-      "route": 9,
+      "route": 12,
       "future-unavailable": 1
     }
   },
@@ -305,7 +305,93 @@
         "access": "unavailable",
         "requires_key": false,
         "key_optional": false
+      },
+      {
+        "id": "crossref",
+        "name": "Crossref",
+        "classification": "route",
+        "capabilities": [
+          "web-search"
+        ],
+        "access": "anonymous",
+        "requires_key": false,
+        "key_optional": false
+      },
+      {
+        "id": "gdelt",
+        "name": "GDELT",
+        "classification": "route",
+        "capabilities": [
+          "web-search"
+        ],
+        "access": "anonymous",
+        "requires_key": false,
+        "key_optional": false
+      },
+      {
+        "id": "wikimedia-commons",
+        "name": "Wikimedia Commons",
+        "classification": "route",
+        "capabilities": [
+          "web-search"
+        ],
+        "access": "anonymous",
+        "requires_key": false,
+        "key_optional": false
       }
     ]
-  }
+  },
+  "operation_routes": [
+    {
+      "id": "answer",
+      "task_class": "web-search",
+      "tool": "goat_answer",
+      "arguments": {},
+      "provider_id": "wikipedia",
+      "status": "route",
+      "on_error": "fail_closed_no_fallback"
+    },
+    {
+      "id": "filtered-search",
+      "task_class": "web-search",
+      "tool": "goat_filtered_search",
+      "arguments": {},
+      "provider_id": "wikipedia",
+      "status": "route",
+      "on_error": "fail_closed_no_fallback"
+    },
+    {
+      "id": "scholar",
+      "task_class": "web-search",
+      "tool": "goat_vertical_search",
+      "arguments": {
+        "vertical": "scholar"
+      },
+      "provider_id": "crossref",
+      "status": "route",
+      "on_error": "fail_closed_no_fallback"
+    },
+    {
+      "id": "news",
+      "task_class": "web-search",
+      "tool": "goat_vertical_search",
+      "arguments": {
+        "vertical": "news"
+      },
+      "provider_id": "gdelt",
+      "status": "route",
+      "on_error": "fail_closed_no_fallback"
+    },
+    {
+      "id": "images",
+      "task_class": "web-search",
+      "tool": "goat_vertical_search",
+      "arguments": {
+        "vertical": "images"
+      },
+      "provider_id": "wikimedia-commons",
+      "status": "route",
+      "on_error": "fail_closed_no_fallback"
+    }
+  ]
 }

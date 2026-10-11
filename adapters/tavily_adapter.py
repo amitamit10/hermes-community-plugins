@@ -9,6 +9,7 @@ import json as _json
 from collections.abc import Mapping
 
 from ssrf_guard import GuardError, URL_BLOCKED, check_url, validate_public_url
+from result_contract import public_error_code as _central_code, result_operation
 
 
 API_BASE_URL = "https://api.tavily.com"
@@ -63,8 +64,8 @@ class TavilyClient:
             response = self._transport(
                 endpoint, method="POST", headers=headers, json=payload
             )
-        except Exception:
-            return {"ok": False, "error": "TRANSPORT_ERROR"}
+        except Exception as error:
+            return {"ok": False, "error": _central_code(error)}
 
         status, body = self._response_parts(response)
         if not 200 <= status < 300:
@@ -74,6 +75,7 @@ class TavilyClient:
             return {"ok": False, "error": "INVALID_RESPONSE"}
         return {"ok": True, "data": data}
 
+    @result_operation
     def search(self, query, **options):
         """Submit a Tavily Search API request."""
         if not self._ready():
@@ -84,6 +86,7 @@ class TavilyClient:
         payload["query"] = query.strip()
         return self._post(SEARCH_ENDPOINT, payload)
 
+    @result_operation
     def extract(self, urls, **options):
         """Extract one URL or a batch of up to 20 URLs."""
         if not self._ready():
@@ -109,6 +112,7 @@ class TavilyClient:
         payload["urls"] = url_list
         return self._post(EXTRACT_ENDPOINT, payload)
 
+    @result_operation
     def crawl(self, url, **options):
         """Start a Tavily Crawl API request."""
         if not self._ready():

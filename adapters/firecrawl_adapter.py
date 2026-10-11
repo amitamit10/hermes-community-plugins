@@ -3,6 +3,7 @@
 import json as _json
 
 from ssrf_guard import GuardError, URL_BLOCKED, validate_public_url
+from result_contract import public_error_code as _central_code, result_operation
 
 
 API_BASE_URL = "https://api.firecrawl.dev/v2"
@@ -28,10 +29,12 @@ class FirecrawlClient:
         self._transport = transport
         self._resolver = resolver
 
+    @result_operation
     def scrape(self, url, **options):
         """Submit a Firecrawl v2 scrape request."""
         return self._post(SCRAPE_ENDPOINT, url, options)
 
+    @result_operation
     def crawl(self, url, **options):
         """Start a Firecrawl v2 crawl request."""
         return self._post(CRAWL_ENDPOINT, url, options)
@@ -41,12 +44,12 @@ class FirecrawlClient:
             return {"ok": False, "error": MISSING_CONFIG}
         if not isinstance(url, str) or not url.strip():
             return {"ok": False, "error": "INVALID_REQUEST"}
+        if not callable(self._transport):
+            return {"ok": False, "error": MISSING_CONFIG}
         try:
             validate_public_url(url, resolver=self._resolver)
         except GuardError:
             return {"error": {"code": URL_BLOCKED}}
-        if not callable(self._transport):
-            return {"ok": False, "error": "TRANSPORT_ERROR"}
 
         headers = {
             "Authorization": "Bearer " + self._api_key,
@@ -56,8 +59,8 @@ class FirecrawlClient:
         payload["url"] = url
         try:
             response = self._transport(endpoint, method="POST", headers=headers, json=payload)
-        except Exception:
-            return {"ok": False, "error": "TRANSPORT_ERROR"}
+        except Exception as error:
+            return {"ok": False, "error": _central_code(error)}
 
         status, body = self._response_parts(response)
         if status < 200 or status >= 300:

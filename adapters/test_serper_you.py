@@ -1,6 +1,6 @@
 import unittest
 
-from serper_you_adapter import MISSING_CONFIG, SerperClient, YouClient
+from serper_you_adapter import AdapterResult, MISSING_CONFIG, SerperClient, YouClient
 
 
 class FakeTransport:
@@ -15,10 +15,15 @@ class FakeTransport:
             "headers": dict(headers),
             "json": dict(json),
         })
+        if isinstance(self.response, BaseException):
+            raise self.response
         return self.response
 
 
 class AdapterTests(unittest.TestCase):
+    def test_adapter_result_dataclass_remains_defined(self):
+        self.assertIn("status", AdapterResult.__dataclass_fields__)
+
     def test_missing_key_returns_missing_config_without_transport_call(self):
         for client_type in (SerperClient, YouClient):
             with self.subTest(client=client_type.__name__):
@@ -26,7 +31,7 @@ class AdapterTests(unittest.TestCase):
                 client = client_type(transport=transport)
                 result = client.search("example", api_key=None)
 
-                self.assertEqual(result.status, MISSING_CONFIG)
+                self.assertEqual(result, {"ok": False, "error": {"code": MISSING_CONFIG}})
                 self.assertEqual(transport.calls, [])
 
     def test_serper_is_marked_experimental_and_unverified(self):
@@ -41,7 +46,7 @@ class AdapterTests(unittest.TestCase):
 
         result = client.search("example", api_key="test-key")
 
-        self.assertEqual(result.status, "UNVERIFIED_CONFIG")
+        self.assertEqual(result, {"ok": False, "error": {"code": MISSING_CONFIG}})
         self.assertEqual(transport.calls, [])
 
     def test_serper_sends_only_explicitly_configured_request_details(self):
@@ -55,8 +60,7 @@ class AdapterTests(unittest.TestCase):
 
         result = client.search("example query", api_key="test-key")
 
-        self.assertEqual(result.status, "OK")
-        self.assertEqual(result.data, {"organic": []})
+        self.assertEqual(result, {"ok": True, "status": "OK", "data": {"organic": []}})
         self.assertEqual(transport.calls, [{
             "method": "POST",
             "url": "https://serper.invalid/search",
@@ -70,8 +74,7 @@ class AdapterTests(unittest.TestCase):
 
         result = client.search("example query", api_key="test-key")
 
-        self.assertEqual(result.status, "OK")
-        self.assertEqual(result.data, {"results": [{"title": "Example"}]})
+        self.assertEqual(result, {"ok": True, "status": "OK", "data": {"results": [{"title": "Example"}]}})
         self.assertEqual(transport.calls, [{
             "method": "POST",
             "url": "https://ydc-index.io/v1/search",

@@ -57,7 +57,7 @@ class BrowserTierTests(unittest.TestCase):
     def test_rejects_bad_start_url_before_transport(self):
         transport = FakeTransport()
         result = BrowserTier(transport=transport).fetch("http://example.com/")
-        self.assertEqual(result, {"ok": False, "error": URL_BLOCKED})
+        self.assertEqual(result, {"ok": False, "error": {"code": URL_BLOCKED}})
         self.assertEqual(transport.calls, [])
 
     def test_fake_http_transport_does_not_trigger_system_dns(self):
@@ -76,7 +76,7 @@ class BrowserTierTests(unittest.TestCase):
             start: {"status": 302, "headers": {"Location": "http://127.0.0.1/admin"}},
         })
         result = BrowserTier(transport=transport).fetch(start)
-        self.assertEqual(result, {"ok": False, "error": REDIRECT_BLOCKED})
+        self.assertEqual(result, {"ok": False, "error": {"code": REDIRECT_BLOCKED}})
         self.assertEqual(transport.calls, [start])
 
     def test_follows_two_explicit_public_redirects_through_gate(self):
@@ -104,7 +104,7 @@ class BrowserTierTests(unittest.TestCase):
             two: {"status": 302, "headers": {"location": "/3"}},
         })
         result = BrowserTier(transport=transport).fetch(start)
-        self.assertEqual(result, {"ok": False, "error": REDIRECT_BLOCKED})
+        self.assertEqual(result, {"ok": False, "error": {"code": REDIRECT_BLOCKED}})
         self.assertEqual(transport.calls, [start, one, two])
 
     def test_rejects_transport_that_hides_auto_followed_redirect(self):
@@ -113,7 +113,7 @@ class BrowserTierTests(unittest.TestCase):
             start: {"status": 200, "url": "https://other.example/end", "body": "hidden redirect"},
         })
         result = BrowserTier(transport=transport).fetch(start)
-        self.assertEqual(result, {"ok": False, "error": REDIRECT_BLOCKED})
+        self.assertEqual(result, {"ok": False, "error": {"code": REDIRECT_BLOCKED}})
         self.assertEqual(transport.calls, [start])
 
     def test_js_render_passes_gate_to_injected_cdp_callable(self):
@@ -130,7 +130,7 @@ class BrowserTierTests(unittest.TestCase):
 
         browser = FakeBrowser(action=action)
         result = render_js("https://example.com/app", browser, resolver=PUBLIC_RESOLVER)
-        self.assertEqual(result, {"ok": False, "error": URL_BLOCKED})
+        self.assertEqual(result, {"ok": False, "error": {"code": URL_BLOCKED}})
 
     def test_js_render_blocks_private_redirect(self):
         def action(url, request_gate):
@@ -138,12 +138,12 @@ class BrowserTierTests(unittest.TestCase):
             return {"status": 200, "body": "unreachable", "url": url}
 
         result = render_js("https://example.com/app", FakeBrowser(action=action), resolver=PUBLIC_RESOLVER)
-        self.assertEqual(result, {"ok": False, "error": REDIRECT_BLOCKED})
+        self.assertEqual(result, {"ok": False, "error": {"code": REDIRECT_BLOCKED}})
 
     def test_js_render_requires_redirect_evidence_for_changed_final_url(self):
         browser = FakeBrowser(final_url="https://other.example/landing")
         result = render_js("https://example.com/app", browser, resolver=PUBLIC_RESOLVER)
-        self.assertEqual(result, {"ok": False, "error": REDIRECT_BLOCKED})
+        self.assertEqual(result, {"ok": False, "error": {"code": REDIRECT_BLOCKED}})
 
     def test_browser_request_log_is_checked(self):
         def action(url, request_gate):
@@ -156,7 +156,7 @@ class BrowserTierTests(unittest.TestCase):
             }
 
         result = render_js("https://example.com/app", FakeBrowser(action=action), resolver=PUBLIC_RESOLVER)
-        self.assertEqual(result, {"ok": False, "error": URL_BLOCKED})
+        self.assertEqual(result, {"ok": False, "error": {"code": URL_BLOCKED}})
 
     def test_cloudflare_callable_runs_only_for_non_captcha_challenge(self):
         start = "https://example.com/article"
@@ -177,7 +177,7 @@ class BrowserTierTests(unittest.TestCase):
         })
         browser = FakeBrowser()
         result = cloudflare_bypass(start, transport, browser, resolver=PUBLIC_RESOLVER)
-        self.assertEqual(result, {"ok": False, "error": URL_BLOCKED})
+        self.assertEqual(result, {"ok": False, "error": {"code": URL_BLOCKED}})
         self.assertEqual(browser.calls, [])
 
     def test_recovery_returns_direct_success_without_fallback(self):
@@ -232,7 +232,7 @@ class BrowserTierTests(unittest.TestCase):
         })
         browser = FakeBrowser()
         result = BrowserTier(transport=transport, browser_callable=browser).recover(url)
-        self.assertEqual(result, {"ok": False, "error": REDIRECT_BLOCKED})
+        self.assertEqual(result, {"ok": False, "error": {"code": REDIRECT_BLOCKED}})
         self.assertEqual(transport.calls, [url])
         self.assertEqual(browser.calls, [])
 
@@ -259,7 +259,7 @@ class BrowserTierTests(unittest.TestCase):
         url = "https://example.com/article"
         transport = FakeTransport({url: RuntimeError("internal diagnostic")})
         result = BrowserTier(transport=transport).fetch(url)
-        self.assertEqual(result, {"ok": False, "error": URL_BLOCKED})
+        self.assertEqual(result, {"ok": False, "error": {"code": URL_BLOCKED}})
         self.assertNotIn("internal diagnostic", repr(result))
 
     def test_browser_url_gate_exception_maps_only_public_error_codes(self):
@@ -267,7 +267,7 @@ class BrowserTierTests(unittest.TestCase):
             raise URLGateError("PRIVATE_HOST")
 
         result = render_js("https://example.com/app", FakeBrowser(action=action), resolver=PUBLIC_RESOLVER)
-        self.assertEqual(result, {"ok": False, "error": URL_BLOCKED})
+        self.assertEqual(result, {"ok": False, "error": {"code": URL_BLOCKED}})
 
 
 if __name__ == "__main__":

@@ -3,6 +3,9 @@ import unittest
 from firecrawl_adapter import CRAWL_ENDPOINT, SCRAPE_ENDPOINT, FirecrawlClient, MISSING_CONFIG
 
 
+PUBLIC_RESOLVER = lambda host, port, **kwargs: ["93.184.216.34"]  # noqa: E731
+
+
 class FakeTransport:
     def __init__(self, response=None, error=None):
         self.response = response
@@ -19,7 +22,7 @@ class FakeTransport:
 class FirecrawlClientTests(unittest.TestCase):
     def test_scrape_posts_authenticated_payload_and_returns_provider_data(self):
         transport = FakeTransport({"status": 200, "body": {"success": True, "data": {"markdown": "hello"}}})
-        client = FirecrawlClient("test-key", transport)
+        client = FirecrawlClient("test-key", transport, resolver=PUBLIC_RESOLVER)
 
         result = client.scrape("https://example.com", formats=["markdown"], onlyMainContent=True)
 
@@ -33,7 +36,7 @@ class FirecrawlClientTests(unittest.TestCase):
 
     def test_crawl_posts_to_crawl_endpoint_with_options(self):
         transport = FakeTransport({"status": 200, "body": {"success": True, "id": "crawl-1"}})
-        client = FirecrawlClient("test-key", transport)
+        client = FirecrawlClient("test-key", transport, resolver=PUBLIC_RESOLVER)
 
         result = client.crawl("https://example.com/docs", limit=25, maxDepth=2)
 
@@ -48,24 +51,25 @@ class FirecrawlClientTests(unittest.TestCase):
         result = client.scrape("https://example.com")
 
         self.assertTrue(FirecrawlClient.requires_key)
-        self.assertEqual(result, {"ok": False, "error": MISSING_CONFIG})
+        self.assertEqual(result, {"ok": False, "error": {"code": MISSING_CONFIG}})
         self.assertEqual(transport.calls, [])
 
-    def test_http_error_returns_status_without_exposing_response_body(self):
+    def test_http_error_is_sanitized_without_exposing_response_body(self):
         transport = FakeTransport({"status": 429, "body": {"error": "private provider detail"}})
-        client = FirecrawlClient("test-key", transport)
+        client = FirecrawlClient("test-key", transport, resolver=PUBLIC_RESOLVER)
 
         result = client.crawl("https://example.com")
 
-        self.assertEqual(result, {"ok": False, "error": "HTTP_ERROR", "status": 429})
+        self.assertEqual(result, {"ok": False, "error": {"code": "URL_BLOCKED"}})
+        self.assertNotIn("private provider detail", repr(result))
 
     def test_transport_exception_is_reported_without_leaking_exception_text(self):
         transport = FakeTransport(error=RuntimeError("secret diagnostic"))
-        client = FirecrawlClient("test-key", transport)
+        client = FirecrawlClient("test-key", transport, resolver=PUBLIC_RESOLVER)
 
         result = client.scrape("https://example.com")
 
-        self.assertEqual(result, {"ok": False, "error": "TRANSPORT_ERROR"})
+        self.assertEqual(result, {"ok": False, "error": {"code": "URL_BLOCKED"}})
         self.assertNotIn("secret diagnostic", repr(result))
 
 

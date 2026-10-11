@@ -43,25 +43,26 @@ class RSSWatcherTests(unittest.TestCase):
         watcher = RSSWatcher(transport)
         first = watcher.poll("https://example.test/feed")
         second = watcher.poll("https://example.test/feed")
-        self.assertEqual([item["id"] for item in first], ["a", "b"])
-        self.assertEqual(second, [])
+        self.assertEqual([item["id"] for item in first["items"]], ["a", "b"])
+        self.assertIs(first["ok"], True)
+        self.assertEqual(second, {"ok": True, "items": []})
         self.assertEqual(transport.calls, ["https://example.test/feed"] * 2)
 
     def test_max_items_leaves_overflow_unseen_for_next_poll(self):
         transport = FakeTransport({"feed": FEED_AB})
         watcher = RSSWatcher(transport, max_items=1)
-        self.assertEqual([item["id"] for item in watcher.poll("feed")], ["a"])
-        self.assertEqual([item["id"] for item in watcher.poll("feed")], ["b"])
-        self.assertEqual(watcher.poll("feed"), [])
+        self.assertEqual([item["id"] for item in watcher.poll("feed")["items"]], ["a"])
+        self.assertEqual([item["id"] for item in watcher.poll("feed")["items"]], ["b"])
+        self.assertEqual(watcher.poll("feed"), {"ok": True, "items": []})
 
     def test_state_path_persists_dedup_across_instances(self):
         transport = FakeTransport({"feed": FEED_AB})
         with tempfile.TemporaryDirectory() as directory:
             state_path = Path(directory) / "watermark.json"
             first_watcher = RSSWatcher(transport, state_path=state_path)
-            self.assertEqual([item["id"] for item in first_watcher.poll("feed")], ["a", "b"])
+            self.assertEqual([item["id"] for item in first_watcher.poll("feed")["items"]], ["a", "b"])
             second_watcher = RSSWatcher(transport, state_path=state_path)
-            self.assertEqual(second_watcher.poll("feed"), [])
+            self.assertEqual(second_watcher.poll("feed"), {"ok": True, "items": []})
             self.assertEqual(second_watcher.seen_ids, ("a", "b"))
 
     def test_atom_feed_and_new_item(self):
@@ -80,8 +81,8 @@ class RSSWatcherTests(unittest.TestCase):
     def test_fetch_error_does_not_advance_watermark(self):
         transport = FakeTransport({"feed": {"status": 503, "body": FEED_AB}})
         watcher = RSSWatcher(transport)
-        with self.assertRaisesRegex(RuntimeError, "503"):
-            watcher.poll("feed")
+        result = watcher.poll("feed")
+        self.assertEqual(result, {"ok": False, "error": {"code": "URL_BLOCKED"}})
         self.assertEqual(watcher.seen_ids, ())
 
 

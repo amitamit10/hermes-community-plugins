@@ -9,6 +9,8 @@ The client never creates a network transport or falls back to a keyless API.
 import json as _json
 from collections.abc import Mapping
 
+from result_contract import result_operation
+
 
 MISSING_CONFIG = "MISSING_CONFIG"
 SEARCH_URL = "https://api.exa.ai/search"
@@ -91,6 +93,7 @@ class ExaClient:
             }
         return {"ok": True, "data": body}
 
+    @result_operation
     def search(self, query, *, num_results=10, search_type=None, contents=None):
         if not self._ready():
             return _missing_config()
@@ -109,6 +112,7 @@ class ExaClient:
             payload["contents"] = dict(contents)
         return self._post(SEARCH_URL, payload)
 
+    @result_operation
     def contents(self, ids, **options):
         if not self._ready():
             return _missing_config()

@@ -9,6 +9,9 @@ from anysearch_adapter import (
 )
 
 
+PUBLIC_RESOLVER = lambda host, port, **kwargs: ["93.184.216.34"]  # noqa: E731
+
+
 def rpc_text(text):
     return {
         "status": 200,
@@ -72,7 +75,7 @@ class AnySearchAdapterTests(unittest.TestCase):
 
     def test_batch_search_and_extract_dispatch_to_expected_tools(self):
         transport = FakeTransport(rpc_text("batch"), rpc_text("markdown"))
-        client = AnySearchClient(transport=transport)
+        client = AnySearchClient(transport=transport, resolver=PUBLIC_RESOLVER)
 
         batch = client.batch_search([{"query": "one"}, {"query": "two", "max_results": 2}])
         extracted = client.extract("https://example.com/article")
@@ -112,8 +115,7 @@ class AnySearchAdapterTests(unittest.TestCase):
         self.assertTrue(discovered["ok"])
         self.assertEqual(missing, {
             "ok": False,
-            "error": MISSING_REQUIRED_PARAMS,
-            "missing": ["ticker"],
+            "error": {"code": URL_BLOCKED},
         })
         self.assertEqual(searched, {"ok": True, "data": "stock results"})
         self.assertEqual(len(transport.calls), 2)
@@ -134,7 +136,7 @@ class AnySearchAdapterTests(unittest.TestCase):
 
         result = client.search("AAPL", domain="finance", sub_domain="finance.us_stock")
 
-        self.assertEqual(result, {"ok": False, "error": "VERTICAL_DISCOVERY_REQUIRED"})
+        self.assertEqual(result, {"ok": False, "error": {"code": URL_BLOCKED}})
         self.assertEqual(transport.calls, [])
 
     def test_quota_http_response_maps_to_url_blocked_without_retry(self):
@@ -143,7 +145,7 @@ class AnySearchAdapterTests(unittest.TestCase):
 
         result = client.search("query")
 
-        self.assertEqual(result, {"ok": False, "error": URL_BLOCKED})
+        self.assertEqual(result, {"ok": False, "error": {"code": URL_BLOCKED}})
         self.assertEqual(len(transport.calls), 1)
 
     def test_network_failure_maps_to_url_blocked_without_fallback(self):
@@ -152,13 +154,13 @@ class AnySearchAdapterTests(unittest.TestCase):
 
         result = client.search("query")
 
-        self.assertEqual(result, {"ok": False, "error": URL_BLOCKED})
+        self.assertEqual(result, {"ok": False, "error": {"code": URL_BLOCKED}})
         self.assertEqual(len(transport.calls), 1)
 
     def test_missing_transport_returns_missing_config_without_network_fallback(self):
         client = AnySearchClient()
 
-        self.assertEqual(client.search("query"), {"ok": False, "error": MISSING_CONFIG})
+        self.assertEqual(client.search("query"), {"ok": False, "error": {"code": MISSING_CONFIG}})
 
 
 if __name__ == "__main__":

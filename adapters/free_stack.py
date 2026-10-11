@@ -15,7 +15,12 @@ import socket
 import ssl
 from urllib.parse import parse_qs, quote, urlencode, urljoin, urlsplit, urlunsplit
 
-from ddg_parser import _SearchParser, _VOID_TAGS, _plain_text
+if __package__:
+    from .ddg_parser import _SearchParser, _VOID_TAGS, _plain_text
+    from .result_contract import result_operation
+else:
+    from ddg_parser import _SearchParser, _VOID_TAGS, _plain_text
+    from result_contract import result_operation
 
 
 DEFAULT_SEARXNG_URL = "http://localhost:8888"
@@ -384,6 +389,7 @@ def _ddg_result_url(raw_url):
     return raw_url if allowed else None
 
 
+@result_operation
 def duckduckgo_search(query, transport=None, *, max_results=MAX_RESULTS):
     """Search DuckDuckGo's keyless HTML endpoint and parse result anchors."""
     try:
@@ -411,6 +417,7 @@ def duckduckgo_search(query, transport=None, *, max_results=MAX_RESULTS):
         return _error_result(error)
 
 
+@result_operation
 def wikipedia_search(query, transport=None, *, max_results=MAX_RESULTS):
     """Search Wikipedia through its keyless MediaWiki Action API."""
     try:
@@ -473,6 +480,7 @@ def _searxng_endpoint(instance_url):
         raise _ClientError(URL_BLOCKED) from None
 
 
+@result_operation
 def searxng_search(
     query,
     instance_url=DEFAULT_SEARXNG_URL,
@@ -518,6 +526,7 @@ def searxng_search(
         return _error_result(error, instance_unreachable=True)
 
 
+@result_operation
 def fallback_chain(
     query,
     instance_url=DEFAULT_SEARXNG_URL,

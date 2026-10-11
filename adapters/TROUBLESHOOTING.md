@@ -1,119 +1,68 @@
-# GOAT Packs — Troubleshooting
+# Troubleshooting — GOAT V3
 
-All public failures use a closed set of error codes. No stack traces, provider keys, or internal diagnostics are exposed. Map the code, find the cause, apply the fix.
+All public failures use a closed set. No stack traces, keys, or host internals leak. Map the code, apply the fix. All successes are `{"ok": true, ...}`; `truncated: true` is not an error.
 
 ## Quick table
 
 | Code | Meaning | Typical cause | Fix |
 |---|---|---|---|
-| `URL_BLOCKED` | URL failed public-HTTPS gate before any fetch, or response/body was malformed | private host, bad scheme/port, credentials in URL, control chars, non-global IP, truncated/malformed payload | Use a public `https://` URL on port 443; strip credentials; re-encode query; check payload shape |
-| `REDIRECT_BLOCKED` | A redirect was unsafe or exceeded the limit | redirect to `http`/private host/different origin (crawl), userinfo/port violation, >2 hops, final URL outside gate | Follow only `https` same-public redirects; cap at 2 hops; for crawl keep same origin |
-| `MISSING_CONFIG` | Required configuration absent — no fetch attempted | `SearXNG` `base_url`/`instance_url` missing, `provider_config=None`, transport `None` without default | Supply `base_url="https://search.example"` (free_search) or `instance_url` (free_stack); pass an injected `transport` for tests |
+| `URL_BLOCKED` | URL or argument failed the closed policy before fetch | private host, bad scheme/port, credentials in URL, control chars, non-global IP, unknown field or type error on closed schema | Use public `https://` on 443, no `@`, encode query; drop unknown fields; fix types (booleans/strings for integers) |
+| `REDIRECT_BLOCKED` | Redirect unsafe or too many hops | `http`/private host/credentials/bad port, loopback→public origin change, >2 hops | Keep redirects `https` public within gate, same-origin where required, ≤2 hops |
+| `MISSING_CONFIG` | Required dependency absent — no fetch attempted | `search` or `vertical_transports` is `None`/non-callable, transport missing in fake fixture, required config not passed | Inject `transport` / provide `deps` via `v3_wiring.WiringDependencies`; supply Hermes callables for live use |
 
-All three appear as `{"error": {"code": "<CODE>"}}`. Success is `{"ok": True, ...}`; `truncated=True` is not an error — it signals >5 results or >8000-char text.
-
----
+All three appear as `{"ok": false, "error": {"code": "<CODE>"}}`.
 
 ## URL_BLOCKED
 
-**When:** any URL (input, result, `base_url`, redirect target) fails `ssrf_guard.check_url` / `free_stack._check_url`. Also when a response body is not valid HTML/JSON, or a result URL is not `https` public — e.g., `javascript:`, `file:`, `http:`, or `duckduckgo.com` redirect without `uddg`.
-
-**Common examples:**
-
-- `http://example.org` → `https://example.org` (staging/packs require `https`; `free_stack` SearXNG instance is the only `http://localhost` exception)
-- `https://user:pass@example.org` → strip credentials
-- `https://127.0.0.1/`, `https://10.0.0.5/`, `https://[::1]/`, `https://intranet.local/` → private/loopback/link-local → blocked by design
-- `https://example.org:8080/search` → non-443 port → blocked (omit port; 443 is implied)
-- `https://example.org/search with space` → control char → percent-encode query (`q=...` via `urlencode`)
-- `javascript:alert(1)` or `//duckduckgo.com/l/?uddg=` missing target → result URL discarded
-
-**Checks:**
+When: any URL (input, result, endpoint, redirect, crawl link) or argument fails `ssrf_guard.check_url` / closed schema. Includes: `http:`, `file:`, `javascript:`, `http://127.0.0.1/`, `https://10.0.0.5/`, `https://example.org:8080/` (non-443), `https://user:pass@example.org`, `https://example.org/space here`, `limit` instead of `max_results`, `max_results: true`/`"5"`, time `"not-a-date"`, `allowed_domains: ["https://example.org"]` (must be bare host).
 
 ```python
-from ssrf_guard import check_url
-print(check_url("https://example.org/p"))      # (True, None) expected
-print(check_url("http://example.org/p"))       # (False, 'URL_BLOCKED')
-print(check_url("https://user:pass@example.org")) # (False, URL_BLOCKED)
+from goat-web.plugins.goat-web.tool_schemas import validate_args, SCHEMAS
+print(validate_args(SCHEMAS["goat_search"]["parameters"], {"query": "hi", "limit": 2}))  # (False, None) → URL_BLOCKED
+print(validate_args(SCHEMAS["goat_search"]["parameters"], {"query": "hi", "max_results": "2"}))  # (False, None)
 ```
 
-**Fix:** use `https://` public hostname, no port, no `@`, encode with `urllib.parse.urlencode`; for `free_search.searxng_search` pass `base_url="https://search.example/"` without query/fragment; for `free_stack` keep default `http://localhost:8888` or a validated `http(s)` loopback.
+Check: `python3 -B goat-web/scripts/build_plugin_bundle.py --help` confirms the builder still expects `--output` as a fresh directory.
 
-**Also check:** `free_search` and `native_tier` bound max_results to 5 and snippet/text to 8000 chars; a 0-limit is not an error but returns empty results with `truncated=True`. Wikipedia `OpenSearch` (free_search) vs `Action API` (free_stack) both map malformed JSON to `URL_BLOCKED`.
-
----
+Failures also include malformed HTML/JSON or result URLs not passing the gate (e.g., `duckduckgo.com/l/?uddg=` missing target).
 
 ## REDIRECT_BLOCKED
 
-**When:** a hop after the initial fetch points outside the public gate, or exceeds policy.
-
-- Initial URL passes but `final_url`/`Location` is `http`, private, credentials, bad port, or cross-origin (crawl).
-- More than 2 redirects (both `free_search` pinned fetch and `free_stack` loop guard).
-- `goat-browser-staging` browser/crawl: same-origin redirect required; `free_stack` also blocks loopback→public origin change.
-
-**Examples:**
+When: a hop after the initial fetch violates the gate or exceeds policy. The built bundle pins official endpoints (`pinned_fetch` timeout 10s, 1 MiB, 0 redirects); any 3xx is `REDIRECT_BLOCKED` before parsing.
 
 ```python
-from free_search import duckduckgo_search
-# Fake transport that hides a redirect via final_url:
 def evil(url): return {"body": "{}", "url": "http://127.0.0.1/private"}
+from adapters.free_stack import duckduckgo_search
 print(duckduckgo_search("q", transport=evil))
-# {'error': {'code': 'REDIRECT_BLOCKED'}}
-
-from free_stack import searxng_search
-# Loopback SearXNG redirecting to public host is blocked:
-def redirecting(url): return {"status": 302, "headers": {"Location": "https://example.org"}, "body": ""}
-print(searxng_search("q", instance_url="http://localhost:8888", transport=redirecting))
-# {'error': {'code': 'REDIRECT_BLOCKED'}}
+# {'ok': False, 'error': {'code': 'REDIRECT_BLOCKED'}}
 ```
-
-**Checks:**
-
-- Inspect `transport` return: if you use `{"url": final_url}` or `Location:` header, that value must itself pass `check_url` with `https` on 443 (or loopback for the pinned SearXNG instance).
-- For `crawl_pro`, every link enqueued must be same-origin as `start_url`; robots `Disallow` that yields `("/" ,)` blocks the crawl rather than returning `REDIRECT_BLOCKED`.
-
-**Fix:** ensure targets only redirect within `https://` public space; keep hops ≤2; for local SearXNG keep redirects loopback-only; for crawls, seed with canonical `https://host/` and author only same-origin links.
-
----
 
 ## MISSING_CONFIG
 
-**When:** a required provider address/key is not supplied — the pack never attempts a fetch.
+When: a required dependency is not supplied. In V3 wiring the seven tools use explicit `WiringDependencies(search=..., vertical_transports={...})`. Default wiring binds the four pinned official transports lazily; if any transport is `None` or non-callable the handler returns `MISSING_CONFIG` without calling fetch.
 
 | Caller | Missing value | Diagnostic |
 |---|---|---|
-| `free_search.searxng_search` | `base_url` and `provider_config["base_url"]` both empty/None | Returns `MISSING_CONFIG` before `transport` is called |
-| `free_stack.searxng_search` | `instance_url` is `None`/`""` or unreachable (`OSError` on default) | Returns `MISSING_CONFIG`; no fallback hops counted |
-| `native_tier.native_search/native_extract` | `web_search`/`web_extract` is `None` | Returns `MISSING_CONFIG` without calling the tier |
-| `free_search.duckduckgo_search(..., provider_config=None)` | explicit `None` signals unconfigured provider | `MISSING_CONFIG` even with a valid transport (test: `test_errors_follow_goat_public_codes`) |
-| `free_stack.fallback_chain` | first provider was `MISSING_CONFIG` | Stops immediately even if `allow_fallback=True`; `source` is that provider, no extra transport calls |
-
-**Examples:**
+| `goat_answer` / `goat_filtered_search` | `search` not callable | `MISSING_CONFIG` before candidate synthesis |
+| `goat_vertical_search` | `vertical_transports[vertical]` absent | `MISSING_CONFIG` before endpoint call |
+| `goat_*` (legacy) | `transport` absent and missing required URL/config | `MISSING_CONFIG` without weaker retry |
 
 ```python
-from free_search import searxng_search
-print(searxng_search("q"))  # {'error': {'code': 'MISSING_CONFIG'}} — no base_url
-print(searxng_search("q", base_url="https://search.example", transport=lambda u: {"results": []}))
-# {'ok': True, ...} — now configured
-
-from free_stack import searxng_search as fs_search
-print(fs_search("q", instance_url=None, transport=lambda u: {"results": []}))
-# {'error': {'code': 'MISSING_CONFIG'}} — transport not called
-
-from free_search import duckduckgo_search
-print(duckduckgo_search("q", transport=lambda u: "ok", provider_config=None))
-# {'error': {'code': 'MISSING_CONFIG'}}
+from adapters.free_verticals import scholar_search
+print(scholar_search("q", transport=None))
+# {'ok': False, 'error': {'code': 'MISSING_CONFIG'}}  — no default network in offline test path when transport is None is context-dependent
 ```
 
-**Fix:** pass `base_url="https://search.example"` (free_search, must be `https` without query) or `instance_url="http://localhost:8888/"` (free_stack, loopback allowed only there). For tests, always inject a `transport` and a valid URL; `MISSING_CONFIG` tests assert `transport.calls == []` to prove no fetch was attempted.
+## Adapter specifics
 
----
+- **RSS watcher** (`adapters/rss_watcher.py`): `id` prefers `guid`/`id`, then `link`, then `sha256:` hash of title+published+summary. `max_items` bounds per poll; overflow remains unseen. Persist via `state_path` JSON `{version, seen}`.
+- **Serper / You** (`serper_you_adapter.py`): `SerperClient` requires `endpoint` + `auth_header` + `payload_builder` plus `api_key`; missing pieces → `MISSING_CONFIG` without sending. Serper is marked `experimental/unverified`; You posts JSON to `https://ydc-index.io/v1/search` with `X-API-Key`.
+- **Crossref / GDELT / Commons**: `free_verticals` returns safe results only — `scholar` DOI links, `news` GDELT metadata+links, `images` per-file license/credit/URL; records without URLs or required licensing are dropped without download.
 
 ## Validate failures
 
-- `ImportError: No module named 'ddg_parser'` / `url_gate` — you copied a subset. Recopy the full `goat-packs/` directory; `QUICKSTART.md` step 1 validates this.
-- `Ran 177 tests OK` expected; `160 tests` means the old staging-`PYTHONPATH` workaround is still assumed — update to the vendored `url_gate.py` + `ddg_parser.py` (no `PYTHONPATH` needed).
-- `fuzz_gate.py` 4288/0 expected; any failure is a gate regression, not a network issue (the fuzzer is deterministic and offline).
+- `test_portable_bundle` failure about missing approved bundle in a fresh scratch is expected outside the staged approval path — rebuild via `build_plugin_bundle.py --output <fresh dir>` and re-check with `--check`.
+- `ModuleNotFoundError: _goat_v3_vendor` means you tried to use the source template `goat-web/plugins/goat-web` directly — use the built `/tmp/hermes-goat-web` instead.
+- Hermes `validate`/`doctor` flags: run `hermes --help`, `hermes plugins --help`, `hermes plugins validate --help` read-only before scripting; do not assume local-path `install` support if your Hermes reports catalog/git only.
 
-## Getting help
-
-Include in a bug report: pack commit, the exact `error.code`, the sanitized URL host (no private IP, no credentials), `source`/`transitions` for fallback, and a minimal `FakeTransport` repro. Do not paste private hostnames, cloud metadata (`169.254.169.254`), or provider keys.
+Include in a bug report: exact `error.code`, sanitized host only, `source`/`transitions` where relevant, and a minimal `FakeTransport` repro. Do not paste private hostnames, cloud metadata (`169.254.169.254`), or keys.

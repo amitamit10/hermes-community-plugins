@@ -79,7 +79,7 @@ class FreeSearchTests(unittest.TestCase):
         invalid = duckduckgo_search("  ", transport=transport)
 
         self.assertEqual(result, {"ok": True, "results": [], "truncated": True})
-        self.assertEqual(invalid, {"error": {"code": URL_BLOCKED}})
+        self.assertEqual(invalid, {"ok": False, "error": {"code": URL_BLOCKED}})
         self.assertEqual(len(transport.calls), 1)
 
     def test_wikipedia_uses_opensearch_api_and_normalizes_records(self):
@@ -121,14 +121,14 @@ class FreeSearchTests(unittest.TestCase):
 
         self.assertEqual(len(result["results"]), MAX_RESULTS)
         self.assertTrue(result["truncated"])
-        self.assertEqual(malformed, {"error": {"code": URL_BLOCKED}})
+        self.assertEqual(malformed, {"ok": False, "error": {"code": URL_BLOCKED}})
 
     def test_searxng_fails_closed_without_config_and_uses_injected_base_url(self):
         unconfigured_transport = FakeTransport({"results": []})
         missing = searxng_search("query")
         missing_with_transport = searxng_search("query", transport=unconfigured_transport)
-        self.assertEqual(missing, {"error": {"code": MISSING_CONFIG}})
-        self.assertEqual(missing_with_transport, {"error": {"code": MISSING_CONFIG}})
+        self.assertEqual(missing, {"ok": False, "error": {"code": MISSING_CONFIG}})
+        self.assertEqual(missing_with_transport, {"ok": False, "error": {"code": MISSING_CONFIG}})
         self.assertEqual(unconfigured_transport.calls, [])
 
         transport = FakeTransport({"status": 200, "body": json.dumps({"results": [
@@ -169,17 +169,17 @@ class FreeSearchTests(unittest.TestCase):
             "url": "http://127.0.0.1/private",
         }))
 
-        self.assertEqual(missing_provider, {"error": {"code": MISSING_CONFIG}})
-        self.assertEqual(bad_transport, {"error": {"code": URL_BLOCKED}})
-        self.assertEqual(provider_error, {"error": {"code": URL_BLOCKED}})
-        self.assertEqual(redirected, {"error": {"code": REDIRECT_BLOCKED}})
+        self.assertEqual(missing_provider, {"ok": False, "error": {"code": MISSING_CONFIG}})
+        self.assertEqual(bad_transport, {"ok": False, "error": {"code": URL_BLOCKED}})
+        self.assertEqual(provider_error, {"ok": False, "error": {"code": URL_BLOCKED}})
+        self.assertEqual(redirected, {"ok": False, "error": {"code": REDIRECT_BLOCKED}})
 
     def test_searxng_rejects_unsafe_and_malformed_base_urls(self):
         for base_url in ("http://127.0.0.1:8080", "https://user:pass@search.example", "file:///etc"):
             with self.subTest(base_url=base_url):
                 transport = FakeTransport({"results": []})
                 result = searxng_search("q", base_url=base_url, transport=transport)
-                self.assertEqual(result, {"error": {"code": URL_BLOCKED}})
+                self.assertEqual(result, {"ok": False, "error": {"code": URL_BLOCKED}})
                 self.assertEqual(transport.calls, [])
 
     def test_searxng_rejects_empty_query(self):
@@ -187,7 +187,7 @@ class FreeSearchTests(unittest.TestCase):
 
         result = searxng_search(" ", base_url="https://search.example", transport=transport)
 
-        self.assertEqual(result, {"error": {"code": URL_BLOCKED}})
+        self.assertEqual(result, {"ok": False, "error": {"code": URL_BLOCKED}})
         self.assertEqual(transport.calls, [])
 
 

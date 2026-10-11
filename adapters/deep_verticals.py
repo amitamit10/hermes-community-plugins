@@ -25,6 +25,8 @@ from collections.abc import Mapping
 from datetime import date
 from urllib.parse import quote, urlencode, urlsplit
 
+from result_contract import result_operation
+
 
 STOOQ_CSV_ENDPOINT = "https://stooq.com/q/d/l/"
 NVD_CVE_ENDPOINT = "https://services.nvd.nist.gov/rest/json/cves/2.0"
@@ -193,6 +195,7 @@ def _stock_prices(text):
     return prices
 
 
+@result_operation
 def stooq_daily(symbol, transport=None, *, start_date=None, end_date=None):
     """Return daily OHLCV records from Stooq's public CSV endpoint.
 
@@ -216,6 +219,7 @@ def stooq_daily(symbol, transport=None, *, start_date=None, end_date=None):
 _CVE_ID_RE = re.compile(r"CVE-\d{4}-\d{4,}\Z", re.IGNORECASE)
 
 
+@result_operation
 def nvd_cve_lookup(cve_id, transport=None):
     """Look up one CVE using the public, keyless NVD CVE API 2.0."""
     def operation():
@@ -252,6 +256,7 @@ def nvd_cve_lookup(cve_id, transport=None):
 _DOI_RE = re.compile(r"10\.\d{4,9}/\S+\Z", re.IGNORECASE)
 
 
+@result_operation
 def crossref_doi_lookup(doi, transport=None):
     """Retrieve a Crossref work record for a literal DOI identifier."""
     def operation():
@@ -279,6 +284,7 @@ _CURRENT_WEATHER_VARIABLES = (
 _TIMEZONE_RE = re.compile(r"[A-Za-z0-9_+./-]{1,64}\Z")
 
 
+@result_operation
 def open_meteo_forecast(latitude, longitude, transport=None, *, forecast_days=1, timezone="auto"):
     """Fetch current conditions from Open-Meteo's no-key forecast API."""
     def operation():
@@ -328,6 +334,7 @@ def open_meteo_forecast(latitude, longitude, transport=None, *, forecast_days=1,
 _CURRENCY_CODE_RE = re.compile(r"[A-Z]{3}\Z")
 
 
+@result_operation
 def frankfurter_rates(base="EUR", quotes=None, transport=None, *, on_date=None):
     """Fetch current or dated exchange rates from the keyless Frankfurter v2 API.
 

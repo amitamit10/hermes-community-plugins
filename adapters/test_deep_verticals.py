@@ -28,6 +28,7 @@ class DeepVerticalsTests(unittest.TestCase):
         result = dv.stooq_daily("aapl.us", transport=transport)
 
         self.assertEqual(result, {
+            "ok": True,
             "symbol": "aapl.us",
             "prices": [{
                 "date": "2024-01-02", "open": 185.64, "high": 188.44,
@@ -64,6 +65,7 @@ class DeepVerticalsTests(unittest.TestCase):
         result = dv.nvd_cve_lookup("CVE-2024-12345", transport=transport)
 
         self.assertEqual(result, {
+            "ok": True,
             "cve_id": "CVE-2024-12345", "found": True,
             "total_results": 1, "cve": payload["vulnerabilities"][0]["cve"],
         })
@@ -77,6 +79,7 @@ class DeepVerticalsTests(unittest.TestCase):
             "CVE-2024-12345", transport=FakeTransport({"totalResults": 0, "vulnerabilities": []}),
         )
         self.assertEqual(result, {
+            "ok": True,
             "cve_id": "CVE-2024-12345", "found": False, "total_results": 0, "cve": None,
         })
 
@@ -86,7 +89,7 @@ class DeepVerticalsTests(unittest.TestCase):
 
         result = dv.crossref_doi_lookup("10.1234/abc.def", transport=transport)
 
-        self.assertEqual(result, {"doi": "10.1234/abc.def", "work": work})
+        self.assertEqual(result, {"ok": True, "doi": "10.1234/abc.def", "work": work})
         request = urlsplit(transport.calls[0])
         self.assertEqual((request.scheme, request.netloc, request.path),
                          ("https", "api.crossref.org", "/works/10.1234/abc.def"))
@@ -96,7 +99,7 @@ class DeepVerticalsTests(unittest.TestCase):
         result = dv.crossref_doi_lookup(
             "10.5555/example", transport=FakeTransport({"status": "ok", "message": work}),
         )
-        self.assertEqual(result, {"doi": "10.5555/example", "work": work})
+        self.assertEqual(result, {"ok": True, "doi": "10.5555/example", "work": work})
 
     def test_open_meteo_forecast_requests_current_conditions(self):
         current = {"time": "2024-01-01T12:00", "temperature_2m": 12.3, "weather_code": 3}
@@ -109,6 +112,7 @@ class DeepVerticalsTests(unittest.TestCase):
         result = dv.open_meteo_forecast(52.52, 13.41, transport=transport)
 
         self.assertEqual(result, {
+            "ok": True,
             "latitude": 52.52, "longitude": 13.419, "timezone": "Europe/Berlin",
             "current": current, "current_units": {"temperature_2m": "°C"},
         })
@@ -130,7 +134,7 @@ class DeepVerticalsTests(unittest.TestCase):
             base="USD", quotes=["EUR"], on_date="2024-01-02", transport=transport,
         )
 
-        self.assertEqual(result, {"base": "USD", "rates": rates})
+        self.assertEqual(result, {"ok": True, "base": "USD", "rates": rates})
         request = urlsplit(transport.calls[0])
         self.assertEqual((request.netloc, request.path),
                          ("api.frankfurter.dev", "/v2/rates"))
@@ -147,23 +151,23 @@ class DeepVerticalsTests(unittest.TestCase):
             dv.open_meteo_forecast(91, 0, transport=transports[3]),
             dv.frankfurter_rates(base="usd", transport=transports[4]),
         ]
-        self.assertEqual(results, [{"error": {"code": dv.URL_BLOCKED}}] * 5)
+        self.assertEqual(results, [{"ok": False, "error": {"code": dv.URL_BLOCKED}}] * 5)
         self.assertEqual([transport.calls for transport in transports], [[]] * 5)
 
     def test_missing_transport_and_transport_exception_use_public_error_envelope(self):
-        self.assertEqual(dv.stooq_daily("aapl.us"), {"error": {"code": dv.MISSING_CONFIG}})
+        self.assertEqual(dv.stooq_daily("aapl.us"), {"ok": False, "error": {"code": dv.MISSING_CONFIG}})
         result = dv.frankfurter_rates(transport=FakeTransport(RuntimeError("private detail")))
-        self.assertEqual(result, {"error": {"code": dv.URL_BLOCKED}})
+        self.assertEqual(result, {"ok": False, "error": {"code": dv.URL_BLOCKED}})
         self.assertNotIn("private detail", repr(result))
 
     def test_cross_origin_redirect_is_reported_as_redirect_blocked(self):
         response = {"status": 200, "body": "{}", "url": "https://attacker.example/"}
         result = dv.crossref_doi_lookup("10.1234/example", transport=FakeTransport(response))
-        self.assertEqual(result, {"error": {"code": dv.REDIRECT_BLOCKED}})
+        self.assertEqual(result, {"ok": False, "error": {"code": dv.REDIRECT_BLOCKED}})
 
     def test_malformed_weather_payload_maps_to_public_url_error(self):
         result = dv.open_meteo_forecast(0, 0, transport=FakeTransport("not json"))
-        self.assertEqual(result, {"error": {"code": dv.URL_BLOCKED}})
+        self.assertEqual(result, {"ok": False, "error": {"code": dv.URL_BLOCKED}})
 
 
 if __name__ == "__main__":

@@ -66,7 +66,7 @@ class SearchFilterTests(unittest.TestCase):
 
         actual = wrapped("q")
 
-        self.assertEqual(actual, {"error": {"code": URL_BLOCKED}})
+        self.assertEqual(actual, {"ok": False, "error": {"code": URL_BLOCKED}})
         self.assertEqual(fake.calls, [])
 
     def test_invalid_time_range_fails_closed_without_calling_search(self):
@@ -75,13 +75,13 @@ class SearchFilterTests(unittest.TestCase):
 
         actual = wrapped("q")
 
-        self.assertEqual(actual, {"error": {"code": URL_BLOCKED}})
+        self.assertEqual(actual, {"ok": False, "error": {"code": URL_BLOCKED}})
         self.assertEqual(fake.calls, [])
 
     def test_reversed_time_range_fails_closed_without_calling_search(self):
         fake = FakeSearch(response(result()))
         actual = with_search_filters(fake, time_after="2025-01-02", time_before="2025-01-01")("q")
-        self.assertEqual(actual, {"error": {"code": URL_BLOCKED}})
+        self.assertEqual(actual, {"ok": False, "error": {"code": URL_BLOCKED}})
         self.assertEqual(fake.calls, [])
 
     def test_domain_allow_and_deny_match_hosts_not_suffix_lookalikes(self):
@@ -104,7 +104,7 @@ class SearchFilterTests(unittest.TestCase):
     def test_invalid_domain_configuration_fails_closed(self):
         fake = FakeSearch(response(result()))
         actual = with_search_filters(fake, allowed_domains=["https://example.com/path"])("q")
-        self.assertEqual(actual, {"error": {"code": URL_BLOCKED}})
+        self.assertEqual(actual, {"ok": False, "error": {"code": URL_BLOCKED}})
         self.assertEqual(fake.calls, [])
 
     def test_language_filter_accepts_primary_language_and_excludes_unknown(self):
@@ -126,21 +126,21 @@ class SearchFilterTests(unittest.TestCase):
     def test_invalid_language_fails_closed_without_calling_search(self):
         fake = FakeSearch(response(result()))
         actual = with_search_filters(fake, language="english!")("q")
-        self.assertEqual(actual, {"error": {"code": URL_BLOCKED}})
+        self.assertEqual(actual, {"ok": False, "error": {"code": URL_BLOCKED}})
         self.assertEqual(fake.calls, [])
 
     def test_non_callable_backend_fails_closed(self):
         actual = with_search_filters(None)("q")
-        self.assertEqual(actual, {"error": {"code": URL_BLOCKED}})
+        self.assertEqual(actual, {"ok": False, "error": {"code": URL_BLOCKED}})
 
     def test_backend_error_envelope_is_preserved(self):
-        payload = {"error": {"code": "MISSING_CONFIG"}}
+        payload = {"ok": False, "error": {"code": "MISSING_CONFIG"}}
         fake = FakeSearch(payload)
         self.assertEqual(with_search_filters(fake, language="en")("q"), payload)
 
     def test_backend_exception_and_malformed_payload_fail_closed(self):
-        self.assertEqual(with_search_filters(FakeSearch(RuntimeError("secret details")))("q"), {"error": {"code": URL_BLOCKED}})
-        self.assertEqual(with_search_filters(FakeSearch({"ok": True, "results": None}))("q"), {"error": {"code": URL_BLOCKED}})
+        self.assertEqual(with_search_filters(FakeSearch(RuntimeError("secret details")))("q"), {"ok": False, "error": {"code": URL_BLOCKED}})
+        self.assertEqual(with_search_filters(FakeSearch({"ok": True, "results": None}))("q"), {"ok": False, "error": {"code": URL_BLOCKED}})
 
 
 if __name__ == "__main__":

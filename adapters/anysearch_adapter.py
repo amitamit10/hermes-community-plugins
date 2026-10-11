@@ -16,6 +16,7 @@ import json as _json
 import re as _re
 
 from ssrf_guard import GuardError, validate_public_url
+from result_contract import public_error_code as _central_code, result_operation
 
 
 ENDPOINT = "https://api.anysearch.com/mcp"
@@ -240,8 +241,8 @@ class AnySearchClient:
                 headers=headers,
                 json=payload,
             )
-        except Exception:
-            return _failure(URL_BLOCKED)
+        except Exception as error:
+            return _failure(_central_code(error))
 
         status, raw_body = _response_parts(response)
         if not 200 <= status < 300:
@@ -250,11 +251,11 @@ class AnySearchClient:
         if body is _MISSING or not isinstance(body, Mapping):
             return _failure(URL_BLOCKED)
         if body.get("error") is not None:
-            return _failure(URL_BLOCKED)
+            return _failure(_central_code(body.get("error")))
         rpc_result = body.get("result", _MISSING)
         if rpc_result is _MISSING:
             if body.get("ok") is False:
-                return _failure(URL_BLOCKED)
+                return _failure(_central_code(body.get("error")))
             data = body.get("data", body)
         else:
             data = _result_data(rpc_result)
@@ -309,6 +310,7 @@ class AnySearchClient:
             arguments["max_results"] = max_results
         return arguments
 
+    @result_operation
     def search(self, query, *, max_results=None, domain=None, sub_domain=None,
                sub_domain_params=None):
         """Search generally or in a discovered vertical domain."""
@@ -323,6 +325,7 @@ class AnySearchClient:
             return arguments
         return self._call("search", arguments)
 
+    @result_operation
     def batch_search(self, queries):
         """Submit 1-5 search objects in one AnySearch batch call."""
         if not isinstance(queries, (list, tuple)) or not 1 <= len(queries) <= 5:
@@ -344,6 +347,7 @@ class AnySearchClient:
             normalized.append(arguments)
         return self._call("batch_search", {"queries": normalized})
 
+    @result_operation
     def extract(self, url):
         """Extract a public HTTPS page as Markdown through AnySearch."""
         if not isinstance(url, str) or not url.strip():
@@ -355,6 +359,7 @@ class AnySearchClient:
             return {"error": {"code": URL_BLOCKED}}
         return self._call("extract", {"url": normalized})
 
+    @result_operation
     def vertical_discover(self, domain=None, *, domains=None):
         """Call ``get_sub_domains`` before vertical search; cache required params."""
         if domains is not None and domain is not None:

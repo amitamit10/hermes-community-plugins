@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Callable, Mapping
 
+from result_contract import public_error_code as _central_code, result_operation
+
 MISSING_CONFIG = "MISSING_CONFIG"
 
 
@@ -35,27 +37,27 @@ class SerperClient:
         self.auth_header = auth_header
         self.payload_builder = payload_builder
 
-    def search(self, query: str, *, api_key: str | None = None) -> AdapterResult:
+    @result_operation
+    def search(self, query: str, *, api_key: str | None = None) -> Mapping[str, Any]:
         if not api_key or not api_key.strip():
-            return AdapterResult(MISSING_CONFIG)
+            return {"ok": False, "error": MISSING_CONFIG}
+        if self._transport is None or not callable(self._transport):
+            return {"ok": False, "error": MISSING_CONFIG}
         if not (
             self.endpoint
             and self.endpoint.startswith("https://")
             and self.auth_header
             and self.payload_builder is not None
         ):
-            return AdapterResult(
-                "UNVERIFIED_CONFIG",
-                error="Serper endpoint, auth header, and payload schema require explicit HTTPS configuration",
-            )
+            return {"ok": False, "error": MISSING_CONFIG}
         if not query or not query.strip():
-            return AdapterResult("INVALID_REQUEST", error="query must not be empty")
+            return {"ok": False, "error": "INVALID_REQUEST"}
         try:
             payload = self.payload_builder(query)
-        except Exception as exc:
-            return AdapterResult("INVALID_REQUEST", error=type(exc).__name__)
+        except Exception:
+            return {"ok": False, "error": "INVALID_REQUEST"}
         if not isinstance(payload, Mapping):
-            return AdapterResult("INVALID_REQUEST", error="payload builder must return a mapping")
+            return {"ok": False, "error": "INVALID_REQUEST"}
         try:
             response = self._transport(
                 method="POST",
@@ -64,10 +66,17 @@ class SerperClient:
                 json=dict(payload),
             )
         except Exception as exc:
-            return AdapterResult("REQUEST_FAILED", error=type(exc).__name__)
+            return {"ok": False, "error": _central_code(exc)}
         if not isinstance(response, Mapping):
-            return AdapterResult("INVALID_RESPONSE", error="transport must return a mapping")
-        return AdapterResult("OK", data=dict(response))
+            return {"ok": False, "error": "INVALID_RESPONSE"}
+        if "status" in response or "status_code" in response:
+            try:
+                status = int(response.get("status", response.get("status_code", 0)))
+            except (TypeError, ValueError, OverflowError):
+                status = 0
+            if not 200 <= status < 300:
+                return {"ok": False, "error": "HTTP_ERROR"}
+        return {"ok": True, "status": "OK", "data": dict(response)}
 
 
 class YouClient:
@@ -80,11 +89,14 @@ class YouClient:
     def __init__(self, transport: Transport) -> None:
         self._transport = transport
 
-    def search(self, query: str, *, api_key: str | None = None) -> AdapterResult:
+    @result_operation
+    def search(self, query: str, *, api_key: str | None = None) -> Mapping[str, Any]:
         if not api_key or not api_key.strip():
-            return AdapterResult(MISSING_CONFIG)
+            return {"ok": False, "error": MISSING_CONFIG}
+        if self._transport is None or not callable(self._transport):
+            return {"ok": False, "error": MISSING_CONFIG}
         if not query or not query.strip():
-            return AdapterResult("INVALID_REQUEST", error="query must not be empty")
+            return {"ok": False, "error": "INVALID_REQUEST"}
         try:
             response = self._transport(
                 method="POST",
@@ -93,7 +105,14 @@ class YouClient:
                 json={"query": query},
             )
         except Exception as exc:
-            return AdapterResult("REQUEST_FAILED", error=type(exc).__name__)
+            return {"ok": False, "error": _central_code(exc)}
         if not isinstance(response, Mapping):
-            return AdapterResult("INVALID_RESPONSE", error="transport must return a mapping")
-        return AdapterResult("OK", data=dict(response))
+            return {"ok": False, "error": "INVALID_RESPONSE"}
+        if "status" in response or "status_code" in response:
+            try:
+                status = int(response.get("status", response.get("status_code", 0)))
+            except (TypeError, ValueError, OverflowError):
+                status = 0
+            if not 200 <= status < 300:
+                return {"ok": False, "error": "HTTP_ERROR"}
+        return {"ok": True, "status": "OK", "data": dict(response)}

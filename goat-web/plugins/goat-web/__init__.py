@@ -2,93 +2,79 @@
 
 import json
 
-from .goat_tools import (
-    MAX_CRAWL_DEPTH,
-    MAX_CRAWL_PAGES,
-    MAX_RESULTS,
-    map_error,
-    register as goat_handlers,
-)
+from ._goat_v3_vendor.result_contract import normalize_result, public_error_code
+from . import v3_wiring
+from .goat_tools import register as goat_handlers
+from .tool_schemas import SCHEMAS, validate_args
 
 
-_TOOL_SPECS = {
-    "goat_search": {
-        "description": "Search public web results with bounded output.",
-        "properties": {
-            "query": {"type": "string", "description": "Search query."},
-            "max_results": {
-                "type": "integer",
-                "description": f"Maximum results (1..{MAX_RESULTS}); non-integers use the default of {MAX_RESULTS}.",
-                "minimum": 1,
-                "maximum": MAX_RESULTS,
-                "default": MAX_RESULTS,
-            },
-        },
-        "required": ["query"],
-    },
-    "goat_extract": {
-        "description": "Fetch one public HTTPS page and return bounded content.",
-        "properties": {"url": {"type": "string", "description": "Public HTTPS URL."}},
-        "required": ["url"],
-    },
-    "goat_crawl": {
-        "description": "Crawl same-origin public HTTPS pages within fixed bounds.",
-        "properties": {
-            "url": {"type": "string", "description": "Public HTTPS start URL."},
-            "max_depth": {
-                "type": "integer",
-                "description": f"Maximum crawl depth (0..{MAX_CRAWL_DEPTH}).",
-                "minimum": 0,
-                "maximum": MAX_CRAWL_DEPTH,
-                "default": MAX_CRAWL_DEPTH,
-            },
-            "max_pages": {
-                "type": "integer",
-                "description": f"Maximum pages to visit (1..{MAX_CRAWL_PAGES}).",
-                "minimum": 1,
-                "maximum": MAX_CRAWL_PAGES,
-                "default": MAX_CRAWL_PAGES,
-            },
-        },
-        "required": ["url"],
-    },
-    "goat_probe": {
-        "description": "Check a public HTTPS URL and return status and host.",
-        "properties": {"url": {"type": "string", "description": "Public HTTPS URL."}},
-        "required": ["url"],
-    },
-}
+def _failure_envelope(error):
+    try:
+        code = public_error_code(error)
+    except Exception:
+        code = "URL_BLOCKED"
+    return {"ok": False, "error": {"code": code}}
 
 
-def _json_handler(handler):
+def _json_handler(operation, parameters):
     def call(args, **_kwargs):
         try:
-            return json.dumps(handler(**(args or {})), ensure_ascii=False)
+            valid, validated = validate_args(parameters, args)
+            if not valid:
+                return json.dumps(
+                    {"ok": False, "error": {"code": "URL_BLOCKED"}},
+                    ensure_ascii=False,
+                    allow_nan=False,
+                )
+            try:
+                result = operation(**validated)
+            except Exception as error:
+                return json.dumps(
+                    _failure_envelope(error),
+                    ensure_ascii=False,
+                    allow_nan=False,
+                )
+            normalized = normalize_result(result)
+            try:
+                failed = (
+                    normalized.get("ok") is False
+                    or normalized.get("error") is not None
+                )
+            except Exception:
+                failed = True
+            if failed:
+                try:
+                    payload = _failure_envelope(normalized.get("error"))
+                except Exception:
+                    payload = {"ok": False, "error": {"code": "URL_BLOCKED"}}
+            else:
+                try:
+                    payload = dict(normalized)
+                except Exception:
+                    payload = {"ok": False, "error": {"code": "URL_BLOCKED"}}
+                    return json.dumps(
+                        payload, ensure_ascii=False, allow_nan=False
+                    )
+                payload["ok"] = True
+            return json.dumps(payload, ensure_ascii=False, allow_nan=False)
         except Exception as error:
-            return json.dumps({"error": {"code": map_error(error)}}, ensure_ascii=False)
+            return json.dumps(
+                _failure_envelope(error), ensure_ascii=False, allow_nan=False
+            )
 
     return call
 
 
-def register(ctx):
-    """Register the four public GOAT tools with the Hermes plugin context."""
-    handlers = goat_handlers()
-    for name, handler in handlers.items():
-        spec = _TOOL_SPECS[name]
-        schema = {
-            "name": name,
-            "description": spec["description"],
-            "parameters": {
-                "type": "object",
-                "properties": spec["properties"],
-                "required": spec["required"],
-                "additionalProperties": False,
-            },
-        }
+def register(ctx, *, deps=None):
+    """Register the legacy tools plus the V3 answer tool with Hermes."""
+    bound = v3_wiring.default_dependencies() if deps is None else deps
+    operations = {**goat_handlers(), **v3_wiring.make_handlers(bound)}
+    assert set(operations) == set(SCHEMAS)
+    for name, schema in SCHEMAS.items():
         ctx.register_tool(
             name=name,
             toolset="goat_web",
             schema=schema,
-            handler=_json_handler(handler),
-            description=spec["description"],
+            handler=_json_handler(operations[name], schema["parameters"]),
+            description=schema["description"],
         )

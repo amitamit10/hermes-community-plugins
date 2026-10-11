@@ -25,7 +25,7 @@ class TavilyAdapterTests(unittest.TestCase):
         client = TavilyClient(api_key="  ", transport=transport)
 
         self.assertTrue(client.requires_key)
-        self.assertEqual(client.search("cats"), {"ok": False, "error": MISSING_CONFIG})
+        self.assertEqual(client.search("cats"), {"ok": False, "error": {"code": MISSING_CONFIG}})
         self.assertEqual(transport.calls, [])
 
     def test_search_posts_query_and_options_with_bearer_auth(self):
@@ -86,7 +86,7 @@ class TavilyAdapterTests(unittest.TestCase):
 
         results = [client.search("cats"), client.extract("https://example.test"), client.crawl("https://example.test")]
 
-        self.assertEqual(results, [{"ok": False, "error": MISSING_CONFIG}] * 3)
+        self.assertEqual(results, [{"ok": False, "error": {"code": MISSING_CONFIG}}] * 3)
         self.assertEqual(transport.calls, [])
 
     def test_extract_parses_response_envelope_json_body(self):
@@ -101,7 +101,7 @@ class TavilyAdapterTests(unittest.TestCase):
     def test_missing_transport_returns_missing_config_without_default_network(self):
         client = TavilyClient(api_key="test-key")
 
-        self.assertEqual(client.search("cats"), {"ok": False, "error": MISSING_CONFIG})
+        self.assertEqual(client.search("cats"), {"ok": False, "error": {"code": MISSING_CONFIG}})
 
     def test_transport_exception_returns_sanitized_error(self):
         transport = FakeTransport(RuntimeError("offline diagnostic"))
@@ -109,7 +109,7 @@ class TavilyAdapterTests(unittest.TestCase):
 
         result = client.crawl("https://example.test")
 
-        self.assertEqual(result, {"ok": False, "error": "TRANSPORT_ERROR"})
+        self.assertEqual(result, {"ok": False, "error": {"code": "URL_BLOCKED"}})
         self.assertNotIn("offline diagnostic", repr(result))
 
 

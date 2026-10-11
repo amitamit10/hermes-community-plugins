@@ -70,7 +70,7 @@ class AnswerSynthTests(unittest.TestCase):
 
         result = goat_answer("nothing found", search=search)
 
-        self.assertEqual(result, {"error": {"code": MISSING_CONFIG}})
+        self.assertEqual(result, {"ok": False, "error": {"code": MISSING_CONFIG}})
         self.assertEqual(search.calls, ["nothing found"])
 
 

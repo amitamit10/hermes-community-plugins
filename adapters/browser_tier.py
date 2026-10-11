@@ -27,6 +27,7 @@ from ssrf_guard import (
     resolve_public_url,
     validate_public_url,
 )
+from result_contract import public_error_code as _central_public_code, result_operation
 
 # Robust pack-local import: prefer sibling url_gate.py so the pack is self-contained
 # without requiring PYTHONPATH to staging.
@@ -101,10 +102,10 @@ class _TierError(Exception):
 
 
 def _error_code(error):
-    if isinstance(error, Mapping):
-        code = error.get("code", error.get("error"))
-    else:
-        code = getattr(error, "code", error)
+    try:
+        code = _central_public_code(error)
+    except Exception:
+        return URL_BLOCKED
     return REDIRECT_BLOCKED if code == REDIRECT_BLOCKED else URL_BLOCKED
 
 
@@ -474,6 +475,7 @@ def _is_usable_page(status, body, *, archived=False):
     return True
 
 
+@result_operation
 def render_js(url, browser_callable, *, resolver=None):
     """Render a public HTTPS URL via an injected CDP browser callable.
 
@@ -493,6 +495,7 @@ def render_js(url, browser_callable, *, resolver=None):
 js_render = render_js
 
 
+@result_operation
 def cloudflare_bypass(url, transport, bypass_callable, *, resolver=None):
     """Use an injected challenge handler only for a public, non-CAPTCHA CF page.
 
@@ -569,6 +572,7 @@ class BrowserTier:
         self.archive_domains = tuple(archive_domains)
         self.resolver = resolver
 
+    @result_operation
     def fetch(self, url):
         """Single gated fetch, returning only successful public page content."""
         try:
@@ -579,12 +583,15 @@ class BrowserTier:
         except Exception as error:
             return _error_result(error)
 
+    @result_operation
     def render_js(self, url):
-        return render_js(url, self.browser_callable, resolver=self.resolver)
+        return render_js.__wrapped__(url, self.browser_callable, resolver=self.resolver)
 
+    @result_operation
     def cloudflare_bypass(self, url):
-        return cloudflare_bypass(url, self.transport, self.cloudflare_callable, resolver=self.resolver)
+        return cloudflare_bypass.__wrapped__(url, self.transport, self.cloudflare_callable, resolver=self.resolver)
 
+    @result_operation
     def recover_blocked_page(self, url, *, api_candidates=()):
         """Try public snapshots, a gated CF handler, API candidates, then CDP.
 
@@ -684,7 +691,7 @@ class BrowserTier:
             result = render_js(url, self.browser_callable, resolver=self.resolver)
             if result.get("ok"):
                 return result
-            if result.get("error") == REDIRECT_BLOCKED:
+            if _error_code(result) == REDIRECT_BLOCKED:
                 return result
             last_error = _error_code(result)
         return {"ok": False, "error": last_error}
@@ -693,6 +700,7 @@ class BrowserTier:
     recover = recover_blocked_page
 
 
+@result_operation
 def recover_blocked_page(
     url,
     *,

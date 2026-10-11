@@ -17,7 +17,16 @@ from urllib.parse import urldefrag, urljoin, urlsplit, urlunsplit
 import xml.etree.ElementTree as ET
 
 import inspect
-from ssrf_guard import MAX_REDIRECTS, check_url, pinned_fetch, resolve_public_url
+from ssrf_guard import MAX_REDIRECTS, URL_BLOCKED, REDIRECT_BLOCKED, check_url, pinned_fetch, resolve_public_url
+from result_contract import result_operation
+
+
+class _CrawlError(ValueError):
+    """Sanitized crawler failure carrying a public code."""
+
+    def __init__(self, code):
+        self.code = code if code in (URL_BLOCKED, REDIRECT_BLOCKED) else URL_BLOCKED
+        super().__init__(self.code)
 
 def _supports_pinned_kw(func, keyword):
     try:
@@ -121,17 +130,17 @@ def _request(url, transport, expected_origin, requests_by_host, resolver=None):
     redirects = 0
     while True:
         if not _same_origin(current, expected_origin):
-            raise ValueError("crawler request is outside the starting origin")
+            raise _CrawlError(REDIRECT_BLOCKED)
         allowed, _code = check_url(current)
         if not allowed:
-            raise ValueError("crawler URL is not publicly fetchable")
+            raise _CrawlError(URL_BLOCKED if redirects == 0 else REDIRECT_BLOCKED)
         pinned_call = getattr(transport, "fetch_pinned", None) if transport is not None else None
         has_pinning = callable(pinned_call)
         if transport is not None and (has_pinning or resolver is not None):
             try:
                 addresses = resolve_public_url(current, resolver=resolver)
             except Exception:
-                raise ValueError("crawler URL is not publicly fetchable") from None
+                raise _CrawlError(URL_BLOCKED if redirects == 0 else REDIRECT_BLOCKED) from None
         else:
             addresses = ()
         host = expected_origin[1]
@@ -155,20 +164,23 @@ def _request(url, transport, expected_origin, requests_by_host, resolver=None):
             response = transport(current)
         status, body, headers, final_url = _response_parts(response)
         if final_url is not None and _clean_url(final_url) != current:
-            raise ValueError("transport hid a redirect instead of returning each hop")
+            raise _CrawlError(REDIRECT_BLOCKED)
         if 300 <= status < 400:
             location = _header(headers, "location")
             if not isinstance(location, str) or not location or redirects >= MAX_REDIRECTS:
-                raise ValueError("crawler redirect is invalid or exceeds the limit")
-            target = _clean_url(urljoin(current, location))
+                raise _CrawlError(REDIRECT_BLOCKED)
+            try:
+                target = _clean_url(urljoin(current, location))
+            except (TypeError, ValueError, AttributeError):
+                raise _CrawlError(REDIRECT_BLOCKED) from None
             if not _same_origin(target, expected_origin):
-                raise ValueError("crawler redirect is outside the starting origin")
+                raise _CrawlError(REDIRECT_BLOCKED)
             current = target
             redirects += 1
             continue
         final_url = _clean_url(final_url or current)
         if not _same_origin(final_url, expected_origin):
-            raise ValueError("transport returned a cross-origin final URL")
+            raise _CrawlError(REDIRECT_BLOCKED)
         return status, body, final_url
 
 
@@ -298,6 +310,7 @@ def _sitemap_urls(start_url, transport, origin, requests_by_host, robots_rules, 
     return pages
 
 
+@result_operation
 def crawl_pro(
     start_url,
     transport=None,
@@ -326,6 +339,9 @@ def crawl_pro(
 
     origin = _origin(start_url)
     start_url = _clean_url(start_url)
+    allowed, _code = check_url(start_url)
+    if not allowed:
+        raise _CrawlError(URL_BLOCKED)
     depth_limit = _bounded(max_depth, MAX_CRAWL_DEPTH, 0, MAX_CRAWL_DEPTH)
     page_limit = _bounded(max_pages, MAX_CRAWL_PAGES, 1, MAX_CRAWL_PAGES)
     requests_by_host = {}

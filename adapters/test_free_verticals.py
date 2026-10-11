@@ -162,11 +162,11 @@ class FreeVerticalTests(unittest.TestCase):
             with self.subTest(search=search.__name__):
                 transport = FakeTransport({'body': '{}'})
                 self.assertEqual(search('  ', transport=transport),
-                                 {'error': {'code': URL_BLOCKED}})
+                                 {'ok': False, 'error': {'code': URL_BLOCKED}})
                 self.assertEqual(search('topic', transport=transport, limit=MAX_RESULTS + 1),
-                                 {'error': {'code': URL_BLOCKED}})
+                                 {'ok': False, 'error': {'code': URL_BLOCKED}})
                 self.assertEqual(search('topic', transport=transport, limit=True),
-                                 {'error': {'code': URL_BLOCKED}})
+                                 {'ok': False, 'error': {'code': URL_BLOCKED}})
                 self.assertEqual(transport.calls, [])
 
     def test_all_verticals_map_config_provider_transport_and_redirect_errors(self):
@@ -174,23 +174,23 @@ class FreeVerticalTests(unittest.TestCase):
             with self.subTest(search=search.__name__):
                 untouched = FakeTransport({'body': '{}'})
                 self.assertEqual(search('topic', transport=untouched, provider_config=None),
-                                 {'error': {'code': MISSING_CONFIG}})
+                                 {'ok': False, 'error': {'code': MISSING_CONFIG}})
                 self.assertEqual(untouched.calls, [])
                 self.assertEqual(search('topic', transport=object()),
-                                 {'error': {'code': URL_BLOCKED}})
+                                 {'ok': False, 'error': {'code': URL_BLOCKED}})
                 self.assertEqual(search('topic', transport=FakeTransport(RuntimeError('private'))),
-                                 {'error': {'code': URL_BLOCKED}})
+                                 {'ok': False, 'error': {'code': URL_BLOCKED}})
                 self.assertEqual(search('topic', transport=FakeTransport({
                     'body': '{}', 'url': 'http://127.0.0.1/private',
-                })), {'error': {'code': REDIRECT_BLOCKED}})
+                })), {'ok': False, 'error': {'code': REDIRECT_BLOCKED}})
 
     def test_all_verticals_reject_malformed_json_and_oversized_responses(self):
         for search in (scholar_search, news_search, image_search):
             with self.subTest(search=search.__name__):
                 malformed = search('topic', transport=FakeTransport('not json'))
                 oversized = search('topic', transport=FakeTransport('x' * (MAX_CONTENT_CHARS * 200)))
-                self.assertEqual(malformed, {'error': {'code': URL_BLOCKED}})
-                self.assertEqual(oversized, {'error': {'code': URL_BLOCKED}})
+                self.assertEqual(malformed, {'ok': False, 'error': {'code': URL_BLOCKED}})
+                self.assertEqual(oversized, {'ok': False, 'error': {'code': URL_BLOCKED}})
 
     def test_results_are_capped_at_goat_maximum_and_text_bound(self):
         payload = {'message': {'items': [

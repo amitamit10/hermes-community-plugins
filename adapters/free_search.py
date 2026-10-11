@@ -19,6 +19,7 @@ from ssrf_guard import (
     validate_public_url,
 )
 from ddg_parser import _SearchParser
+from result_contract import result_operation
 
 
 MISSING_CONFIG = "MISSING_CONFIG"
@@ -202,6 +203,7 @@ def _query_or_error(query):
     return query.strip()
 
 
+@result_operation
 def duckduckgo_search(
     query,
     transport=None,
@@ -236,6 +238,7 @@ def duckduckgo_search(
         return _error_result(error)
 
 
+@result_operation
 def wikipedia_search(
     query,
     transport=None,
@@ -297,6 +300,7 @@ def _searxng_base_url(base_url, provider_config):
     return urlunsplit((parsed.scheme, parsed.netloc, path, "", ""))
 
 
+@result_operation
 def searxng_search(
     query,
     base_url=None,

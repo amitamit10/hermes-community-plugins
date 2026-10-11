@@ -185,7 +185,7 @@ class PackSSRFGateTests(unittest.TestCase):
 
         result = duckduckgo_search("query", transport=transport)
 
-        self.assertEqual(result, {"error": {"code": URL_BLOCKED}})
+        self.assertEqual(result, {"ok": False, "error": {"code": URL_BLOCKED}})
         self.assertEqual(len(calls), 1)
 
     def test_free_search_dns_preflight_blocks_private_answer_before_transport(self):
@@ -196,14 +196,15 @@ class PackSSRFGateTests(unittest.TestCase):
             resolver=lambda host, port, **kwargs: ["10.20.30.40"],
         )
 
-        self.assertEqual(result, {"error": {"code": URL_BLOCKED}})
+        self.assertEqual(result, {"ok": False, "error": {"code": URL_BLOCKED}})
         self.assertEqual(calls, [])
 
     def test_rss_watcher_rejects_oversized_feed_before_xml_parse(self):
         watcher = RSSWatcher(lambda url: {"status": 200, "body": b" " * (MAX_RESPONSE_BYTES + 1)})
 
-        with self.assertRaisesRegex(ValueError, "byte limit"):
-            watcher.poll("https://feed.example.test/rss")
+        result = watcher.poll("https://feed.example.test/rss")
+
+        self.assertEqual(result, {"ok": False, "error": {"code": URL_BLOCKED}})
 
     def test_native_extract_passes_pinned_fetch_to_capable_adapter(self):
         url = "https://native.example.test/article"
@@ -246,7 +247,7 @@ class PackSSRFGateTests(unittest.TestCase):
 
         result = native_extract(url, extract, resolver=resolver)
 
-        self.assertEqual(result, {"ok": False, "error": URL_BLOCKED})
+        self.assertEqual(result, {"ok": False, "error": {"code": URL_BLOCKED}})
         self.assertEqual(calls, [])
         self.assertEqual(resolver_calls, [("private-dns.example.test", 443)])
 
@@ -267,7 +268,7 @@ class PackSSRFGateTests(unittest.TestCase):
                 ) as fetch:
                     result = browser_tier_module.BrowserTier(resolver=resolver).fetch(url)
 
-        self.assertEqual(result, {"ok": False, "error": URL_BLOCKED})
+        self.assertEqual(result, {"ok": False, "error": {"code": URL_BLOCKED}})
         wrapper_validation.assert_not_called()
         fetch.assert_called_once_with(url, resolver=resolver, max_redirects=0)
         self.assertEqual(resolver_calls, [("private-dns.example.test", 443)])
@@ -291,8 +292,8 @@ class PackSSRFGateTests(unittest.TestCase):
         http_result = browser_tier_module.BrowserTier(transport=transport, resolver=resolver).fetch(url)
         js_result = render_js(url, browser, resolver=resolver)
 
-        self.assertEqual(http_result, {"ok": False, "error": URL_BLOCKED})
-        self.assertEqual(js_result, {"ok": False, "error": URL_BLOCKED})
+        self.assertEqual(http_result, {"ok": False, "error": {"code": URL_BLOCKED}})
+        self.assertEqual(js_result, {"ok": False, "error": {"code": URL_BLOCKED}})
         self.assertEqual(transport_calls, [])
         self.assertEqual(browser_calls, [])
 
@@ -312,7 +313,7 @@ class PackSSRFGateTests(unittest.TestCase):
 
         result = browser_tier_module.BrowserTier(transport=transport, resolver=lookup).fetch(start)
 
-        self.assertEqual(result, {"ok": False, "error": REDIRECT_BLOCKED})
+        self.assertEqual(result, {"ok": False, "error": {"code": REDIRECT_BLOCKED}})
         self.assertEqual(calls, [start])
 
     def test_browser_gate_exposes_the_verified_connection_addresses(self):
@@ -394,9 +395,9 @@ class PackSSRFGateTests(unittest.TestCase):
             address = "93.184.216.34" if lookups <= 2 else "10.20.30.40"
             return [address]
 
-        with self.assertRaisesRegex(ValueError, "not publicly fetchable"):
-            crawl_pro(start, transport, respect_robots=False, resolver=lookup)
+        result = crawl_pro(start, transport, respect_robots=False, resolver=lookup)
 
+        self.assertEqual(result, {"ok": False, "error": {"code": "REDIRECT_BLOCKED"}})
         self.assertEqual(calls, ["https://crawl.example.test/sitemap.xml", start])
 
     def test_crawl_redirect_to_private_target_never_fetches_it(self):
@@ -410,14 +411,14 @@ class PackSSRFGateTests(unittest.TestCase):
                 return {"status": 404, "body": ""}
             return {"status": 302, "headers": {"Location": private}}
 
-        with self.assertRaisesRegex(ValueError, "outside the starting origin"):
-            crawl_pro(
-                start,
-                transport,
-                respect_robots=False,
-                resolver=lambda host, port, **kwargs: ["93.184.216.34"],
-            )
+        result = crawl_pro(
+            start,
+            transport,
+            respect_robots=False,
+            resolver=lambda host, port, **kwargs: ["93.184.216.34"],
+        )
 
+        self.assertEqual(result, {"ok": False, "error": {"code": "REDIRECT_BLOCKED"}})
         self.assertEqual(calls, ["https://crawl.example.test/sitemap.xml", start])
 
     def test_crawl_default_transport_uses_pinned_fetch_per_hop(self):
@@ -469,7 +470,7 @@ class PackSSRFGateTests(unittest.TestCase):
 
         result = native_extract("https://127.0.0.1/private", tool)
 
-        self.assertEqual(result, {"ok": False, "error": URL_BLOCKED})
+        self.assertEqual(result, {"ok": False, "error": {"code": URL_BLOCKED}})
         self.assertEqual(tool.calls, [])
 
     def test_native_extract_rejects_private_dns_before_callable(self):
@@ -478,7 +479,7 @@ class PackSSRFGateTests(unittest.TestCase):
 
         result = tier.extract("https://public.example.test/page")
 
-        self.assertEqual(result, {"ok": False, "error": URL_BLOCKED})
+        self.assertEqual(result, {"ok": False, "error": {"code": URL_BLOCKED}})
         self.assertEqual(tool.calls, [])
 
     def test_browser_rejects_callable_bypass_without_gate_or_request_logs(self):
@@ -490,7 +491,7 @@ class PackSSRFGateTests(unittest.TestCase):
             resolver=lambda host, port, **kwargs: ["93.184.216.34"],
         )
 
-        self.assertEqual(result, {"ok": False, "error": URL_BLOCKED})
+        self.assertEqual(result, {"ok": False, "error": {"code": URL_BLOCKED}})
 
     def test_browser_dns_private_address_is_blocked_before_callable(self):
         calls = []
@@ -506,7 +507,7 @@ class PackSSRFGateTests(unittest.TestCase):
             resolver=lambda host, port, **kwargs: ["172.16.0.4"],
         )
 
-        self.assertEqual(result, {"ok": False, "error": URL_BLOCKED})
+        self.assertEqual(result, {"ok": False, "error": {"code": URL_BLOCKED}})
         self.assertEqual(calls, [])
 
     def test_provider_extract_and_crawl_block_unsafe_urls_without_remote_posts(self):
@@ -525,7 +526,7 @@ class PackSSRFGateTests(unittest.TestCase):
             firecrawl_client.crawl("http://example.com/"),
         )
 
-        self.assertEqual(results, ({"error": {"code": URL_BLOCKED}},) * 5)
+        self.assertEqual(results, ({"ok": False, "error": {"code": URL_BLOCKED}},) * 5)
         self.assertEqual(any_transport.calls, [])
         self.assertEqual(tavily_transport.calls, [])
         self.assertEqual(firecrawl_transport.calls, [])
@@ -563,7 +564,7 @@ class PackSSRFGateTests(unittest.TestCase):
             FirecrawlClient("key", firecrawl_transport, resolver=resolver).scrape("https://public.example.test/"),
         )
 
-        self.assertEqual(results, ({"error": {"code": URL_BLOCKED}},) * 3)
+        self.assertEqual(results, ({"ok": False, "error": {"code": URL_BLOCKED}},) * 3)
         self.assertEqual(any_transport.calls, [])
         self.assertEqual(tavily_transport.calls, [])
         self.assertEqual(firecrawl_transport.calls, [])

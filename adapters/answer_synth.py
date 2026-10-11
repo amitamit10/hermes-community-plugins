@@ -8,6 +8,11 @@ list of title/url/snippet mappings, as returned by ``goat_search``.
 from collections.abc import Mapping
 import re
 
+if __package__:
+    from .result_contract import result_operation
+else:
+    from result_contract import result_operation
+
 
 MISSING_CONFIG = "MISSING_CONFIG"
 URL_BLOCKED = "URL_BLOCKED"
@@ -134,6 +139,7 @@ def _answer_text(claims):
     return "\n".join(lines)
 
 
+@result_operation
 def goat_answer(query, search=None, *, max_results=MAX_RESULTS):
     """Return ranked extractive claims with one-based source citations.
 
@@ -159,6 +165,11 @@ def goat_answer(query, search=None, *, max_results=MAX_RESULTS):
 
     if isinstance(response, Mapping) and response.get("error") is not None:
         return _error_result(_map_error(response.get("error")))
+    if isinstance(response, Mapping) and response.get("ok") is False:
+        upstream_error = response.get("error")
+        if upstream_error is None:
+            return _error_result(URL_BLOCKED)
+        return _error_result(_map_error(upstream_error))
     results = response.get("results") if isinstance(response, Mapping) else None
     if not isinstance(results, (list, tuple)) or not results:
         return _error_result(MISSING_CONFIG)

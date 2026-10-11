@@ -2,9 +2,7 @@ import unittest
 
 from donsetch_adapter import (
     DEFAULT_BINARY_PATH,
-    GLIBC_EXPLANATION,
     MISSING_CONFIG,
-    UNAVAILABLE,
     DonsetchAdapter,
 )
 
@@ -28,19 +26,17 @@ class DonsetchAdapterTests(unittest.TestCase):
 
         result = DonsetchAdapter(binary_checker=checker).check()
 
-        self.assertEqual(result["error"], MISSING_CONFIG)
-        self.assertFalse(result["ok"])
+        self.assertEqual(result, {"ok": False, "error": {"code": MISSING_CONFIG}})
         self.assertEqual(checker.paths, [DEFAULT_BINARY_PATH])
 
-    def test_glibc_broken_binary_returns_unavailable_with_explanation(self):
+    def test_broken_binary_normalizes_missing_without_explanation(self):
         checker = FakeBinaryChecker(error=OSError("GLIBC_2.39 not found"))
 
         result = DonsetchAdapter(binary_checker=checker).check()
 
-        self.assertEqual(result["error"], UNAVAILABLE)
-        self.assertFalse(result["ok"])
-        self.assertIn("GLIBC_2.39", result["explanation"])
-        self.assertEqual(result["explanation"], GLIBC_EXPLANATION)
+        self.assertEqual(result, {"ok": False, "error": {"code": MISSING_CONFIG}})
+        self.assertNotIn("explanation", result)
+        self.assertNotIn("GLIBC", repr(result))
         self.assertEqual(checker.paths, [DEFAULT_BINARY_PATH])
 
 

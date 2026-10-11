@@ -14,6 +14,7 @@ import tempfile
 import xml.etree.ElementTree as ET
 
 from ssrf_guard import MAX_RESPONSE_BYTES
+from result_contract import result_operation
 
 
 _DEFAULT_MAX_ITEMS = 20
@@ -160,6 +161,7 @@ class RSSWatcher:
         """Return the current watermark as an immutable oldest-to-newest tuple."""
         return tuple(self._seen)
 
+    @result_operation
     def poll(self, feed_url):
         """Fetch one feed and return its unseen entries, oldest feed order first."""
         if not isinstance(feed_url, str) or not feed_url.strip():
@@ -174,7 +176,7 @@ class RSSWatcher:
             for item in selected:
                 self._remember(item["id"])
             self._save_state()
-        return selected
+        return {"ok": True, "items": selected}
 
     def _remember(self, item_id):
         self._seen[item_id] = None

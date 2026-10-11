@@ -133,7 +133,8 @@ def _build_cases():
     donsetch = donsetch_module.DonsetchAdapter(binary_checker=lambda path: False)
     add("donsetch_adapter", donsetch.check, lambda result:
         isinstance(result, Mapping)
-        and result.get("error") == donsetch_module.MISSING_CONFIG)
+        and result.get("ok") is False
+        and result.get("error") == {"code": donsetch_module.MISSING_CONFIG})
 
     exa_transport = FakeTransport({"status": 200, "body": {"results": [{"id": "fixture"}]}})
     exa = modules["exa_adapter"].ExaClient(
@@ -209,7 +210,7 @@ def _build_cases():
     feed_transport = FeedTransport()
     watcher = modules["rss_watcher"].RSSWatcher(feed_transport, max_seen=512)
     add("rss_watcher", lambda: watcher.poll("https://example.test/feed"),
-        lambda result: isinstance(result, list) and len(result) == 1)
+        lambda result: isinstance(result, Mapping) and result.get("ok") is True and len(result.get("items", [])) == 1)
 
     filter_payload = {"ok": True, "results": [{
         "title": "Offline fixture", "url": "https://example.com/article",
@@ -229,7 +230,7 @@ def _build_cases():
     )
     add("serper_you_adapter", lambda: serper.search(
         "offline fixture", api_key="offline-benchmark-placeholder"
-    ), lambda result: getattr(result, "status", None) == "OK")
+    ), lambda result: isinstance(result, Mapping) and result.get("status") == "OK")
 
     tavily_transport = FakeTransport({"status": 200, "body": {
         "results": [{"title": "Offline fixture"}]

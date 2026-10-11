@@ -40,10 +40,10 @@ class NativeTierTests(unittest.TestCase):
     def test_missing_native_callables_return_missing_config(self):
         tier = NativeTier()
 
-        self.assertEqual(tier.search("topic"), {"ok": False, "error": MISSING_CONFIG})
+        self.assertEqual(tier.search("topic"), {"ok": False, "error": {"code": MISSING_CONFIG}})
         self.assertEqual(
             tier.extract("https://example.test/page"),
-            {"ok": False, "error": MISSING_CONFIG},
+            {"ok": False, "error": {"code": MISSING_CONFIG}},
         )
 
     def test_search_clamps_result_count_and_normalizes_native_results(self):
@@ -110,7 +110,7 @@ class NativeTierTests(unittest.TestCase):
         search = FakeSearch({"data": {"web": []}})
         tier = NativeTier(web_search=search)
 
-        self.assertEqual(tier.search("  "), {"ok": False, "error": URL_BLOCKED})
+        self.assertEqual(tier.search("  "), {"ok": False, "error": {"code": URL_BLOCKED}})
         self.assertEqual(search.calls, [])
 
     def test_search_maps_provider_errors_to_public_codes(self):
@@ -126,7 +126,7 @@ class NativeTierTests(unittest.TestCase):
                 else:
                     search = FakeSearch(response)
                 tier = NativeTier(web_search=search)
-                self.assertEqual(tier.search("topic"), {"ok": False, "error": expected})
+                self.assertEqual(tier.search("topic"), {"ok": False, "error": {"code": expected}})
 
     def test_extract_passes_one_url_and_character_cap_and_truncates_content(self):
         url = "https://example.test/page"
@@ -156,16 +156,16 @@ class NativeTierTests(unittest.TestCase):
         extract = FakeExtract({"results": []})
         tier = NativeTier(web_extract=extract)
 
-        self.assertEqual(tier.extract("file:///etc/passwd"), {"ok": False, "error": URL_BLOCKED})
+        self.assertEqual(tier.extract("file:///etc/passwd"), {"ok": False, "error": {"code": URL_BLOCKED}})
         self.assertEqual(extract.calls, [])
 
     def test_extract_maps_native_error_and_exception(self):
         url = "https://example.test/page"
         tier = NativeTier(web_extract=FakeExtract({"results": [{"url": url, "error": "REDIRECT_FAILED"}]}))
-        self.assertEqual(tier.extract(url), {"ok": False, "error": REDIRECT_BLOCKED})
+        self.assertEqual(tier.extract(url), {"ok": False, "error": {"code": REDIRECT_BLOCKED}})
 
         tier = NativeTier(web_extract=FakeExtract(error=RuntimeError("private diagnostic")))
-        self.assertEqual(tier.extract(url), {"ok": False, "error": URL_BLOCKED})
+        self.assertEqual(tier.extract(url), {"ok": False, "error": {"code": URL_BLOCKED}})
 
 
 if __name__ == "__main__":

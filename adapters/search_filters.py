@@ -11,6 +11,11 @@ import math
 import re
 from urllib.parse import urlsplit
 
+if __package__:
+    from .result_contract import result_operation
+else:
+    from result_contract import result_operation
+
 
 URL_BLOCKED = "URL_BLOCKED"
 _ERROR_RESULT = {"error": {"code": URL_BLOCKED}}
@@ -224,6 +229,7 @@ def with_search_filters(
         invalid = True
         lower = upper = allow = deny = requested_language = None
 
+    @result_operation
     def filtered_search(*args, **kwargs):
         if invalid or not callable(search):
             return _error_result()
@@ -234,11 +240,11 @@ def with_search_filters(
         try:
             if not isinstance(payload, Mapping):
                 return _error_result()
-            if "error" in payload:
-                if isinstance(payload["error"], Mapping):
-                    return dict(payload)
-                return _error_result()
-            if payload.get("ok") is False or not isinstance(payload.get("results"), list):
+            if payload.get("error") is not None:
+                return dict(payload)
+            if payload.get("ok") is False:
+                return dict(payload)
+            if not isinstance(payload.get("results"), list):
                 return _error_result()
 
             filtered = []

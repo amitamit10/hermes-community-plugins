@@ -10,6 +10,7 @@ from collections.abc import Mapping
 from urllib.parse import urlsplit
 
 from ssrf_guard import check_url, pinned_fetch, resolve_public_url
+from result_contract import public_error_code as _central_public_code, result_operation
 
 
 MISSING_CONFIG = "MISSING_CONFIG"
@@ -25,24 +26,20 @@ _INTERNAL_URL_ERRORS = frozenset(
 
 
 def map_error(error):
-    """Map provider/internal failures to the Goat public error codes."""
+    """Map provider/internal failures to the Goat public error codes.
+
+    Preserves legacy None -> MISSING_CONFIG; nested structures use central.
+    """
+    if error is None:
+        return MISSING_CONFIG
     if isinstance(error, Mapping):
-        code = error.get("code", error.get("error"))
-    else:
-        code = getattr(error, "code", error)
-    if code is None:
-        return MISSING_CONFIG
-    if not isinstance(code, str):
-        return URL_BLOCKED
-    if code in PUBLIC_ERROR_CODES:
-        return code
-    if code in _INTERNAL_URL_ERRORS:
-        return URL_BLOCKED
-    if code in ("MISSING_CONFIG", "PROVIDER_NOT_CONFIGURED", "MISSING_PROVIDER_CONFIG"):
-        return MISSING_CONFIG
-    if code in ("REDIRECT_FAILED", "TOO_MANY_REDIRECTS", "INVALID_REDIRECT"):
-        return REDIRECT_BLOCKED
-    return URL_BLOCKED
+        try:
+            code_val = error.get("code", error.get("error"))
+        except Exception:
+            return URL_BLOCKED
+        if code_val is None:
+            return MISSING_CONFIG
+    return _central_public_code(error)
 
 
 def _error_result(error):
@@ -159,6 +156,7 @@ def _search_items(response):
     return data if isinstance(data, (list, tuple)) else None
 
 
+@result_operation
 def native_search(query, web_search=None, *, max_results=MAX_RESULTS, resolver=None):
     """Search via an injected native callable and return the Goat result shape.
 
@@ -214,6 +212,7 @@ def _extract_record(response):
     return None
 
 
+@result_operation
 def native_extract(url, web_extract=None, *, resolver=None):
     """Extract a page through an injected, pin-aware native adapter.
 
@@ -263,13 +262,15 @@ class NativeTier:
         self.web_extract = web_extract
         self.resolver = resolver
 
+    @result_operation
     def search(self, query, *, max_results=MAX_RESULTS):
-        return native_search(
+        return native_search.__wrapped__(
             query, self.web_search, max_results=max_results, resolver=self.resolver
         )
 
+    @result_operation
     def extract(self, url):
-        return native_extract(url, self.web_extract, resolver=self.resolver)
+        return native_extract.__wrapped__(url, self.web_extract, resolver=self.resolver)
 
 
 __all__ = [

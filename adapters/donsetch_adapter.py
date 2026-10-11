@@ -16,6 +16,8 @@ binary or an ``OSError`` containing a glibc diagnostic for a broken binary.
 
 import os
 
+from result_contract import result_operation
+
 MISSING_CONFIG = "MISSING_CONFIG"
 UNAVAILABLE = "UNAVAILABLE"
 DEFAULT_BINARY_PATH = os.environ.get("DONSETCH_BINARY_PATH", os.path.join(os.path.expanduser("~"), "bin", "donsetch-mcp-hermes"))
@@ -56,8 +58,9 @@ class DonsetchAdapter:
             _default_binary_checker if binary_checker is None else binary_checker
         )
 
+    @result_operation
     def check(self):
-        """Return ``MISSING_CONFIG`` or ``UNAVAILABLE``; never claim success."""
+        """Return ``MISSING_CONFIG``; never claim success."""
         if not callable(self._binary_checker):
             return _failure(MISSING_CONFIG, MISSING_EXPLANATION)
 

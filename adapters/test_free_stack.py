@@ -107,7 +107,7 @@ class FreeStackTests(unittest.TestCase):
 
     def test_wikipedia_malformed_payload_returns_public_error_envelope(self):
         result = wikipedia_search("topic", transport=FakeTransport('{"query": {}}'))
-        self.assertEqual(result, {"error": {"code": URL_BLOCKED}})
+        self.assertEqual(result, {"ok": False, "error": {"code": URL_BLOCKED}})
 
     def test_searxng_uses_configured_local_instance(self):
         fixture = {"results": [
@@ -141,7 +141,7 @@ class FreeStackTests(unittest.TestCase):
 
         result = searxng_search("topic", instance_url=None, transport=transport)
 
-        self.assertEqual(result, {"error": {"code": MISSING_CONFIG}})
+        self.assertEqual(result, {"ok": False, "error": {"code": MISSING_CONFIG}})
         self.assertEqual(transport.calls, [])
 
     def test_searxng_unreachable_instance_is_missing_config(self):
@@ -149,14 +149,14 @@ class FreeStackTests(unittest.TestCase):
 
         result = searxng_search("topic", instance_url="http://localhost:9999", transport=transport)
 
-        self.assertEqual(result, {"error": {"code": MISSING_CONFIG}})
+        self.assertEqual(result, {"ok": False, "error": {"code": MISSING_CONFIG}})
 
     def test_searxng_rejects_non_local_http_instance_without_fetch(self):
         transport = FakeTransport('{"results": []}')
 
         result = searxng_search("topic", instance_url="http://search.example.org", transport=transport)
 
-        self.assertEqual(result, {"error": {"code": URL_BLOCKED}})
+        self.assertEqual(result, {"ok": False, "error": {"code": URL_BLOCKED}})
         self.assertEqual(transport.calls, [])
 
     def test_keyless_clients_convert_requires_key_errors_instead_of_raising(self):
@@ -165,7 +165,7 @@ class FreeStackTests(unittest.TestCase):
 
         result = wikipedia_search("topic", transport=FakeTransport(RequiresKeyError()))
 
-        self.assertEqual(result, {"error": {"code": URL_BLOCKED}})
+        self.assertEqual(result, {"ok": False, "error": {"code": URL_BLOCKED}})
         self.assertNotIn("requires_key", json.dumps(result))
 
     def test_fallback_chain_returns_first_nonempty_provider_in_order(self):
@@ -235,7 +235,7 @@ class FreeStackTests(unittest.TestCase):
             ddg_transport=ddg,
         )
 
-        self.assertEqual(result, {"error": {"code": MISSING_CONFIG}, "source": "searxng"})
+        self.assertEqual(result, {"ok": False, "error": {"code": MISSING_CONFIG}, "source": "searxng"})
         self.assertEqual([len(searx.calls), len(wiki.calls), len(ddg.calls)], [0, 0, 0])
 
     def test_fallback_chain_does_not_fallback_on_error_by_default(self):
@@ -250,7 +250,7 @@ class FreeStackTests(unittest.TestCase):
             ddg_transport=ddg,
         )
 
-        self.assertEqual(result, {"error": {"code": URL_BLOCKED}, "source": "searxng"})
+        self.assertEqual(result, {"ok": False, "error": {"code": URL_BLOCKED}, "source": "searxng"})
         self.assertEqual([len(searx.calls), len(wiki.calls), len(ddg.calls)], [1, 0, 0])
 
     def test_fallback_chain_records_error_reason_in_transition(self):
