@@ -35,7 +35,8 @@ else:  # Backward-compatible top-level import used by the existing offline tests
 
 
 MISSING_CONFIG = "MISSING_CONFIG"
-PUBLIC_ERROR_CODES = frozenset((URL_BLOCKED, REDIRECT_BLOCKED, MISSING_CONFIG))
+PROVIDER_BLOCKED = "PROVIDER_BLOCKED"
+PUBLIC_ERROR_CODES = frozenset((URL_BLOCKED, REDIRECT_BLOCKED, MISSING_CONFIG, PROVIDER_BLOCKED))
 MAX_RESULTS = 5
 MAX_CONTENT_CHARS = 8000
 MAX_CRAWL_DEPTH = 2
@@ -48,7 +49,7 @@ _INTERNAL_URL_ERRORS = frozenset(
 
 
 def map_error(error):
-    """Map internal/provider failures to the three public error codes only."""
+    """Map internal/provider failures to the four public error codes only."""
     if isinstance(error, dict):
         code = error.get("code", error.get("error"))
     else:
@@ -198,6 +199,8 @@ class _SearchParser(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.results = []
         self.snippets = []
+        self.has_challenge = False
+        self.has_no_results = False
         self._capture = None
         self._stack = []
 
@@ -218,6 +221,14 @@ class _SearchParser(HTMLParser):
             if tag.lower() not in self._VOID_TAGS:
                 self._stack.append(tag.lower())
             return
+        if tag.lower() == "form":
+            if attributes.get("id") in ("challenge-form", "captcha-form"):
+                self.has_challenge = True
+            elif "anomaly-modal__form" in classes:
+                self.has_challenge = True
+        if tag.lower() == "div":
+            if classes & {"no-results", "no-results__message", "result--no-result"}:
+                self.has_no_results = True
         if tag.lower() == "a" and "result__a" in classes:
             self._capture = ("result", attributes.get("href", ""), [])
             self._stack = [tag.lower()]
@@ -264,9 +275,17 @@ def goat_search(query, transport=None, *, max_results=MAX_RESULTS, provider_conf
             max_results = MAX_RESULTS
         max_results = _bounded_integer(max_results, 1, MAX_RESULTS)
         search_url = "https://html.duckduckgo.com/html/?" + urlencode({"q": query.strip()})
-        _status, body, _final_url = _fetch(search_url, fetch)
+        status, body, _final_url = _fetch(search_url, fetch)
+        if status in (403, 429):
+            raise URLGateError(PROVIDER_BLOCKED)
+        if not 200 <= status < 300:
+            raise URLGateError(URL_BLOCKED)
         parser = _SearchParser()
         parser.feed(body)
+        if parser.has_challenge:
+            raise URLGateError(PROVIDER_BLOCKED)
+        if not parser.results and body.strip() and not parser.has_no_results:
+            raise URLGateError(PROVIDER_BLOCKED)
         results = []
         for index, item in enumerate(parser.results[:max_results]):
             result_url = _search_result_url(item["url"])

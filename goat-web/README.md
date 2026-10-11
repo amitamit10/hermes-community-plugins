@@ -10,7 +10,7 @@ Local release candidate `0.2.0` for bounded public-web search, extraction, crawl
 - `goat_filtered_search` — filtered Wikipedia Action API search by inclusive UTC time, domains, language; active filters exclude missing metadata without inference
 - `goat_vertical_search` — one official keyless vertical: `scholar`=Crossref, `news`=GDELT, `images`=Wikimedia Commons; returns provider/source links and per-file image licensing
 
-All tools share a closed JSON schema (`additionalProperties: false`). Unknown fields, type errors, and policy blocks return a sanitized `ok:false` envelope with one of `URL_BLOCKED`, `REDIRECT_BLOCKED`, `MISSING_CONFIG`.
+All tools share a closed JSON schema (`additionalProperties: false`). Unknown fields, type errors, and policy blocks return a sanitized `ok:false` envelope with one of `URL_BLOCKED`, `REDIRECT_BLOCKED`, `MISSING_CONFIG` — plus `PROVIDER_BLOCKED` for provider bot-challenge blocks once the provider-sibling P1-2 fix lands (not in baseline `1311d89a`).
 
 Safety boundaries: no stealth, proxy rotation, CAPTCHA solving, or bypass. URL-policy gate applies to every input URL, redirect, and crawl link. Provider keys only for paid backends; missing key fails closed (`MISSING_CONFIG`). No network service is started by the package.
 
@@ -27,12 +27,16 @@ python3 -B goat-web/scripts/build_plugin_bundle.py --check /tmp/hermes-goat-web
 ls /tmp/hermes-goat-web/bundle-manifest.json
 ```
 
-Validate a built bundle read-only (isolated, no install or enable):
+Validate a built bundle read-only with the approved interpreter, a disposable env, and no install or enable (see `adapters/QUICKSTART.md` section 2 for the `SCRATCH`/`RUNTIME` setup; `RUNTIME` must point at the approved installed Hermes source version):
 
 ```sh
-hermes plugins validate /tmp/hermes-goat-web
+hermes_readonly plugins validate /tmp/hermes-goat-web
+hermes_readonly plugins doctor /tmp/hermes-goat-web --ci
+python3 -B goat-web/scripts/build_plugin_bundle.py --check /tmp/hermes-goat-web
 ```
 
-Manifest `goat-web/plugins/goat-web/plugin.yaml` declares `name: hermes-goat-web` version `0.2.0`, entrypoint `__init__:register`. Directory `goat-web` and ID `hermes-goat-web` are aligned — Hermes commands use the manifest ID.
+Deliberate startup only: plain `hermes chat` / `hermes gateway run` are not protected. The supported gate is the reviewed companion `goat-web/scripts/start_with_preflight.py` kept outside the bundle — offline `--help`/default first, then `--bundle <reviewed-built-bundle> --allow-network --` only after separate approval. Full recipe and exit codes: `adapters/QUICKSTART.md` section 4.
+
+Manifest `goat-web/plugins/goat-web/plugin.yaml` declares `name: hermes-goat-web` version `0.2.0`, entrypoint `__init__:register`. Directory `goat-web` and ID `hermes-goat-web` are aligned — Hermes commands use the manifest ID. Those fields are entrypoint metadata, not host permissions.
 
 Status: local candidate from this checkout. No published release, tag, or live activation is claimed. Publication or enable requires explicit human approval and a re-run of `validate`/`doctor` on the exact built bundle. The vendored `_goat_v3_vendor/` inside the bundle mirrors `adapters/` allowlist (answer/filter/vertical/stack/guard/parser plus `result_contract`).

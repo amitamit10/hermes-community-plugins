@@ -114,6 +114,88 @@ class ResultContractNormalizationTests(unittest.TestCase):
         self.assertEqual(out.get("ok"), False)
         self.assertEqual(out.get("error"), {"code": "URL_BLOCKED"})
 
+    def test_provider_blocked_is_preserved_as_public_code(self):
+        mod = _load()
+        # Literal distinct code must survive as ok=False, not collapse.
+        self.assertEqual(mod.public_error_code("PROVIDER_BLOCKED"), "PROVIDER_BLOCKED")
+        self.assertEqual(mod.public_error_code({"code": "PROVIDER_BLOCKED"}), "PROVIDER_BLOCKED")
+        self.assertEqual(mod.public_error_code({"error": {"code": "PROVIDER_BLOCKED"}}), "PROVIDER_BLOCKED")
+        self.assertEqual(
+            mod.public_error_code({"error": "PROVIDER_BLOCKED"}), "PROVIDER_BLOCKED"
+        )
+        exc = Exception("leak")
+        exc.code = "PROVIDER_BLOCKED"
+        self.assertEqual(mod.public_error_code(exc), "PROVIDER_BLOCKED")
+        self.assertEqual(
+            mod.normalize_result({"error": {"code": "PROVIDER_BLOCKED"}}),
+            {"ok": False, "error": {"code": "PROVIDER_BLOCKED"}},
+        )
+        # Raw legacy error shape preserves the distinct code.
+        self.assertEqual(
+            mod.normalize_result({"error": {"code": "PROVIDER_BLOCKED"}})["error"],
+            {"code": "PROVIDER_BLOCKED"},
+        )
+
+    def test_provider_blocked_sanitizes_and_preserves_provenance(self):
+        mod = _load()
+        raw = {
+            "ok": False,
+            "error": {"code": "PROVIDER_BLOCKED"},
+            "body": "raw-body-secret",
+            "status": 202,
+            "provider": "x",
+            "exception": "boom-secret",
+            "results": [{"title": "must-be-dropped"}],
+            "source": "fake",
+            "transitions": ["a"],
+            "truncated": True,
+        }
+        snapshot = dict(raw)
+        out = mod.normalize_result(raw)
+        self.assertEqual(raw, snapshot)
+        self.assertEqual(out.get("ok"), False)
+        self.assertEqual(out.get("error"), {"code": "PROVIDER_BLOCKED"})
+        self.assertEqual(out.get("source"), "fake")
+        self.assertEqual(out.get("transitions"), ["a"])
+        self.assertEqual(out.get("truncated"), True)
+        for stripped in ("body", "status", "provider", "exception", "results"):
+            self.assertNotIn(stripped, out)
+        self.assertNotIn("raw-body-secret", repr(out))
+        self.assertNotIn("boom-secret", repr(out))
+        # error_result preserves code with allowlisted provenance only.
+        err = mod.error_result("PROVIDER_BLOCKED", source="fake", transitions=["a"], truncated=False)
+        self.assertEqual(err, {"ok": False, "error": {"code": "PROVIDER_BLOCKED"},
+                               "source": "fake", "transitions": ["a"], "truncated": False})
+        nested = mod.error_result({"error": {"code": "PROVIDER_BLOCKED"}}, source="fake")
+        self.assertEqual(nested.get("error"), {"code": "PROVIDER_BLOCKED"})
+        exc = Exception("internal diagnostic detail")
+        exc.code = "PROVIDER_BLOCKED"
+        exc_out = mod.error_result(exc)
+        self.assertEqual(exc_out.get("error"), {"code": "PROVIDER_BLOCKED"})
+        self.assertNotIn("internal diagnostic detail", repr(exc_out))
+
+        @mod.result_operation
+        def op_passthrough():
+            return {"error": {"code": "PROVIDER_BLOCKED"}, "body": "secret-body",
+                    "status": 202, "results": ["x"], "source": "fake"}
+
+        passed = op_passthrough()
+        self.assertEqual(passed.get("ok"), False)
+        self.assertEqual(passed.get("error"), {"code": "PROVIDER_BLOCKED"})
+        self.assertEqual(passed.get("source"), "fake")
+        self.assertNotIn("secret-body", repr(passed))
+
+        @mod.result_operation
+        def op_raise():
+            err = RuntimeError("internal diagnostic detail")
+            err.code = "PROVIDER_BLOCKED"
+            raise err
+
+        raised = op_raise()
+        self.assertEqual(raised.get("ok"), False)
+        self.assertEqual(raised.get("error"), {"code": "PROVIDER_BLOCKED"})
+        self.assertNotIn("internal diagnostic detail", repr(raised))
+
     def test_public_helpers_and_operation_decorator(self):
         mod = _load()
         # public_error_code / error_result with provenance.

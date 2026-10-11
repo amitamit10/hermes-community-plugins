@@ -24,7 +24,7 @@ All validation, unknown fields, type errors, and policy blocks fail closed:
 { "ok": false, "error": { "code": "MISSING_CONFIG" } }
 ```
 
-Only those three codes are public. No stack traces or credentials are exposed. Success envelopes always carry `ok: true`; errors never leak internals.
+plus `PROVIDER_BLOCKED` for provider bot-challenge blocks. That fourth code needs the provider-sibling P1-2 fix and is **not** supported by baseline `1311d89a` alone. No stack traces or credentials are exposed. Success envelopes always carry `ok: true`; errors never leak internals.
 
 ## Layout
 
@@ -53,26 +53,32 @@ ls /tmp/hermes-goat-web/bundle-manifest.json
 python3 -B goat-web/scripts/build_plugin_bundle.py --check /tmp/hermes-goat-web
 # ok /tmp/hermes-goat-web
 
-# 5. Offline tests — reproducible commands, no live plugin enable
-python3 -B -m unittest discover -s adapters -p "test_*.py" -v 2>&1 | tail -n 20
-python3 -B -m unittest discover -s goat-web/tests -p "test_*.py" -v 2>&1 | tail -n 20
-python3 -B -m unittest discover -s goat-ultimate/tests -p "test_*.py" -v 2>&1 | tail -n 20
+# 5. Offline tests — reproducible commands, no live plugin enable (no pipes: they mask exit codes)
+python3 -B -m unittest discover -s adapters -p "test_*.py" -v
+python3 -B -m unittest discover -s goat-web/tests -p "test_*.py" -v
+python3 -B -m unittest discover -s goat-ultimate/tests -p "test_*.py" -v
 
-# 6. Plugin manifest read-only check (isolated, no install)
-# In a disposable HOME if you don't want to touch your live Hermes:
-# HOME=$(mktemp -d) hermes plugins validate /tmp/hermes-goat-web 2>&1 | head
-hermes plugins validate /tmp/hermes-goat-web 2>&1 | head
+# 6. Plugin manifest read-only check (approved interpreter, disposable env, no install)
+# See adapters/QUICKSTART.md section 2 for SCRATCH/RUNTIME; RUNTIME must point at the
+# approved installed Hermes source version. Never the shared auto-repair launcher.
+# hermes_readonly plugins validate /tmp/hermes-goat-web
+# hermes_readonly plugins doctor /tmp/hermes-goat-web --ci
+# python3 -B goat-web/scripts/build_plugin_bundle.py --check /tmp/hermes-goat-web
 ```
 
 Only the built directory at `/tmp/hermes-goat-web` is standalone. `goat-web/plugins/goat-web` alone is not.
 
-Hermes CLI reference (read-only, no install):
+Hermes CLI reference (read-only, no install; run through the section-2 wrapper above):
 
-- `hermes plugins validate <bundle-path>` — read-only manifest + tool check
-- `hermes plugins install <catalog-or-git> --ref <sha> --no-enable` — requires explicit ref; local paths require an approved local-install method
-- `hermes doctor` / `hermes plugins doctor` — health checks; no enable/restart by default
+- `plugins validate <bundle-path>` — read-only manifest + tool check
+- `plugins install <catalog-or-git> --ref <sha> --no-enable` — installs only with an explicit ref, does not enable; local paths require an approved local-install method
+- `plugins doctor <bundle-path> --ci` — health check; no enable/restart by default
 
-Actual flags may vary by Hermes version — run `hermes --help`, `hermes plugins --help`, `hermes plugins validate --help` to confirm before scripting. Do not invent local-path support for `install` if your Hermes reports catalog/git only.
+Actual flags may vary by Hermes version — confirm via the wrapper (`hermes_readonly --help`, `plugins --help`, `plugins validate --help`) before scripting. Do not invent local-path support for `install` if your Hermes reports catalog/git only. Native status/readback/profile installs need a separate approval and are not covered here.
+
+## Deliberate startup (opt-in preflight)
+
+Plain `hermes chat` / `hermes gateway run` alone are **not** protected. The supported gate is the reviewed companion `goat-web/scripts/start_with_preflight.py` (kept outside the built bundle): check the offline default first, then — only after separate network-startup approval — launch with `--bundle <reviewed-built-bundle> --allow-network --`. Full recipe, exit codes, and the production network contract live in `adapters/QUICKSTART.md` sections 0–4.
 
 ## Wiring and official endpoints
 
@@ -87,7 +93,7 @@ V3 wiring (`goat-web/plugins/goat-web/v3_wiring.py`) binds real adapters to fixe
 
 ## Security and error contract
 
-Fail-closed HTTPS/443 + SSRF/DNS gate on every URL, redirect, and crawl link. Pin-checked egress for the four official endpoints (`pinned_fetch` timeout 10s, 1 MiB, 0 redirects). Three public error codes only. See `adapters/SECURITY.md` and `goat-web/PROVENANCE.md`. No comprehensive audit is claimed here; treat this as a candidate requiring independent review and explicit human approval before publication or live enable.
+Fail-closed HTTPS/443 + SSRF/DNS gate on every URL, redirect, and crawl link. Pin-checked egress for the four official endpoints (`pinned_fetch` timeout 10s, 1 MiB, 0 redirects). Public error codes are `URL_BLOCKED`, `REDIRECT_BLOCKED`, `MISSING_CONFIG`, plus `PROVIDER_BLOCKED` once the provider-sibling P1-2 fix lands (not in baseline `1311d89a`). See `adapters/SECURITY.md` and `goat-web/PROVENANCE.md`. No comprehensive audit is claimed here; treat this as a candidate requiring independent review and explicit human approval before publication or live enable.
 
 ## Testing model
 

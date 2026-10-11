@@ -1,6 +1,6 @@
 # Tool schemas
 
-Closed public contract. Each registered JSON schema sets `additionalProperties: false`; unknown fields return the public `URL_BLOCKED` error rather than executing. URL policy in [url-policy.md](url-policy.md) applies wherever a URL is accepted. All success envelopes carry `ok: true` (plus tool-specific fields); failures carry `ok: false, error: {code}` with only three public codes.
+Closed public contract. Each registered JSON schema sets `additionalProperties: false`; unknown fields return the public `URL_BLOCKED` error rather than executing. URL policy in [url-policy.md](url-policy.md) applies wherever a URL is accepted. All success envelopes carry `ok: true` (plus tool-specific fields); failures carry `ok: false, error: {code}` with only four public codes.
 
 ## `goat_search`
 
@@ -176,6 +176,9 @@ Success:
 { "ok": false, "error": { "code": "URL_BLOCKED" } }
 { "ok": false, "error": { "code": "REDIRECT_BLOCKED" } }
 { "ok": false, "error": { "code": "MISSING_CONFIG" } }
+{ "ok": false, "error": { "code": "PROVIDER_BLOCKED" } }
 ```
 
-`URL_BLOCKED` for invalid/disallowed initial URL or invalid arguments/unknown fields; `REDIRECT_BLOCKED` for invalid/disallowed/excessive redirect; `MISSING_CONFIG` when a required dependency (search transport or vertical transport) is absent or `None`. No internal details are exposed; only these three codes.
+`URL_BLOCKED` for invalid/disallowed initial URL or invalid arguments/unknown fields; `REDIRECT_BLOCKED` for invalid/disallowed/excessive redirect; `MISSING_CONFIG` when a required dependency (search transport or vertical transport) is absent or `None`. `PROVIDER_BLOCKED` for provider-side denial with no retry, fallback, bypass, or raw HTML leakage. Normalized shape is `{'ok': false, 'error': {'code': 'PROVIDER_BLOCKED'}}`; raw legacy shape is `{'error': {'code': 'PROVIDER_BLOCKED'}}`. No internal details are exposed; only these four codes.
+
+`goat_search` returns `PROVIDER_BLOCKED` for HTTP 403/429, for known 202/200 bot-challenge pages matched by finite exact semantic form markers, and for nonempty anomalous no-SERP 200 bodies with no parsed results and no semantic empty-SERP evidence. All other non-2xx/invalid statuses remain `URL_BLOCKED`. Legitimate no-results remains `{ "ok": true, "results": [] }`, including recognized exact semantic DDG empty-SERP `div` markers (`no-results`, `no-results__message`, `result--no-result`); existing blank-200 and empty-204 compatibility is unchanged. Detection uses only those finite exact markers and semantic empty-SERP evidence, not CAPTCHA/bot words in result titles/snippets.
