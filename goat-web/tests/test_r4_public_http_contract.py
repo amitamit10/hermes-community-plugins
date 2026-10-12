@@ -14,8 +14,12 @@ fixtures, no live network. Covers 12 HTTP scenarios per tool:
 - TimeoutError => UPSTREAM_TIMEOUT
 - OSError => CONNECTION_ERROR
 - socket.gaierror => DNS_ERROR
-- GuardError (private URL) => URL_BLOCKED
+- injected GuardError (public error-mapping seam, not real SSRF proof) => URL_BLOCKED
 - 302 with Location => REDIRECT_BLOCKED
+
+The injected-guard-error case only checks that a mocked GuardError maps to
+URL_BLOCKED. Genuine private-literal/DNS/redirect rejection is proven with
+the real guard in goat-web/tests/test_v4_postqa_real_guard.py.
 """
 
 import importlib
@@ -230,7 +234,8 @@ class PublicHttpContractTests(OfflineRecordingTestCase):
             ("timeout", _raising(TimeoutError("mock upstream timeout secret-xyz")), False, "UPSTREAM_TIMEOUT"),
             ("connection", _raising(OSError("mock connection failure secret-xyz")), False, "CONNECTION_ERROR"),
             ("dns", _raising(socket.gaierror(socket.EAI_NONAME, "mock dns failure secret-xyz")), False, "DNS_ERROR"),
-            ("private-ip", _raising(vendor_guard.GuardError(vendor_guard.URL_BLOCKED)), False, "URL_BLOCKED"),
+            # Injected-guard-error seam: mocked GuardError mapping only, not real SSRF proof (see test_v4_postqa_real_guard.py).
+            ("injected-guard-error-url-blocked", _raising(vendor_guard.GuardError(vendor_guard.URL_BLOCKED)), False, "URL_BLOCKED"),
             ("redirect-302", _static(302, REDIRECT_BODY, {"location": "https://example.com/other"}), False, "REDIRECT_BLOCKED"),
         ]
         for name, fake, expect_ok, expect_code in answer_cases:
@@ -262,7 +267,8 @@ class PublicHttpContractTests(OfflineRecordingTestCase):
             ("timeout", _raising(TimeoutError("mock upstream timeout secret-xyz")), False, "UPSTREAM_TIMEOUT"),
             ("connection", _raising(OSError("mock connection failure secret-xyz")), False, "CONNECTION_ERROR"),
             ("dns", _raising(socket.gaierror(socket.EAI_NONAME, "mock dns failure secret-xyz")), False, "DNS_ERROR"),
-            ("private-ip", _raising(vendor_guard.GuardError(vendor_guard.URL_BLOCKED)), False, "URL_BLOCKED"),
+            # Injected-guard-error seam: mocked GuardError mapping only, not real SSRF proof (see test_v4_postqa_real_guard.py).
+            ("injected-guard-error-url-blocked", _raising(vendor_guard.GuardError(vendor_guard.URL_BLOCKED)), False, "URL_BLOCKED"),
             ("redirect-302", _static(302, REDIRECT_BODY, {"location": "https://example.com/other"}), False, "REDIRECT_BLOCKED"),
         ]
         for name, fake, expect_ok, expect_code in filtered_cases:
@@ -292,7 +298,8 @@ class PublicHttpContractTests(OfflineRecordingTestCase):
             ("timeout", _raising(TimeoutError("mock upstream timeout secret-xyz")), False, "UPSTREAM_TIMEOUT"),
             ("connection", _raising(OSError("mock connection failure secret-xyz")), False, "CONNECTION_ERROR"),
             ("dns", _raising(socket.gaierror(socket.EAI_NONAME, "mock dns failure secret-xyz")), False, "DNS_ERROR"),
-            ("private-ip", _raising(vendor_guard.GuardError(vendor_guard.URL_BLOCKED)), False, "URL_BLOCKED"),
+            # Injected-guard-error seam: mocked GuardError mapping only, not real SSRF proof (see test_v4_postqa_real_guard.py).
+            ("injected-guard-error-url-blocked", _raising(vendor_guard.GuardError(vendor_guard.URL_BLOCKED)), False, "URL_BLOCKED"),
             ("redirect-302", _static(302, REDIRECT_BODY, {"location": "https://example.com/other"}), False, "REDIRECT_BLOCKED"),
         ]
         for name, fake, expect_ok, expect_code in vertical_cases:

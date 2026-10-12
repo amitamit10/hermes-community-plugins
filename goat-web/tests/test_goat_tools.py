@@ -302,7 +302,7 @@ class GoatToolsTests(unittest.TestCase):
         def transport(url):
             calls.append(url)
             links = "".join(f'<a href="{link}">next</a>' for link in pages.get(url, []))
-            return {"status": 200, "body": links}
+            return {"status": 200, "body": links or "<p>Leaf page content.</p>"}
 
         result = goat_crawl("https://example.com/", transport=transport)
         self.assertEqual(set(result), {"pages"})

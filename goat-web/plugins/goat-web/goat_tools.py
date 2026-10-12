@@ -3,6 +3,7 @@
 Search uses DuckDuckGo HTML by default; no API key or provider credential is required. All outbound requests use pinned HTTPS fetch."""
 
 import http.client
+import json
 import socket
 from collections import deque
 from html.parser import HTMLParser
@@ -473,6 +474,12 @@ def _rate_limited_result(status, retry_after=None):
 def _has_provider_challenge(body):
     """Return whether HTML carries a recognised provider challenge widget."""
     try:
+        if isinstance(body, str) and "<" in body:
+            try:
+                json.loads(body)
+                return False
+            except Exception:
+                pass
         parser = _ChallengeParser()
         parser.feed(body if isinstance(body, str) else "")
         parser.close()
@@ -493,6 +500,8 @@ def goat_extract(url, transport=None, *, provider_config=_UNSET):
         if _validated_http_status(status) is None:
             raise URLGateError(URL_BLOCKED)
         if not 200 <= status < 300:
+            return _http_error_result(status)
+        if not body.strip():
             return _http_error_result(status)
         text, truncated = _truncate(trafilatura_like_extract(body))
         return {
@@ -543,6 +552,8 @@ def goat_crawl(
             if _validated_http_status(status) is None:
                 raise URLGateError(URL_BLOCKED)
             if not 200 <= status < 300:
+                return _http_error_result(status)
+            if not body.strip():
                 return _http_error_result(status)
             text, content_cut = _truncate(trafilatura_like_extract(body))
             pages.append(
