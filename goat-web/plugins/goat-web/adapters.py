@@ -44,38 +44,247 @@ _BLOCK_TAGS = frozenset(
 )
 
 
+_BOILERPLATE_ATTR_RE = re.compile(
+    r"cookie|consent|gdpr|promo|newsletter|subscribe|subscription|related|"
+    r"recommend|sidebar|menu|banner|advert|sponsor|popup|signup|sign-?up|"
+    r"social|share|comment|author-?bio",
+    re.IGNORECASE,
+)
+
+_HIGH_CONTENT_TAGS = frozenset(
+    ("article", "main", "p", "h1", "h2", "h3", "h4", "h5", "h6", "pre", "blockquote")
+)
+_MAIN_ANCESTOR_TAGS = frozenset(("article", "main"))
+
+
+def _score_segment(text, tag, ancestor_tags, attr_text, link_ratio):
+    """Score one block segment; positive means likely main content."""
+    if tag in ("article", "main"):
+        base = 4
+    elif tag in ("p", "h1", "h2", "h3", "h4", "h5", "h6", "pre", "blockquote"):
+        base = 3
+    elif tag is None:
+        base = 1
+    else:
+        base = 0
+    try:
+        ancestors = set(ancestor_tags) if ancestor_tags else set()
+    except Exception:
+        ancestors = set()
+    if ancestors & _MAIN_ANCESTOR_TAGS:
+        base += 2
+    length = len(text) if isinstance(text, str) else 0
+    if length >= 100:
+        base += 2
+    elif length >= 20:
+        base += 1
+    try:
+        boilerplate = bool(attr_text and _BOILERPLATE_ATTR_RE.search(attr_text))
+    except Exception:
+        boilerplate = False
+    if boilerplate:
+        base -= 6
+    try:
+        ratio = float(link_ratio) if link_ratio else 0.0
+    except Exception:
+        ratio = 0.0
+    if ratio < 0.0:
+        ratio = 0.0
+    if ratio > 1.0:
+        ratio = 1.0
+    base -= 3.0 * ratio
+    return base
+
+
 class _ReadableTextParser(HTMLParser):
     def __init__(self):
         super().__init__(convert_charrefs=True)
-        self.parts = []
         self._ignored_stack = []
+        self._stack = []
+        self._root_chunks = []
+        self._root_link_chars = 0
+        self._anchor_depth = 0
+        self._segments = []
+        self._order = 0
+        self._seq = 0
+        self._root_first_seq = None
 
-    def handle_starttag(self, tag, _attrs):
-        tag = tag.lower()
+    def _current_frame(self):
+        return self._stack[-1] if self._stack else None
+
+    def _finalize_frame(self, frame):
+        raw = "".join(frame.get("chunks") or [])
+        text = re.sub(r"\s+", " ", raw).strip()
+        if not text:
+            return
+        denom = len(raw.strip())
+        if denom <= 0:
+            denom = len(text)
+        if denom <= 0:
+            denom = 1
+        link_chars = frame.get("link_chars") or 0
+        ratio = link_chars / float(denom)
+        if ratio > 1.0:
+            ratio = 1.0
+        own_attr = ((frame.get("class") or "") + " " + (frame.get("id") or ""))
+        ancestor_attr = frame.get("ancestor_attr") or ""
+        score = _score_segment(
+            text,
+            frame.get("tag"),
+            frame.get("ancestors") or (),
+            (own_attr + " " + ancestor_attr),
+            ratio,
+        )
+        self._segments.append(
+            {"order": frame.get("first_seq", frame.get("order", 0)), "text": text, "score": score}
+        )
+
+    def handle_starttag(self, tag, attrs):
+        lowered = tag.lower()
         if self._ignored_stack:
-            if tag not in _VOID_TAGS:
-                self._ignored_stack.append(tag)
+            if lowered not in _VOID_TAGS:
+                self._ignored_stack.append(lowered)
             return
-        if tag in _IGNORED_TAGS:
-            if tag not in _VOID_TAGS:
-                self._ignored_stack.append(tag)
+        if lowered in _IGNORED_TAGS:
+            if lowered not in _VOID_TAGS:
+                self._ignored_stack.append(lowered)
             return
-        if tag in _BLOCK_TAGS:
-            self.parts.append(" ")
+        if lowered == "a":
+            self._anchor_depth += 1
+            return
+        if lowered in _VOID_TAGS:
+            piece = " "
+            frame = self._current_frame()
+            if frame is not None:
+                frame["chunks"].append(piece)
+            else:
+                self._root_chunks.append(piece)
+            return
+        if lowered in _BLOCK_TAGS:
+            try:
+                mapping = dict(attrs)
+            except Exception:
+                mapping = {}
+            cls = mapping.get("class") or ""
+            iid = mapping.get("id") or ""
+            if not isinstance(cls, str):
+                cls = str(cls)
+            if not isinstance(iid, str):
+                iid = str(iid)
+            ancestor_attr = " ".join(
+                ((fr.get("class") or "") + " " + (fr.get("id") or ""))
+                for fr in self._stack
+            )
+            frame = {
+                "tag": lowered,
+                "class": cls,
+                "id": iid,
+                "chunks": [],
+                "link_chars": 0,
+                "order": self._order,
+                "first_seq": None,
+                "ancestors": [fr.get("tag") for fr in self._stack],
+                "ancestor_attr": ancestor_attr,
+            }
+            self._order += 1
+            self._stack.append(frame)
+            return
+        return
 
     def handle_endtag(self, tag):
-        tag = tag.lower()
+        lowered = tag.lower()
         if self._ignored_stack:
-            if tag in self._ignored_stack:
-                index = len(self._ignored_stack) - 1 - self._ignored_stack[::-1].index(tag)
+            if lowered in self._ignored_stack:
+                index = len(self._ignored_stack) - 1 - self._ignored_stack[::-1].index(lowered)
                 del self._ignored_stack[index:]
             return
-        if tag in _BLOCK_TAGS:
-            self.parts.append(" ")
+        if lowered == "a":
+            if self._anchor_depth > 0:
+                self._anchor_depth -= 1
+            return
+        if lowered in _VOID_TAGS:
+            return
+        if lowered in _BLOCK_TAGS:
+            for pos in range(len(self._stack) - 1, -1, -1):
+                if self._stack[pos].get("tag") == lowered:
+                    pending = self._stack[pos:]
+                    del self._stack[pos:]
+                    for frame in reversed(pending):
+                        self._finalize_frame(frame)
+                    break
+            return
+
+    def handle_startendtag(self, tag, attrs):
+        lowered = tag.lower()
+        if self._ignored_stack:
+            return
+        if lowered in _IGNORED_TAGS:
+            return
+        if lowered == "a":
+            return
+        if lowered in _BLOCK_TAGS and lowered in _VOID_TAGS:
+            frame = self._current_frame()
+            if frame is not None:
+                frame["chunks"].append(" ")
+            else:
+                self._root_chunks.append(" ")
+            return
+        if lowered in _BLOCK_TAGS:
+            self.handle_starttag(tag, attrs)
+            self.handle_endtag(tag)
+            return
 
     def handle_data(self, data):
-        if not self._ignored_stack:
-            self.parts.append(data)
+        if self._ignored_stack:
+            return
+        if not data:
+            return
+        self._seq += 1
+        frame = self._current_frame()
+        if frame is not None:
+            if frame.get("first_seq") is None:
+                frame["first_seq"] = self._seq
+            frame["chunks"].append(data)
+            if self._anchor_depth > 0:
+                try:
+                    frame["link_chars"] += len(data)
+                except Exception:
+                    pass
+        else:
+            if self._root_first_seq is None:
+                self._root_first_seq = self._seq
+            self._root_chunks.append(data)
+            if self._anchor_depth > 0:
+                try:
+                    self._root_link_chars += len(data)
+                except Exception:
+                    pass
+
+    def close(self):
+        try:
+            super().close()
+        finally:
+            for frame in reversed(list(self._stack)):
+                try:
+                    self._finalize_frame(frame)
+                except Exception:
+                    pass
+            self._stack = []
+
+    def scored_segments(self):
+        out = list(self._segments)
+        raw_root = "".join(self._root_chunks)
+        root_text = re.sub(r"\s+", " ", raw_root).strip()
+        if root_text:
+            denom = len(raw_root.strip()) or len(root_text) or 1
+            ratio = (self._root_link_chars / float(denom)) if denom else 0.0
+            if ratio > 1.0:
+                ratio = 1.0
+            score = _score_segment(root_text, None, (), "", ratio)
+            order = self._root_first_seq if self._root_first_seq is not None else 10**9
+            out.append({"order": order, "text": root_text, "score": score})
+        out.sort(key=lambda item: item["order"])
+        return out
 
 
 class _LinkParser(HTMLParser):
@@ -104,7 +313,17 @@ def trafilatura_like_extract(html):
     parser = _ReadableTextParser()
     parser.feed(html)
     parser.close()
-    return re.sub(r"\s+", " ", "".join(parser.parts)).strip()
+    segments = parser.scored_segments()
+    if not segments:
+        return ""
+    has_positive = any(item["score"] > 0 for item in segments)
+    if has_positive:
+        kept = [item["text"] for item in segments if item["score"] > 0]
+        if not kept:
+            kept = [item["text"] for item in segments]
+    else:
+        kept = [item["text"] for item in segments]
+    return re.sub(r"\s+", " ", " ".join(kept)).strip()
 
 
 def _origin(url):

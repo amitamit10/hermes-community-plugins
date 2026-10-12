@@ -530,6 +530,8 @@ def goat_extract(url, transport=None, *, provider_config=_UNSET):
         if not body.strip():
             return _http_error_result(status)
         text, truncated = _truncate(trafilatura_like_extract(body))
+        if not text.strip():
+            return _http_error_result(status)
         return {
             "url": url,
             "final_url": final_url,
@@ -582,6 +584,8 @@ def goat_crawl(
             if not body.strip():
                 return _http_error_result(status)
             text, content_cut = _truncate(trafilatura_like_extract(body))
+            if not text.strip():
+                return _http_error_result(status)
             pages.append(
                 {
                     "url": current,
