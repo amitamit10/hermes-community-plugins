@@ -17,10 +17,10 @@ from urllib.parse import parse_qs, quote, urlencode, urljoin, urlsplit, urlunspl
 
 if __package__:
     from .ddg_parser import _SearchParser, _VOID_TAGS, _plain_text
-    from .result_contract import public_error_code, result_operation
+    from .result_contract import http_error_code, public_error_code, result_operation
 else:
     from ddg_parser import _SearchParser, _VOID_TAGS, _plain_text
-    from result_contract import public_error_code, result_operation
+    from result_contract import http_error_code, public_error_code, result_operation
 
 
 DEFAULT_SEARXNG_URL = "http://localhost:8888"
@@ -611,6 +611,12 @@ def wikipedia_search(query, transport=None, *, max_results=MAX_RESULTS):
             "formatversion": 2,
         })
         _status, body, effective_url = _fetch(url, fetch)
+        try:
+            _http_code = http_error_code(_status, body)
+        except Exception:
+            _http_code = URL_BLOCKED
+        if _http_code is not None:
+            raise _ClientError(_http_code)
         payload = _json_body(body)
         if not isinstance(payload, Mapping):
             raise _ClientError(URL_BLOCKED)

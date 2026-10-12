@@ -619,6 +619,28 @@ def _discovery_subject_phrase(query):
     return _normalize_subject_phrase(match.group("subj"))
 
 
+def _parse_orbit_query(query):
+    """Parse ``What does <subject> orbit?`` into a normalized subject phrase.
+
+    Returns the subject phrase or ``None`` when the query is not a direct
+    single-relation orbit question. Grounding still requires one complete
+    cited source sentence (e.g. ``The Moon orbits the Earth.``); answers
+    are never hardcoded here.
+    """
+    if not isinstance(query, str):
+        return None
+    low = query.casefold().strip()
+    match = re.match(r"what\s+does\s+(?P<subj>.+?)\s+orbit\s*\??\s*$", low)
+    if not match:
+        return None
+    subject_phrase = _normalize_subject_phrase(match.group("subj"))
+    if not subject_phrase:
+        return None
+    if "who" in _tokens(subject_phrase):
+        return None
+    return subject_phrase
+
+
 def _parse_generic_who_query(query):
     if not isinstance(query, str):
         return None
@@ -658,6 +680,15 @@ def _relation_patterns(kind, subj_pat, base=None):
             r"(?P<actor>.+?)\bdiscovered\b\s+" + subj_pat + r"\s*[.!]\s*$",
             subj_pat + r"\s+was\s+discovered(?:\s+in\s+\d{4})?\s+by\s+"
             r"(?P<actor>[^.!?]+?)\s*[.!]\s*$",
+        ]
+    if kind == "orbit":
+        return [
+            r".*?" + subj_pat + r"\s+orbits?\s+(?:the\s+|a\s+|an\s+)?"
+            r"(?P<actor>[^.!?]+?)\s*[.!]\s*$",
+            r".*?" + subj_pat + r"\s+is\s+orbiting\s+(?:the\s+|a\s+|an\s+)?"
+            r"(?P<actor>[^.!?]+?)\s*[.!]\s*$",
+            r"(?:the\s+|a\s+|an\s+)?(?P<actor>[^.!?]+?)\s+(?:is|was)\s+orbited\s+by\s+"
+            r"(?:the\s+|a\s+|an\s+)?" + subj_pat + r"\s*[.!]\s*$",
         ]
     if kind == "generic":
         active_forms = _GENERIC_ACTIVE_FORMS.get(base, ())
@@ -741,6 +772,18 @@ def _relation_negative_patterns(kind, subj_pat, base=None):
             subj_pat + r"\s+" + _was_contract
             + r"discovered(?:\s+in\s+\d{4})?\s+by\s+"
             r"(?P<actor>[^.!?]+?)\s*[.!]\s*$",
+        ]
+    if kind == "orbit":
+        return [
+            r".*?" + subj_pat + r"\s+(?:does\s+not\s+|do\s+not\s+|did\s+not\s+|"
+            r"doesn['\u2019]t\s+|don['\u2019]t\s+|didn['\u2019]t\s+|never\s+)"
+            r"orbits?\s+(?:the\s+|a\s+|an\s+)?(?P<actor>[^.!?]+?)\s*[.!]\s*$",
+            r"(?:the\s+|a\s+|an\s+)?(?P<actor>[^.!?]+?)\s+(?:is|was)\s+" + _neg
+            + r"orbited\s+by\s+(?:the\s+|a\s+|an\s+)?" + subj_pat + r"\s*[.!]\s*$",
+            r"(?:the\s+|a\s+|an\s+)?(?P<actor>[^.!?]+?)\s+" + _was_contract
+            + r"orbited\s+by\s+(?:the\s+|a\s+|an\s+)?" + subj_pat + r"\s*[.!]\s*$",
+            r"(?:the\s+|a\s+|an\s+)?(?P<actor>[^.!?]+?)\s+is\s+never\s+orbited\s+by\s+"
+            r"(?:the\s+|a\s+|an\s+)?" + subj_pat + r"\s*[.!]\s*$",
         ]
     if kind == "generic":
         if base is None:
@@ -1169,6 +1212,16 @@ def goat_answer(query, search=None, *, max_results=MAX_RESULTS):
         )
         return _finish(gated)
     else:
+        orbit_subject = _parse_orbit_query(query)
+        if orbit_subject:
+            if _relation_has_conflict(ranked_all, "orbit", orbit_subject, extract_only=True):
+                return {"error": {"code": _INSUFFICIENT}}
+            gated = _collect_sentence_claims(
+                ranked_all,
+                lambda text: _is_relation_evidence(text, "orbit", orbit_subject),
+                extract_only=True,
+            )
+            return _finish(gated)
         generic_parsed = _parse_generic_who_query(query)
         if generic_parsed is not None:
             base, subject_phrase = generic_parsed

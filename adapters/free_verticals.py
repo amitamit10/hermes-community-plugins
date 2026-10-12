@@ -171,6 +171,8 @@ def _fetch(url, transport):
     code = http_error_code(status, text)
     if code is not None:
         raise _ClientError(code)
+    if 200 <= status < 300 and text.strip() == "":
+        raise _ClientError(HTTP_ERROR)
     if not 200 <= status < 300:
         raise _ClientError(URL_BLOCKED)
     return text

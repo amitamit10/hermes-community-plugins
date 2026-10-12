@@ -1614,7 +1614,8 @@ class OfficialDefaultTransportTests(OfflineTestCase, FixtureMixin):
 
     def test_error_statuses_are_url_blocked(self):
         wiring = self._wiring()
-        for status in (403, 429, 500, 200 - 200):
+        expected = {403: "HTTP_ERROR", 429: "RATE_LIMITED", 500: "HTTP_ERROR", 0: "URL_BLOCKED"}
+        for status, want in expected.items():
             with self.subTest(status=status):
                 calls = []
                 search = wiring.make_default_search(
@@ -1623,7 +1624,7 @@ class OfficialDefaultTransportTests(OfflineTestCase, FixtureMixin):
                 response = search("q", max_results=5)
                 self.assertEqual(len(calls), 1)
                 self.assertEqual(
-                    response, {"ok": False, "error": {"code": "URL_BLOCKED"}}
+                    response, {"ok": False, "error": {"code": want}}
                 )
 
     def test_transport_preflight_rejects_non_fixed_urls(self):
@@ -2321,7 +2322,13 @@ class VerticalOfficialTransportTests(OfflineTestCase, FixtureMixin):
                         getattr(raised.exception, "code", None),
                         "REDIRECT_BLOCKED",
                     )
-            for status in (403, 429, 500, 503, 0):
+            for status, want in (
+                (403, "HTTP_ERROR"),
+                (429, "RATE_LIMITED"),
+                (500, "HTTP_ERROR"),
+                (503, "HTTP_ERROR"),
+                (0, "URL_BLOCKED"),
+            ):
                 with self.subTest(endpoint=endpoint, status=status):
                     calls = []
                     with self.assertRaises(Exception) as raised:
@@ -2333,7 +2340,7 @@ class VerticalOfficialTransportTests(OfflineTestCase, FixtureMixin):
                     code = getattr(raised.exception, "code", raised.exception)
                     self.assertEqual(
                         wiring._vendor_contract.public_error_code(code),
-                        "URL_BLOCKED",
+                        want,
                     )
 
     def test_default_dependencies_bind_all_four_official_endpoints(self):
@@ -2583,7 +2590,12 @@ class VerticalPinnedBoundaryTests(OfflineTestCase):
                     call for call in seams["request_calls"] if call[1] == "api.crossref.org"
                 ]
                 self.assertEqual(len(scholar_requests), 1)
-        for status in (403, 429, 500, 503):
+        for status, want in (
+            (403, "HTTP_ERROR"),
+            (429, "RATE_LIMITED"),
+            (500, "HTTP_ERROR"),
+            (503, "HTTP_ERROR"),
+        ):
             with self.subTest(status=status):
                 resolver, factory, seams = self._seams(
                     bodies, statuses={"api.crossref.org": status}
@@ -2603,7 +2615,7 @@ class VerticalPinnedBoundaryTests(OfflineTestCase):
                     )
                 )
                 self.assertEqual(
-                    payload, {"ok": False, "error": {"code": "URL_BLOCKED"}}
+                    payload, {"ok": False, "error": {"code": want}}
                 )
         for failure, body_override in (
             ("timeout", None),

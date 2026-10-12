@@ -100,7 +100,7 @@ def _require_wikipedia_url(url):
 
 
 def _call_official(url, endpoint, *, _fetch, _resolver, _connection_factory):
-    """Fetch one fixed-endpoint URL; reject every 3xx and non-2xx."""
+    """Fetch one fixed-endpoint URL; classify HTTP errors, keep SSRF blocks."""
     _require_exact_endpoint(url, endpoint)
     fetch = _fetch if _fetch is not None else _vendor_guard.pinned_fetch
     response = fetch(
@@ -111,18 +111,40 @@ def _call_official(url, endpoint, *, _fetch, _resolver, _connection_factory):
         resolver=_resolver,
         connection_factory=_connection_factory,
     )
-    if isinstance(response, Mapping):
-        status_value = response.get("status", 0)
-    else:
-        status_value = getattr(response, "status", 0)
     try:
-        status = int(status_value)
-    except (TypeError, ValueError, OverflowError):
-        status = 0
-    if 300 <= status <= 399:
-        raise _vendor_guard.GuardError(_vendor_guard.REDIRECT_BLOCKED)
-    if not 200 <= status <= 299:
+        if isinstance(response, Mapping):
+            status_value = response.get("status", 0)
+            body = response.get("body", response.get("text", ""))
+        else:
+            status_value = getattr(response, "status", 0)
+            body = getattr(response, "body", getattr(response, "text", ""))
+    except Exception:
+        raise _vendor_guard.GuardError(_vendor_guard.URL_BLOCKED) from None
+    try:
+        code = _vendor_contract.http_error_code(status_value, body)
+    except Exception:
+        raise _vendor_guard.GuardError(_vendor_guard.URL_BLOCKED) from None
+    if code is not None:
+        raise _vendor_guard.GuardError(code)
+    if isinstance(status_value, bool) or type(status_value) is not int:
         raise _vendor_guard.GuardError(_vendor_guard.URL_BLOCKED)
+    if 300 <= status_value <= 399:
+        raise _vendor_guard.GuardError(_vendor_guard.REDIRECT_BLOCKED)
+    if not 200 <= status_value <= 299:
+        raise _vendor_guard.GuardError(_vendor_guard.URL_BLOCKED)
+    try:
+        if body is None:
+            _empty = True
+        elif isinstance(body, str):
+            _empty = body.strip() == ""
+        elif isinstance(body, (bytes, bytearray)):
+            _empty = bytes(body).decode("utf-8", errors="replace").strip() == ""
+        else:
+            _empty = False
+    except Exception:
+        _empty = False
+    if _empty:
+        raise _vendor_guard.GuardError(_vendor_guard.HTTP_ERROR)
     return response
 
 
