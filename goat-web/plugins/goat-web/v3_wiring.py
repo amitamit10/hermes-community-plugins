@@ -351,44 +351,159 @@ def _make_answer_operation(deps):
             return _failure("MISSING_CONFIG")
         stripped = query.strip() if isinstance(query, str) else query
         try:
-            response = search(stripped, max_results=_CANDIDATE_CAP)
+            plan = _vendor_answer.decompose_query(stripped)
+        except Exception:
+            plan = None
+        if not isinstance(plan, list):
+            plan = None
+        _is_two_hop = (
+            isinstance(plan, list)
+            and len(plan) == 2
+            and isinstance(plan[0], str)
+            and isinstance(plan[1], str)
+        )
+        if not _is_two_hop:
+            try:
+                response = search(stripped, max_results=_CANDIDATE_CAP)
+            except Exception as error:
+                return _failure(_vendor_contract.public_error_code(error))
+            try:
+                normalized_backend = _vendor_contract.normalize_result(response)
+            except Exception:
+                return _failure("URL_BLOCKED")
+            try:
+                backend_failed = (
+                    normalized_backend.get("ok") is False
+                    or normalized_backend.get("error") is not None
+                )
+            except Exception:
+                return _failure("URL_BLOCKED")
+            if backend_failed:
+                try:
+                    code = _vendor_contract.public_error_code(
+                        normalized_backend.get("error")
+                    )
+                except Exception:
+                    code = "URL_BLOCKED"
+                return _failure(code)
+            try:
+                results = normalized_backend.get("results")
+            except Exception:
+                return _failure("URL_BLOCKED")
+            if not isinstance(results, list):
+                return _failure("URL_BLOCKED")
+            try:
+                overproduced = len(results) > _CANDIDATE_CAP
+            except Exception:
+                return _failure("URL_BLOCKED")
+            try:
+                candidates = list(results[:_CANDIDATE_CAP])
+            except Exception:
+                return _failure("URL_BLOCKED")
+            safe = [item for item in candidates if _safe_candidate(item)]
+            provenance = {}
+            for _key in (
+                "source",
+                "source_url",
+                "transitions",
+                "truncated",
+                "metadata",
+                "provenance",
+            ):
+                try:
+                    if _key in normalized_backend:
+                        provenance[_key] = normalized_backend[_key]
+                except Exception:
+                    return _failure("URL_BLOCKED")
+
+            def _synth_search(_candidate_query):
+                return {"ok": True, "results": list(safe)}
+
+            try:
+                raw = _vendor_answer.goat_answer(
+                    stripped, search=_synth_search, max_results=max_results
+                )
+            except Exception as error:
+                return _failure(_vendor_contract.public_error_code(error))
+            if not isinstance(raw, Mapping):
+                return _failure("URL_BLOCKED")
+            try:
+                raw_failed = (
+                    raw.get("ok") is False or raw.get("error") is not None
+                )
+            except Exception:
+                return _failure("URL_BLOCKED")
+            if raw_failed:
+                try:
+                    code = _vendor_contract.public_error_code(raw.get("error"))
+                except Exception:
+                    code = "URL_BLOCKED"
+                return _failure(code)
+            try:
+                out = dict(raw)
+            except Exception:
+                return _failure("URL_BLOCKED")
+            out["ok"] = True
+            for _key, _value in provenance.items():
+                if _key in ("answer", "sources", "ok", "error", "results"):
+                    continue
+                out[_key] = _value
+            truncated_needed = bool(overproduced)
+            if truncated_needed:
+                try:
+                    present = "truncated" in out
+                except Exception:
+                    return _failure("URL_BLOCKED")
+                if not present:
+                    out["truncated"] = True
+                else:
+                    try:
+                        current = out.get("truncated")
+                    except Exception:
+                        return _failure("URL_BLOCKED")
+                    if current is False:
+                        out["truncated"] = True
+            return out
+        hop1 = plan[0]
+        try:
+            response1 = search(hop1, max_results=_CANDIDATE_CAP)
         except Exception as error:
             return _failure(_vendor_contract.public_error_code(error))
         try:
-            normalized_backend = _vendor_contract.normalize_result(response)
+            normalized1 = _vendor_contract.normalize_result(response1)
         except Exception:
             return _failure("URL_BLOCKED")
         try:
-            backend_failed = (
-                normalized_backend.get("ok") is False
-                or normalized_backend.get("error") is not None
+            backend_failed1 = (
+                normalized1.get("ok") is False
+                or normalized1.get("error") is not None
             )
         except Exception:
             return _failure("URL_BLOCKED")
-        if backend_failed:
+        if backend_failed1:
             try:
                 code = _vendor_contract.public_error_code(
-                    normalized_backend.get("error")
+                    normalized1.get("error")
                 )
             except Exception:
                 code = "URL_BLOCKED"
             return _failure(code)
         try:
-            results = normalized_backend.get("results")
+            results1 = normalized1.get("results")
         except Exception:
             return _failure("URL_BLOCKED")
-        if not isinstance(results, list):
+        if not isinstance(results1, list):
             return _failure("URL_BLOCKED")
         try:
-            overproduced = len(results) > _CANDIDATE_CAP
+            overproduced1 = len(results1) > _CANDIDATE_CAP
         except Exception:
             return _failure("URL_BLOCKED")
         try:
-            candidates = list(results[:_CANDIDATE_CAP])
+            candidates1 = list(results1[:_CANDIDATE_CAP])
         except Exception:
             return _failure("URL_BLOCKED")
-        safe = [item for item in candidates if _safe_candidate(item)]
-        provenance = {}
+        safe1 = [item for item in candidates1 if _safe_candidate(item)]
+        provenance1 = {}
         for _key in (
             "source",
             "source_url",
@@ -398,44 +513,303 @@ def _make_answer_operation(deps):
             "provenance",
         ):
             try:
-                if _key in normalized_backend:
-                    provenance[_key] = normalized_backend[_key]
+                if _key in normalized1:
+                    provenance1[_key] = normalized1[_key]
             except Exception:
                 return _failure("URL_BLOCKED")
 
-        def _synth_search(_candidate_query):
-            return {"ok": True, "results": list(safe)}
+        def _synth_search1(_candidate_query):
+            return {"ok": True, "results": list(safe1)}
 
         try:
-            raw = _vendor_answer.goat_answer(
-                stripped, search=_synth_search, max_results=max_results
+            raw1 = _vendor_answer.goat_answer(
+                hop1, search=_synth_search1, max_results=max_results
             )
         except Exception as error:
             return _failure(_vendor_contract.public_error_code(error))
-        if not isinstance(raw, Mapping):
+        if not isinstance(raw1, Mapping):
             return _failure("URL_BLOCKED")
         try:
-            raw_failed = (
-                raw.get("ok") is False or raw.get("error") is not None
+            raw_failed1 = (
+                raw1.get("ok") is False or raw1.get("error") is not None
             )
         except Exception:
             return _failure("URL_BLOCKED")
-        if raw_failed:
+        if raw_failed1:
             try:
-                code = _vendor_contract.public_error_code(raw.get("error"))
+                _err1 = raw1.get("error")
+            except Exception:
+                return _failure("URL_BLOCKED")
+            _insufficient1 = False
+            try:
+                if isinstance(_err1, Mapping):
+                    _c1 = _err1.get("code")
+                    if _c1 == "INSUFFICIENT_EVIDENCE":
+                        _insufficient1 = True
+                    elif isinstance(_c1, Mapping) and _c1.get("code") == "INSUFFICIENT_EVIDENCE":
+                        _insufficient1 = True
+                    elif _err1.get("error") == "INSUFFICIENT_EVIDENCE":
+                        _insufficient1 = True
+                elif _err1 == "INSUFFICIENT_EVIDENCE":
+                    _insufficient1 = True
+            except Exception:
+                _insufficient1 = False
+            if _insufficient1:
+                return {"ok": False, "error": {"code": "INSUFFICIENT_EVIDENCE"}}
+            try:
+                code = _vendor_contract.public_error_code(raw1.get("error"))
             except Exception:
                 code = "URL_BLOCKED"
             return _failure(code)
         try:
-            out = dict(raw)
+            hop1_answer = raw1.get("answer", "")
+            hop1_sources = raw1.get("sources", [])
         except Exception:
             return _failure("URL_BLOCKED")
+        if not isinstance(hop1_answer, str):
+            hop1_answer = ""
+        if not isinstance(hop1_sources, list):
+            return _failure("URL_BLOCKED")
+        try:
+            bridge = _vendor_answer.extract_bridge_entity(hop1_answer)
+        except Exception:
+            bridge = ""
+        if not isinstance(bridge, str) or not bridge:
+            return {"ok": False, "error": {"code": "INSUFFICIENT_EVIDENCE"}}
+        hop2 = plan[1].replace("{bridge}", bridge)
+        try:
+            response2 = search(hop2, max_results=_CANDIDATE_CAP)
+        except Exception as error:
+            return _failure(_vendor_contract.public_error_code(error))
+        try:
+            normalized2 = _vendor_contract.normalize_result(response2)
+        except Exception:
+            return _failure("URL_BLOCKED")
+        try:
+            backend_failed2 = (
+                normalized2.get("ok") is False
+                or normalized2.get("error") is not None
+            )
+        except Exception:
+            return _failure("URL_BLOCKED")
+        if backend_failed2:
+            try:
+                code = _vendor_contract.public_error_code(
+                    normalized2.get("error")
+                )
+            except Exception:
+                code = "URL_BLOCKED"
+            return _failure(code)
+        try:
+            results2 = normalized2.get("results")
+        except Exception:
+            return _failure("URL_BLOCKED")
+        if not isinstance(results2, list):
+            return _failure("URL_BLOCKED")
+        try:
+            overproduced2 = len(results2) > _CANDIDATE_CAP
+        except Exception:
+            return _failure("URL_BLOCKED")
+        try:
+            candidates2 = list(results2[:_CANDIDATE_CAP])
+        except Exception:
+            return _failure("URL_BLOCKED")
+        safe2 = [item for item in candidates2 if _safe_candidate(item)]
+        provenance2 = {}
+        for _key in (
+            "source",
+            "source_url",
+            "transitions",
+            "truncated",
+            "metadata",
+            "provenance",
+        ):
+            try:
+                if _key in normalized2:
+                    provenance2[_key] = normalized2[_key]
+            except Exception:
+                return _failure("URL_BLOCKED")
+
+        def _synth_search2(_candidate_query):
+            return {"ok": True, "results": list(safe2)}
+
+        try:
+            raw2 = _vendor_answer.goat_answer(
+                hop2, search=_synth_search2, max_results=max_results
+            )
+        except Exception as error:
+            return _failure(_vendor_contract.public_error_code(error))
+        if not isinstance(raw2, Mapping):
+            return _failure("URL_BLOCKED")
+        try:
+            raw_failed2 = (
+                raw2.get("ok") is False or raw2.get("error") is not None
+            )
+        except Exception:
+            return _failure("URL_BLOCKED")
+        if raw_failed2:
+            try:
+                _err2 = raw2.get("error")
+            except Exception:
+                return _failure("URL_BLOCKED")
+            _insufficient2 = False
+            try:
+                if isinstance(_err2, Mapping):
+                    _c2 = _err2.get("code")
+                    if _c2 == "INSUFFICIENT_EVIDENCE":
+                        _insufficient2 = True
+                    elif isinstance(_c2, Mapping) and _c2.get("code") == "INSUFFICIENT_EVIDENCE":
+                        _insufficient2 = True
+                    elif _err2.get("error") == "INSUFFICIENT_EVIDENCE":
+                        _insufficient2 = True
+                elif _err2 == "INSUFFICIENT_EVIDENCE":
+                    _insufficient2 = True
+            except Exception:
+                _insufficient2 = False
+            if _insufficient2:
+                return {"ok": False, "error": {"code": "INSUFFICIENT_EVIDENCE"}}
+            try:
+                code = _vendor_contract.public_error_code(raw2.get("error"))
+            except Exception:
+                code = "URL_BLOCKED"
+            return _failure(code)
+        try:
+            hop2_answer = raw2.get("answer", "")
+            hop2_sources = raw2.get("sources", [])
+        except Exception:
+            return _failure("URL_BLOCKED")
+        if not isinstance(hop2_answer, str):
+            hop2_answer = ""
+        if not isinstance(hop2_sources, list):
+            return _failure("URL_BLOCKED")
+        if hop2_answer:
+            try:
+                _neg_re = getattr(_vendor_answer, "_NEGATION_RE", None)
+            except Exception:
+                _neg_re = None
+            if _neg_re is None:
+                _neg_re = re.compile(
+                    r"\b(never|not|no|neither|nor|without|deny|denies|denied|false)\b"
+                    r"|n['\u2019]t\b|\bcannot\b",
+                    re.IGNORECASE,
+                )
+            try:
+                _bridge_tokens = [t.casefold() for t in _TOKEN_RE.findall(bridge)]
+            except Exception:
+                _bridge_tokens = []
+            _conflict = False
+            if _bridge_tokens:
+                try:
+                    _claim_fn = getattr(_vendor_answer, "_claim_texts", None)
+                    _ev_fn = getattr(_vendor_answer, "_evidence_text", None)
+                except Exception:
+                    _claim_fn = None
+                    _ev_fn = None
+                for _item in safe2:
+                    try:
+                        if _ev_fn is not None:
+                            _ev = _ev_fn(_item)
+                        else:
+                            _ev = ""
+                            if isinstance(_item, Mapping):
+                                _ex = _item.get("extract", "")
+                                _ev = _ex.strip() if isinstance(_ex, str) else ""
+                                if not _ev:
+                                    _sn = _item.get("snippet", _item.get("description", ""))
+                                    _ev = _sn.strip() if isinstance(_sn, str) else ""
+                    except Exception:
+                        continue
+                    if not _ev:
+                        continue
+                    try:
+                        if _claim_fn is not None:
+                            _sents = _claim_fn(_ev)
+                        else:
+                            _sents = [_ev]
+                    except Exception:
+                        _sents = [_ev]
+                    for _sent in _sents:
+                        try:
+                            _stoks = set(_TOKEN_RE.findall(_sent.casefold()))
+                        except Exception:
+                            continue
+                        if not all(_bt in _stoks for _bt in _bridge_tokens):
+                            continue
+                        try:
+                            if _neg_re.search(_sent.casefold()):
+                                _conflict = True
+                                break
+                        except Exception:
+                            continue
+                    if _conflict:
+                        break
+            if _conflict:
+                return {"ok": False, "error": {"code": "INSUFFICIENT_EVIDENCE"}}
+        try:
+            _m = len(hop1_sources)
+        except Exception:
+            return _failure("URL_BLOCKED")
+        try:
+            _shifted = re.sub(
+                r"\[(\d+)\]",
+                lambda _mo: "[%d]" % (int(_mo.group(1)) + _m),
+                hop2_answer,
+            )
+        except Exception:
+            return _failure("URL_BLOCKED")
+        try:
+            hop1_stamped = []
+            for _s in hop1_sources:
+                if not isinstance(_s, Mapping):
+                    return _failure("URL_BLOCKED")
+                _d = dict(_s)
+                _d["hop"] = 1
+                hop1_stamped.append(_d)
+            hop2_renumbered = []
+            for _s in hop2_sources:
+                if not isinstance(_s, Mapping):
+                    return _failure("URL_BLOCKED")
+                _d = dict(_s)
+                try:
+                    _idx = _d.get("index")
+                except Exception:
+                    return _failure("URL_BLOCKED")
+                if not isinstance(_idx, int):
+                    return _failure("URL_BLOCKED")
+                _d["index"] = _idx + _m
+                _d["hop"] = 2
+                hop2_renumbered.append(_d)
+        except Exception:
+            return _failure("URL_BLOCKED")
+        try:
+            out = dict(raw2)
+        except Exception:
+            return _failure("URL_BLOCKED")
+        out["answer"] = _shifted
+        out["sources"] = hop1_stamped + hop2_renumbered
         out["ok"] = True
-        for _key, _value in provenance.items():
+        try:
+            if "error" in out:
+                del out["error"]
+        except Exception:
+            return _failure("URL_BLOCKED")
+        try:
+            if "results" in out:
+                del out["results"]
+        except Exception:
+            return _failure("URL_BLOCKED")
+        for _key, _value in provenance2.items():
             if _key in ("answer", "sources", "ok", "error", "results"):
                 continue
             out[_key] = _value
-        truncated_needed = bool(overproduced)
+        try:
+            out["hops"] = [
+                {"query": hop1, "answer": hop1_answer, "sources": hop1_stamped},
+                {"query": hop2, "answer": hop2_answer, "sources": hop2_renumbered},
+            ]
+        except Exception:
+            return _failure("URL_BLOCKED")
+        truncated_needed = bool(overproduced1 or overproduced2)
         if truncated_needed:
             try:
                 present = "truncated" in out

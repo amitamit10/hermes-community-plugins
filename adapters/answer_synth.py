@@ -1248,6 +1248,76 @@ def goat_answer(query, search=None, *, max_results=MAX_RESULTS):
         return _finish(gated)
 
 
+MAX_HOPS = 2
+MAX_CANDIDATES_PER_HOP = MAX_RESULTS
+_BORN_AUTHOR_RE = re.compile(r"^\s*where\s+was\s+the\s+(author|writer|creator|founder|inventor|director)\s+of\s+(.+?)\s+born\s*\??\s*$", re.IGNORECASE)
+_BRIDGE_VERB_RE = re.compile(r"^\s*(?P<bridge>.+?)\s+(wrote|found|founded|created|designed|invented|discovered|directed)\b", re.IGNORECASE)
+_BORN_ROLE_VERBS = {
+    "author": "wrote",
+    "writer": "wrote",
+    "creator": "created",
+    "founder": "founded",
+    "inventor": "invented",
+    "director": "directed",
+}
+
+
+def decompose_query(query):
+    if not isinstance(query, str):
+        return [query]
+    match = _BORN_AUTHOR_RE.match(query)
+    if match:
+        role = match.group(1).casefold()
+        verb = _BORN_ROLE_VERBS.get(role, "")
+        subject = match.group(2).strip()
+        if not verb or not subject:
+            stripped = query.strip()
+            return [stripped if stripped else query]
+        return ["Who " + verb + " " + subject + "?", "{bridge} born"]
+    stripped = query.strip()
+    return [stripped if stripped else query]
+
+
+def extract_bridge_entity(answer_text):
+    try:
+        if not isinstance(answer_text, str):
+            return ""
+        first = ""
+        for line in answer_text.splitlines():
+            if line.strip():
+                first = line
+                break
+        if not first:
+            return ""
+        cleaned = re.sub(r"(?:\s*\[\d+\])+\s*$", "", first)
+        cleaned = cleaned.strip()
+        while cleaned.endswith("."):
+            cleaned = cleaned[:-1].strip()
+        if not cleaned:
+            return ""
+        match = _BRIDGE_VERB_RE.match(cleaned)
+        if not match:
+            return ""
+        candidate = match.group("bridge").strip()
+        if not candidate:
+            return ""
+        tokens = _TOKEN_RE.findall(candidate)
+        if not 1 <= len(tokens) <= 6:
+            return ""
+        for token in tokens:
+            if token.casefold() in _UNRESOLVED_SLOTS:
+                return ""
+        _bridge_token_re = re.compile(r"[A-Za-z][\w\.\x27-]*")
+        for token in tokens:
+            if not _bridge_token_re.fullmatch(token):
+                return ""
+            if not token[0].isupper():
+                return ""
+        return candidate
+    except Exception:
+        return ""
+
+
 def register():
     """Return the public tool-name to handler mapping for plugin loading."""
     return {"goat_answer": goat_answer}
@@ -1262,4 +1332,8 @@ __all__ = [
     "URL_BLOCKED",
     "goat_answer",
     "register",
+    "MAX_HOPS",
+    "MAX_CANDIDATES_PER_HOP",
+    "decompose_query",
+    "extract_bridge_entity",
 ]
