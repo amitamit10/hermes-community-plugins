@@ -25,6 +25,11 @@ SCHEMAS = {
                     "maximum": MAX_RESULTS,
                     "default": MAX_RESULTS,
                 },
+                "allow_fallback": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "Opt-in ordered fallback (DDG then Wikipedia) with source/transitions provenance; default False keeps single-provider baseline.",
+                },
             },
             "required": ["query"],
             "additionalProperties": False,
@@ -349,6 +354,15 @@ def _validate_node(node, value):
                          "additionalProperties", "items", "maxItems", "uniqueItems"}:
             return _invalid()
         if not _check_integer(node, value):
+            return _invalid()
+    elif node.get("type") == "boolean":
+        if set(node) & {"minLength", "maxLength", "pattern", "minimum", "maximum",
+                         "properties", "required", "additionalProperties",
+                         "items", "maxItems", "uniqueItems"}:
+            return _invalid()
+        if type(value) is not bool:
+            return _invalid()
+        if "default" in node and type(node["default"]) is not bool:
             return _invalid()
     elif node.get("type") == "array":
         if set(node) & {"minLength", "maxLength", "pattern", "minimum", "maximum",
