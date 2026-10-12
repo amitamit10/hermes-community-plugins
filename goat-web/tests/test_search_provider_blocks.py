@@ -159,7 +159,13 @@ class _SharedSearchCases:
         self.assertEqual(payload, expected)
         self.assertEqual(len(calls), 1)
         self.assertIn("html.duckduckgo.com", calls[0])
-        for leak in self.BLOCKED_LEAKS:
+        leaks = self.BLOCKED_LEAKS
+        # Allow 'status' only when the expected failure explicitly carries it
+        # (HTTP_ERROR/RATE_LIMITED typed diagnostics); code-only blocks must
+        # never leak it.
+        if isinstance(expected, dict) and "status" in expected:
+            leaks = tuple(leak for leak in leaks if leak != "status")
+        for leak in leaks:
             self.assertNotIn(leak, raw)
 
     def assertBlocked(self, payload, raw, calls):
@@ -168,35 +174,57 @@ class _SharedSearchCases:
     def assertProviderBlocked(self, payload, raw, calls):
         self._assert_code(payload, raw, calls, self.EXPECTED_PROVIDER_BLOCKED)
 
+    def _expected_http(self, status):
+        if "ok" in self.EXPECTED_BLOCKED:
+            return {"ok": False, "error": {"code": "HTTP_ERROR"}, "status": status}
+        return {"error": {"code": "HTTP_ERROR"}, "status": status}
+
+    def _expected_rate(self, status):
+        if "ok" in self.EXPECTED_BLOCKED:
+            return {"ok": False, "error": {"code": "RATE_LIMITED"}, "status": status}
+        return {"error": {"code": "RATE_LIMITED"}, "status": status}
+
+    def assertHttpError(self, payload, raw, calls, status):
+        self._assert_code(payload, raw, calls, self._expected_http(status))
+
+    def assertRateLimited(self, payload, raw, calls, status):
+        self._assert_code(payload, raw, calls, self._expected_rate(status))
+
     def assertSuccess(self, payload, expected):
         raise NotImplementedError
     def test_http_errors_are_blocked(self):
-        # 403/429 are provider denials -> literal PROVIDER_BLOCKED.
-        denied_bodies = {403: "Access denied", 429: "Rate limited"}
-        for status in (403, 429):
-            with self.subTest(status=status):
-                self.assertProviderBlocked(*self._call_status(status, denied_bodies[status]))
-        # Generic other HTTP errors remain URL_BLOCKED.
+        # Ordinary 403 is HTTP_ERROR (only structural challenges block);
+        # 429 is RATE_LIMITED. Both carry typed status, no body leak.
+        self.assertHttpError(*self._call_status(403, "Access denied"), 403)
+        self.assertRateLimited(*self._call_status(429, "Rate limited"), 429)
+        # Ordinary non-2xx remain HTTP_ERROR with typed status.
         generic_bodies = {302: "redirect without location"}
-        for status in (100, 302, 400, 401, 404, 500, 503, 600, 0, "invalid"):
+        for status in (100, 302, 400, 401, 404, 500, 503):
             with self.subTest(status=status):
-                self.assertBlocked(*self._call_status(status, generic_bodies.get(status, "error body")))
+                self.assertHttpError(*self._call_status(status, generic_bodies.get(status, "error body")), status)
+        # Invalid/out-of-range statuses stay URL_BLOCKED code-only.
+        for status in (600, 0, "invalid"):
+            with self.subTest(status=status):
+                self.assertBlocked(*self._call_status(status, "error body"))
         self.assertNoNetwork()
 
     def test_http_error_with_results_still_blocked(self):
-        for status in (403, 429):
-            with self.subTest(status=status):
-                self.assertProviderBlocked(*self._call_status(status, CONVINCING_HTML))
+        self.assertHttpError(*self._call_status(403, CONVINCING_HTML), 403)
+        self.assertRateLimited(*self._call_status(429, CONVINCING_HTML), 429)
         for status in (500,):
             with self.subTest(status=status):
-                self.assertBlocked(*self._call_status(status, CONVINCING_HTML))
+                self.assertHttpError(*self._call_status(status, CONVINCING_HTML), status)
         self.assertNoNetwork()
 
     def test_transport_exceptions_are_sanitized(self):
         for exc in (RuntimeError("boom-secret-xyz"), OSError("dns-failure-secret"), ValueError("provider exploded secret body")):
             with self.subTest(exc=type(exc).__name__):
                 payload, raw, calls = self._call(exception=exc)
-                self.assertEqual(payload, self.EXPECTED_BLOCKED)
+                if isinstance(exc, OSError):
+                    expected = {"ok": False, "error": {"code": "CONNECTION_ERROR"}} if "ok" in self.EXPECTED_BLOCKED else {"error": {"code": "CONNECTION_ERROR"}}
+                    self.assertEqual(payload, expected)
+                else:
+                    self.assertEqual(payload, self.EXPECTED_BLOCKED)
                 self.assertEqual(len(calls), 1)
                 for leak in ("boom-secret-xyz", "dns-failure-secret", "exploded", "secret"):
                     self.assertNotIn(leak, raw)
@@ -353,7 +381,10 @@ class RealPinnedFetchTransportTests(OfflineRecordingTestCase):
         self.url_gate = importlib.import_module(self.mod_name + ".url_gate")
 
     def test_goat_search_over_real_pinned_fetch_blocks_403_and_429(self):
-        for status in (403, 429):
+        # b'challenge probe secret-body' is ordinary (no structural widget):
+        # 403 -> HTTP_ERROR+status, 429 -> RATE_LIMITED+status.
+        for status, expected in ((403, {"error": {"code": "HTTP_ERROR"}, "status": 403}),
+                                 (429, {"error": {"code": "RATE_LIMITED"}, "status": 429})):
             with self.subTest(status=status):
                 resolver_calls, made, requested, closed, transport_calls = [], [], [], [], []
 
@@ -377,7 +408,7 @@ class RealPinnedFetchTransportTests(OfflineRecordingTestCase):
 
                 with mock.patch.object(self.url_gate, "_PinnedHTTPSConnection", FakeConnection):
                     result = self.goat_tools.goat_search("offline query", transport=transport)
-                self.assertEqual(result, EXACT_LEGACY_PROVIDER_BLOCKED)
+                self.assertEqual(result, expected)
                 self.assertEqual(len(transport_calls), 1)
                 self.assertIn("html.duckduckgo.com", transport_calls[0])
                 self.assertEqual(resolver_calls, [("html.duckduckgo.com", 443)])

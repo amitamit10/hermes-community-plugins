@@ -15,7 +15,9 @@
 
 from collections.abc import Mapping
 from html.parser import HTMLParser
+import http.client
 import json
+import socket
 from urllib.parse import quote, urlencode
 
 if __package__:
@@ -30,7 +32,7 @@ if __package__:
         check_url,
         pinned_fetch,
     )
-    from .result_contract import result_operation
+    from .result_contract import http_error_code, public_error_code, result_operation
 else:
     from ssrf_guard import (
         BAD_PORT,
@@ -43,11 +45,17 @@ else:
         check_url,
         pinned_fetch,
     )
-    from result_contract import result_operation
+    from result_contract import http_error_code, public_error_code, result_operation
 
 
 MISSING_CONFIG = 'MISSING_CONFIG'
-PUBLIC_ERROR_CODES = frozenset((URL_BLOCKED, REDIRECT_BLOCKED, MISSING_CONFIG))
+DNS_ERROR = 'DNS_ERROR'
+UPSTREAM_TIMEOUT = 'UPSTREAM_TIMEOUT'
+CONNECTION_ERROR = 'CONNECTION_ERROR'
+HTTP_ERROR = 'HTTP_ERROR'
+RATE_LIMITED = 'RATE_LIMITED'
+PROVIDER_BLOCKED = 'PROVIDER_BLOCKED'
+PUBLIC_ERROR_CODES = frozenset((URL_BLOCKED, REDIRECT_BLOCKED, MISSING_CONFIG, DNS_ERROR, UPSTREAM_TIMEOUT, CONNECTION_ERROR))
 MAX_RESULTS = 5
 MAX_CONTENT_CHARS = 8000
 _UNSET = object()
@@ -74,23 +82,32 @@ class _TextParser(HTMLParser):
 
 def map_error(error):
     # Reduce internal/provider failures to Goat's public error codes only.
+    # Shared public_error_code preserves every allowlisted literal; the guards
+    # below keep the legacy MISSING_CONFIG/URL_BLOCKED boundaries intact.
     if isinstance(error, Mapping):
         code = error.get('code', error.get('error'))
+    elif isinstance(error, socket.gaierror):
+        return DNS_ERROR
+    elif isinstance(error, TimeoutError):
+        return UPSTREAM_TIMEOUT
+    elif isinstance(error, OSError):
+        return CONNECTION_ERROR
+    elif isinstance(error, http.client.HTTPException):
+        return CONNECTION_ERROR
     else:
         code = getattr(error, 'code', error)
     if code is None:
         return MISSING_CONFIG
     if not isinstance(code, str):
         return URL_BLOCKED
-    if code in PUBLIC_ERROR_CODES:
-        return code
     if code in _INTERNAL_URL_ERRORS:
         return URL_BLOCKED
-    if code in ('MISSING_CONFIG', 'PROVIDER_NOT_CONFIGURED', 'MISSING_PROVIDER_CONFIG'):
-        return MISSING_CONFIG
     if code in ('REDIRECT_FAILED', 'TOO_MANY_REDIRECTS', 'INVALID_REDIRECT'):
         return REDIRECT_BLOCKED
-    return URL_BLOCKED
+    mapped = public_error_code(code)
+    if mapped == MISSING_CONFIG and code not in ('MISSING_CONFIG', 'PROVIDER_NOT_CONFIGURED', 'MISSING_PROVIDER_CONFIG'):
+        return URL_BLOCKED
+    return mapped
 
 
 def _error_result(error):
@@ -151,6 +168,9 @@ def _fetch(url, transport):
         allowed, _code = check_url(final_url)
         if not allowed:
             raise _ClientError(REDIRECT_BLOCKED)
+    code = http_error_code(status, text)
+    if code is not None:
+        raise _ClientError(code)
     if not 200 <= status < 300:
         raise _ClientError(URL_BLOCKED)
     return text
@@ -430,11 +450,17 @@ def register():
 
 
 __all__ = [
+    'CONNECTION_ERROR',
+    'DNS_ERROR',
+    'HTTP_ERROR',
     'MAX_CONTENT_CHARS',
     'MAX_RESULTS',
     'MISSING_CONFIG',
+    'PROVIDER_BLOCKED',
     'PUBLIC_ERROR_CODES',
+    'RATE_LIMITED',
     'REDIRECT_BLOCKED',
+    'UPSTREAM_TIMEOUT',
     'URL_BLOCKED',
     'goat_images',
     'goat_news',

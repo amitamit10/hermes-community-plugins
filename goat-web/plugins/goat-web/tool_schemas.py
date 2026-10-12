@@ -83,9 +83,12 @@ SCHEMAS = {
     "goat_answer": {
         "name": "goat_answer",
         "description": (
-            "Deterministic extractive answer with numbered URL citations over "
-            "bounded official Wikipedia Action API search snippets. No model "
-            "call or page fetch; not general-web coverage."
+            "Deterministic sentence-grounded answer from fixed English Wikipedia "
+            "Action API search plus readable intro extracts (at most two official "
+            "requests, at most five candidates). No model call or arbitrary page "
+            "fetch; direct complete subject-relation evidence or public "
+            "INSUFFICIENT_EVIDENCE; bounded full claims with cited sources only; "
+            "multi-hop unsupported; not general-web coverage."
         ),
         "parameters": {
             "type": "object",
@@ -118,9 +121,11 @@ SCHEMAS = {
     "goat_filtered_search": {
         "name": "goat_filtered_search",
         "description": (
-            "Filter at most five official Wikipedia Action API search candidates "
-            "by inclusive UTC time, domain and language metadata. Active filters "
-            "exclude missing metadata; no metadata inference, refill or fallback."
+            "Filter at most five official Wikipedia Action API candidates from the "
+            "known English source (language=en) by inclusive UTC time, domain and "
+            "language metadata. Active filters exclude missing metadata; no fabricated "
+            "dates, refill, fallback or metadata inference; deny wins; primary matches "
+            "regional variants, regional requires exact tag."
         ),
         "parameters": {
             "type": "object",

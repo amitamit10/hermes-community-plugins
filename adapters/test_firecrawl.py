@@ -60,7 +60,7 @@ class FirecrawlClientTests(unittest.TestCase):
 
         result = client.crawl("https://example.com")
 
-        self.assertEqual(result, {"ok": False, "error": {"code": "URL_BLOCKED"}})
+        self.assertEqual(result, {"ok": False, "error": {"code": "HTTP_ERROR"}, "status": 429})
         self.assertNotIn("private provider detail", repr(result))
 
     def test_transport_exception_is_reported_without_leaking_exception_text(self):

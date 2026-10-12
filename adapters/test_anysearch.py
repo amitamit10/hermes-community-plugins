@@ -154,7 +154,7 @@ class AnySearchAdapterTests(unittest.TestCase):
 
         result = client.search("query")
 
-        self.assertEqual(result, {"ok": False, "error": {"code": URL_BLOCKED}})
+        self.assertEqual(result, {"ok": False, "error": {"code": "CONNECTION_ERROR"}})
         self.assertEqual(len(transport.calls), 1)
 
     def test_missing_transport_returns_missing_config_without_network_fallback(self):

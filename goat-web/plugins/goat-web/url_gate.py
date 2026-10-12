@@ -14,6 +14,9 @@ PRIVATE_HOST = "PRIVATE_HOST"
 BAD_PORT = "BAD_PORT"
 URL_BLOCKED = "URL_BLOCKED"
 REDIRECT_BLOCKED = "REDIRECT_BLOCKED"
+DNS_ERROR = "DNS_ERROR"
+UPSTREAM_TIMEOUT = "UPSTREAM_TIMEOUT"
+CONNECTION_ERROR = "CONNECTION_ERROR"
 
 _DOMAIN_RE = re.compile(r"[a-z0-9-]+(?:\.[a-z0-9-]+)*\Z")
 
@@ -166,11 +169,63 @@ def check_redirect(current_host, location, hops_used):
     return (True, OK) if allowed else (False, REDIRECT_BLOCKED)
 
 
+def _validated_gate_status(value):
+    """Strict observed HTTP status for diagnostics; type(x) is int and 100<=x<=599."""
+    if type(value) is not int:
+        return None
+    if not 100 <= value <= 599:
+        return None
+    return value
+
+
+def _validated_gate_host(value):
+    """Bare DNS/IP host for diagnostics; rejects credentials/ports/paths/controls."""
+    if type(value) is not str:
+        return None
+    if not value or value != value.strip():
+        return None
+    if len(value) > 253:
+        return None
+    if any(ord(c) < 0x20 or ord(c) == 0x7F for c in value):
+        return None
+    if any(c in value for c in (" ", "\\", "/", "?", "#", "@")):
+        return None
+    candidate = value
+    if candidate.startswith("[") and candidate.endswith("]"):
+        candidate = candidate[1:-1]
+    try:
+        import ipaddress as _ip
+
+        _ip.ip_address(candidate.split("%", 1)[0] if "%" in candidate else candidate)
+        if "%" in candidate:
+            return None
+        return value
+    except Exception:
+        pass
+    host = candidate.lower().rstrip(".")
+    if not host or len(host) > 253:
+        return None
+    if ":" in host:
+        return None
+    labels = host.split(".")
+    for label in labels:
+        if not label or len(label) > 63:
+            return None
+        if label.startswith("-") or label.endswith("-"):
+            return None
+        for ch in label:
+            if not (ch.isascii() and (ch.isalnum() or ch == "-")):
+                return None
+    return value
+
+
 class URLGateError(Exception):
     """A URL-gate failure carrying an internal, non-public error code."""
 
-    def __init__(self, code):
+    def __init__(self, code, *, status=None, host=None):
         self.code = code
+        self.status = _validated_gate_status(status)
+        self.host = _validated_gate_host(host)
         super().__init__(code)
 
 
@@ -231,10 +286,16 @@ def resolve_and_validate(host, resolver=None):
         answers = lookup(normalized_host, 443, type=socket.SOCK_STREAM)
     except URLGateError:
         raise
+    except socket.gaierror as exc:
+        raise URLGateError(DNS_ERROR) from exc
+    except TimeoutError as exc:
+        raise URLGateError(UPSTREAM_TIMEOUT) from exc
+    except OSError as exc:
+        raise URLGateError(DNS_ERROR) from exc
     except Exception as exc:
         raise URLGateError(URL_BLOCKED) from exc
     if not answers:
-        raise URLGateError(URL_BLOCKED)
+        raise URLGateError(DNS_ERROR)
 
     verified = []
     seen = set()
@@ -281,6 +342,8 @@ def pinned_fetch(url, resolver=None, timeout=10, max_response_bytes=1_048_576):
         raise ValueError("max_response_bytes must be a positive integer")
     current = url
     redirects = 0
+    last_status = None
+    last_host = None
     while True:
         allowed, code = check_url(current)
         if not allowed:
@@ -300,7 +363,9 @@ def pinned_fetch(url, resolver=None, timeout=10, max_response_bytes=1_048_576):
             addresses = resolve_and_validate(hostname, resolver=resolver)
         except URLGateError as exc:
             if redirects:
-                raise URLGateError(REDIRECT_BLOCKED) from exc
+                if exc.code in (DNS_ERROR, UPSTREAM_TIMEOUT, CONNECTION_ERROR):
+                    raise
+                raise URLGateError(REDIRECT_BLOCKED, status=last_status, host=last_host) from exc
             raise
         path = parsed.path or "/"
         if parsed.query:
@@ -329,12 +394,14 @@ def pinned_fetch(url, resolver=None, timeout=10, max_response_bytes=1_048_576):
         finally:
             connection.close()
 
+        last_status = _validated_gate_status(status)
+        last_host = _validated_gate_host(hostname)
         if status in (301, 302, 303, 307, 308) and headers.get("location"):
             if redirects >= 2:
-                raise URLGateError(REDIRECT_BLOCKED)
+                raise URLGateError(REDIRECT_BLOCKED, status=last_status, host=last_host)
             allowed, redirect_code = check_redirect(current, headers["location"], redirects)
             if not allowed:
-                raise URLGateError(redirect_code)
+                raise URLGateError(redirect_code, status=last_status, host=last_host)
             current = urljoin(current, headers["location"])
             redirects += 1
             continue

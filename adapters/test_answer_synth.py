@@ -1,6 +1,7 @@
 import re
 import unittest
 
+import result_contract
 from answer_synth import MAX_ANSWER_CHARS, MAX_RESULTS, MISSING_CONFIG, goat_answer
 
 
@@ -26,7 +27,7 @@ class AnswerSynthTests(unittest.TestCase):
                 {
                     "title": "Solar energy plan",
                     "url": "https://news.example/solar",
-                    "snippet": "The city will build solar farms in 2027.",
+                    "snippet": "The city will build solar farms under new energy policy in 2027.",
                 },
             ]
         })
@@ -35,7 +36,7 @@ class AnswerSynthTests(unittest.TestCase):
 
         self.assertEqual(search.calls, ["solar farms energy policy"])
         self.assertEqual(result["sources"][0]["url"], "https://news.example/solar")
-        self.assertIn("The city will build solar farms in 2027. [1]", result["answer"])
+        self.assertIn("The city will build solar farms under new energy policy in 2027. [1]", result["answer"])
         claims = [line for line in result["answer"].splitlines() if line]
         self.assertTrue(claims)
         for claim in claims:
@@ -70,7 +71,17 @@ class AnswerSynthTests(unittest.TestCase):
 
         result = goat_answer("nothing found", search=search)
 
-        self.assertEqual(result, {"ok": False, "error": {"code": MISSING_CONFIG}})
+        self.assertEqual(
+            result,
+            {
+                "ok": False,
+                "error": {
+                    "code": result_contract.public_error_code(
+                        "INSUFFICIENT_EVIDENCE"
+                    )
+                },
+            },
+        )
         self.assertEqual(search.calls, ["nothing found"])
 
 

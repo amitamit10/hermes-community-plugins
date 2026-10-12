@@ -1,6 +1,6 @@
 # Tool schemas
 
-Closed public contract. Each registered JSON schema sets `additionalProperties: false`; unknown fields return the public `URL_BLOCKED` error rather than executing. URL policy in [url-policy.md](url-policy.md) applies wherever a URL is accepted. All success envelopes carry `ok: true` (plus tool-specific fields); failures carry `ok: false, error: {code}` with only four public codes.
+Closed public contract. Each registered JSON schema sets `additionalProperties: false`; unknown fields return the public `URL_BLOCKED` error rather than executing. URL policy in [url-policy.md](url-policy.md) applies wherever a URL is accepted. All success envelopes carry `ok: true` (plus tool-specific fields); failures carry `ok: false, error: {code}` with ten public codes (`URL_BLOCKED`, `REDIRECT_BLOCKED`, `MISSING_CONFIG`, `PROVIDER_BLOCKED`, `HTTP_ERROR`, `RATE_LIMITED`, `DNS_ERROR`, `CONNECTION_ERROR`, `UPSTREAM_TIMEOUT`, `INSUFFICIENT_EVIDENCE`). Types and bounds policy is unchanged.
 
 ## `goat_search`
 
@@ -82,7 +82,7 @@ Plus reachability boolean in `ok` (true for 2xx/3xx-ish per probe). No body retu
 
 ## `goat_answer`
 
-Deterministic extractive answer over bounded official Wikipedia Action API snippets. No model call, no page fetch.
+Deterministic sentence-grounded answer from fixed English Wikipedia Action API search plus readable intro extracts (at most two official requests, at most five candidates). No model call or arbitrary page fetch; direct complete subject-relation evidence or public `INSUFFICIENT_EVIDENCE`; bounded full claims with cited sources only; multi-hop unsupported; not general-web coverage.
 
 Input:
 
@@ -93,7 +93,7 @@ Input:
 }
 ```
 
-Bounded to `https://en.wikipedia.org/w/api.php` via pinned fetch; candidates limited to ≤5, each URL ≤2048 chars and passing the URL gate.
+Bounded to the known English endpoint `https://en.wikipedia.org/w/api.php` via pinned fetch (10s, 1 MiB, 0 redirects); candidates limited to ≤5, each URL ≤2048 chars and passing the URL gate; wiki candidates carry `language: "en"`.
 
 Success:
 
@@ -107,11 +107,11 @@ Success:
 }
 ```
 
-Claims are deduplicated sentences from snippets ranked by title/snippet term overlap; truncation uses ellipsis before citation.
+Claims are complete deduplicated source sentences (not ellipsis fragments) ranked by title/snippet term overlap; every listed source is cited by a real identical sentence; unsupported, ambiguous or multi-hop queries return `INSUFFICIENT_EVIDENCE`. Answer text ≤8000 chars; no paid source or quality-score claim.
 
 ## `goat_filtered_search`
 
-Inclusive filter over ≤5 official Wikipedia Action API candidates. Active filters exclude missing/invalid metadata; no inference, no refill, no fallback.
+Inclusive filter over ≤5 official Wikipedia Action API candidates from the known English source (`language: "en"`). Active filters exclude missing/invalid metadata (undated candidates are excluded when a time filter is active, otherwise retained); no fabricated dates, metadata inference, refill or fallback; deny wins over allow; primary language matches regional variants, regional requires the exact tag.
 
 Input:
 
@@ -177,8 +177,14 @@ Success:
 { "ok": false, "error": { "code": "REDIRECT_BLOCKED" } }
 { "ok": false, "error": { "code": "MISSING_CONFIG" } }
 { "ok": false, "error": { "code": "PROVIDER_BLOCKED" } }
+{ "ok": false, "error": { "code": "HTTP_ERROR" } }
+{ "ok": false, "error": { "code": "RATE_LIMITED" } }
+{ "ok": false, "error": { "code": "DNS_ERROR" } }
+{ "ok": false, "error": { "code": "CONNECTION_ERROR" } }
+{ "ok": false, "error": { "code": "UPSTREAM_TIMEOUT" } }
+{ "ok": false, "error": { "code": "INSUFFICIENT_EVIDENCE" } }
 ```
 
-`URL_BLOCKED` for invalid/disallowed initial URL or invalid arguments/unknown fields; `REDIRECT_BLOCKED` for invalid/disallowed/excessive redirect; `MISSING_CONFIG` when a required dependency (search transport or vertical transport) is absent or `None`. `PROVIDER_BLOCKED` for provider-side denial with no retry, fallback, bypass, or raw HTML leakage. Normalized shape is `{'ok': false, 'error': {'code': 'PROVIDER_BLOCKED'}}`; raw legacy shape is `{'error': {'code': 'PROVIDER_BLOCKED'}}`. No internal details are exposed; only these four codes.
+`URL_BLOCKED` for invalid/disallowed initial URL or invalid arguments/unknown fields; `REDIRECT_BLOCKED` for invalid/disallowed/excessive redirect; `MISSING_CONFIG` when a required dependency (search transport or vertical transport) is absent or `None`. `PROVIDER_BLOCKED` for provider-side denial with no retry, fallback, bypass, or raw HTML leakage. `HTTP_ERROR`, `RATE_LIMITED`, `DNS_ERROR`, `CONNECTION_ERROR`, `UPSTREAM_TIMEOUT` for typed transport failures; `INSUFFICIENT_EVIDENCE` for answer/filter with no direct complete-sentence evidence. Normalized shape is `{'ok': false, 'error': {'code': 'PROVIDER_BLOCKED'}}`; raw legacy shape is `{'error': {'code': 'PROVIDER_BLOCKED'}}`. No internal details or exception text are exposed; only validated `status`/`host`/`retry_after` are preserved on the diagnostic codes (`HTTP_ERROR`, `RATE_LIMITED`, `PROVIDER_BLOCKED`, `REDIRECT_BLOCKED`), all other codes carry no diagnostics. Only these ten codes.
 
 `goat_search` returns `PROVIDER_BLOCKED` for HTTP 403/429, for known 202/200 bot-challenge pages matched by finite exact semantic form markers, and for nonempty anomalous no-SERP 200 bodies with no parsed results and no semantic empty-SERP evidence. All other non-2xx/invalid statuses remain `URL_BLOCKED`. Legitimate no-results remains `{ "ok": true, "results": [] }`, including recognized exact semantic DDG empty-SERP `div` markers (`no-results`, `no-results__message`, `result--no-result`); existing blank-200 and empty-204 compatibility is unchanged. Detection uses only those finite exact markers and semantic empty-SERP evidence, not CAPTCHA/bot words in result titles/snippets.

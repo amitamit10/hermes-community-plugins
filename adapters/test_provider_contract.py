@@ -194,19 +194,22 @@ class ProviderContractTests(unittest.TestCase):
     def test_provider_http_429_and_nested_redirect_boundaries(self):
         tavily_transport = JsonTransport({"status": 429, "body": {"message": "rate-limited-secret"}})
         result = TavilyClient(api_key="k", transport=tavily_transport, resolver=PUBLIC_RESOLVER).search("cats")
-        assert_nested(self, result, "URL_BLOCKED")
+        assert_nested(self, result, "HTTP_ERROR")
+        self.assertEqual(result.get("status"), 429)
         self.assertNotIn("rate-limited-secret", repr(result))
         self.assertEqual(len(tavily_transport.calls), 1)
 
         exa_transport = JsonTransport({"status": 429, "body": "rate-limited-secret"})
         result = ExaClient(api_key="k", transport=exa_transport).search("topic")
-        assert_nested(self, result, "URL_BLOCKED")
+        assert_nested(self, result, "HTTP_ERROR")
+        self.assertEqual(result.get("status"), 429)
         self.assertNotIn("rate-limited-secret", repr(result))
         self.assertEqual(len(exa_transport.calls), 1)
 
         fire_transport = JsonTransport({"status": 429, "body": {"error": "rate-limited-secret"}})
         result = FirecrawlClient("k", fire_transport, resolver=PUBLIC_RESOLVER).scrape("https://example.test")
-        assert_nested(self, result, "URL_BLOCKED")
+        assert_nested(self, result, "HTTP_ERROR")
+        self.assertEqual(result.get("status"), 429)
         self.assertNotIn("rate-limited-secret", repr(result))
         self.assertEqual(len(fire_transport.calls), 1)
 
@@ -214,13 +217,15 @@ class ProviderContractTests(unittest.TestCase):
         serper = SerperClient(transport=serper_transport, endpoint="https://serper.invalid/search",
                               auth_header="X-K", payload_builder=lambda q: {"q": q})
         result = serper.search("query", api_key="k")
-        assert_nested(self, result, "URL_BLOCKED")
+        assert_nested(self, result, "HTTP_ERROR")
+        self.assertNotIn("status", result)
         self.assertNotIn("rate-limited-secret", repr(result))
         self.assertEqual(len(serper_transport.calls), 1)
 
         you_transport = PostTransport({"status": 429, "error": "rate-limited-secret"})
         result = YouClient(transport=you_transport).search("query", api_key="k")
-        assert_nested(self, result, "URL_BLOCKED")
+        assert_nested(self, result, "HTTP_ERROR")
+        self.assertNotIn("status", result)
         self.assertNotIn("rate-limited-secret", repr(result))
         self.assertEqual(len(you_transport.calls), 1)
 

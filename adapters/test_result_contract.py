@@ -78,7 +78,7 @@ class ResultContractNormalizationTests(unittest.TestCase):
             "INVALID_INPUT": "URL_BLOCKED",
             "PROVIDER_ERROR": "URL_BLOCKED",
             "TRANSPORT_ERROR": "URL_BLOCKED",
-            "HTTP_ERROR": "URL_BLOCKED",
+            "HTTP_ERROR": "HTTP_ERROR",
             "INVALID_RESPONSE": "URL_BLOCKED",
             "UNKNOWN_SOMETHING": "URL_BLOCKED",
             "REDIRECT_FAILED": "REDIRECT_BLOCKED",
@@ -158,7 +158,7 @@ class ResultContractNormalizationTests(unittest.TestCase):
         self.assertEqual(out.get("source"), "fake")
         self.assertEqual(out.get("transitions"), ["a"])
         self.assertEqual(out.get("truncated"), True)
-        for stripped in ("body", "status", "provider", "exception", "results"):
+        for stripped in ("body", "provider", "exception", "results"):
             self.assertNotIn(stripped, out)
         self.assertNotIn("raw-body-secret", repr(out))
         self.assertNotIn("boom-secret", repr(out))

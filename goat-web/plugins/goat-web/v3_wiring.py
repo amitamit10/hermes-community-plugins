@@ -8,6 +8,7 @@ the final vendored ``ssrf_guard.pinned_fetch``.
 """
 
 import dataclasses
+import re
 from collections.abc import Callable, Mapping
 from types import MappingProxyType
 from typing import Any, Optional
@@ -47,6 +48,7 @@ class WiringDependencies:
 
     search: Optional[Callable[..., Any]] = None
     vertical_transports: Optional[Mapping[str, Any]] = None
+    answer_search: Optional[Callable[..., Any]] = None
 
     def __post_init__(self):
         transports = self.vertical_transports
@@ -187,6 +189,64 @@ def make_default_search(*, _fetch=None, _resolver=None, _connection_factory=None
     return _search
 
 
+_ANSWER_STOPWORDS = frozenset((
+    "what", "which", "who", "whom", "whose", "when", "where", "why", "how",
+    "is", "are", "was", "were", "be", "been", "being", "do", "does", "did",
+    "done", "the", "a", "an", "of", "for", "to", "in", "on", "at", "by",
+    "with", "about", "as", "from", "that", "this", "these", "those", "it",
+    "its", "and", "or", "but", "if", "then", "than", "so", "such", "no",
+    "not", "only", "own", "same", "tell", "me", "you", "your", "please",
+    "name", "give", "list", "show",
+))
+_TOKEN_RE = re.compile(r"[^\W_]+", re.UNICODE)
+
+
+def _answer_keywords(query):
+    if not isinstance(query, str):
+        return ""
+    tokens = _TOKEN_RE.findall(query)
+    kept = [token for token in tokens if token.casefold() not in _ANSWER_STOPWORDS]
+    if kept:
+        return " ".join(kept)
+    return query.strip()
+
+
+def make_default_answer_search(*, _fetch=None, _resolver=None, _connection_factory=None):
+    """Build the trusted default Wikipedia intro-extract answer dependency."""
+
+    _transport = make_official_transport(
+        WIKIPEDIA_ACTION_ENDPOINT,
+        _fetch=_fetch,
+        _resolver=_resolver,
+        _connection_factory=_connection_factory,
+    )
+
+    def _answer_search(query, *, max_results=_CANDIDATE_CAP):
+        try:
+            keywords = _answer_keywords(query)
+            raw = _vendor_stack.wikipedia_answer_search(
+                keywords, transport=_transport, max_results=max_results
+            )
+        except Exception as error:
+            return {
+                "ok": False,
+                "error": {"code": _vendor_contract.public_error_code(error)},
+            }
+        if not isinstance(raw, Mapping):
+            return {"ok": False, "error": {"code": "URL_BLOCKED"}}
+        if raw.get("ok") is False or raw.get("error") is not None:
+            return {
+                "ok": False,
+                "error": {"code": _vendor_contract.public_error_code(raw.get("error"))},
+            }
+        out = dict(raw)
+        out["source"] = WIKIPEDIA_SOURCE
+        out["source_url"] = WIKIPEDIA_SOURCE_URL
+        return out
+
+    return _answer_search
+
+
 def make_vertical_transports(*, _fetch=None, _resolver=None,
                                _connection_factory=None):
     """Build the three fixed official vertical transports."""
@@ -225,6 +285,11 @@ def default_dependencies(*, _fetch=None, _resolver=None, _connection_factory=Non
             _resolver=_resolver,
             _connection_factory=_connection_factory,
         ),
+        answer_search=make_default_answer_search(
+            _fetch=_fetch,
+            _resolver=_resolver,
+            _connection_factory=_connection_factory,
+        ),
     )
 
 
@@ -252,7 +317,14 @@ def _safe_candidate(item):
 
 def _make_answer_operation(deps):
     def _answer_operation(query, max_results=_CANDIDATE_CAP):
-        search = deps.search
+        try:
+            answer_backend = getattr(deps, "answer_search", None)
+        except Exception:
+            answer_backend = None
+        if answer_backend is None or not callable(answer_backend):
+            search = deps.search
+        else:
+            search = answer_backend
         if search is None or not callable(search):
             return _failure("MISSING_CONFIG")
         stripped = query.strip() if isinstance(query, str) else query

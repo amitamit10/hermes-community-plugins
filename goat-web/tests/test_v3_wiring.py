@@ -225,9 +225,12 @@ class AnswerSchemaTests(OfflineTestCase, FixtureMixin):
         self.assertEqual(schema["name"], "goat_answer")
         self.assertEqual(
             schema["description"],
-            "Deterministic extractive answer with numbered URL citations over "
-            "bounded official Wikipedia Action API search snippets. No model "
-            "call or page fetch; not general-web coverage.",
+            "Deterministic sentence-grounded answer from fixed English Wikipedia "
+            "Action API search plus readable intro extracts (at most two official "
+            "requests, at most five candidates). No model call or arbitrary page "
+            "fetch; direct complete subject-relation evidence or public "
+            "INSUFFICIENT_EVIDENCE; bounded full claims with cited sources only; "
+            "multi-hop unsupported; not general-web coverage.",
         )
         self.assertEqual(schema["parameters"], EXPECTED_ANSWER_PARAMETERS)
         self.assertEqual(
@@ -345,14 +348,19 @@ class AnswerValidationTests(OfflineTestCase, FixtureMixin):
             calls.append((query, max_results))
             return {"ok": True, "results": []}
 
-        _, tools = self.load_tools(fake_search)
+        module, tools = self.load_tools(fake_search)
         payload = json.loads(
             tools["goat_answer"]["handler"](
                 {"query": "ctx"}, task_id="t-1", scope="s", extra=None
             )
         )
         self.assertEqual(calls, [("ctx", 5)])
-        self.assertEqual(payload["error"]["code"], "MISSING_CONFIG")
+        self.assertEqual(
+            payload["error"]["code"],
+            module.v3_wiring._vendor_contract.public_error_code(
+                "INSUFFICIENT_EVIDENCE"
+            ),
+        )
 
     def test_handler_result_is_ascii_unescaped_json(self):
         def fake_search(query, *, max_results=5):
@@ -419,7 +427,8 @@ class AnswerSemanticsTests(OfflineTestCase, FixtureMixin):
         self.assertTrue(payload["ok"])
         self.assertEqual(fake_search.calls, [("nuclear fission energy", 5)])
         self.assertIn("[1][2]", payload["answer"])
-        self.assertIn("Café", payload["answer"])
+        self.assertNotIn("Café", payload["answer"])
+        self.assertNotIn("Control rods manage fission rate", payload["answer"])
         self.assertEqual(
             [item["index"] for item in payload["sources"]], [1, 2]
         )
@@ -476,13 +485,18 @@ class AnswerSemanticsTests(OfflineTestCase, FixtureMixin):
         self.assertNotIn(too_long_url, json.dumps(payload))
 
     def test_long_answer_capped_at_8000(self):
-        snippet = ("fission energy evidence words " * 100).strip()
+        def _long_snippet(index):
+            return (
+                "Fission energy evidence words %d here " % index
+                + ("detail " * 400)
+                + "."
+            )
         fake_search = _search_with(
             [
                 {
                     "title": "Long %d" % index,
                     "url": "https://example.com/long-%d" % index,
-                    "snippet": snippet,
+                    "snippet": _long_snippet(index),
                 }
                 for index in range(5)
             ]
@@ -541,15 +555,35 @@ class AnswerSemanticsTests(OfflineTestCase, FixtureMixin):
         payload = json.loads(tools["goat_answer"]["handler"]({"query": "q"}))
         self.assertEqual(payload, {"ok": False, "error": {"code": "MISSING_CONFIG"}})
 
-        _, tools = self.load_tools(_search_with([]))
+        module_empty, tools = self.load_tools(_search_with([]))
         payload = json.loads(tools["goat_answer"]["handler"]({"query": "q"}))
-        self.assertEqual(payload, {"ok": False, "error": {"code": "MISSING_CONFIG"}})
+        self.assertEqual(
+            payload,
+            {
+                "ok": False,
+                "error": {
+                    "code": module_empty.v3_wiring._vendor_contract.public_error_code(
+                        "INSUFFICIENT_EVIDENCE"
+                    )
+                },
+            },
+        )
 
-        _, tools = self.load_tools(
+        module_snippetless, tools = self.load_tools(
             _search_with([{"title": "T", "url": "https://example.com/t"}])
         )
         payload = json.loads(tools["goat_answer"]["handler"]({"query": "q"}))
-        self.assertEqual(payload, {"ok": False, "error": {"code": "MISSING_CONFIG"}})
+        self.assertEqual(
+            payload,
+            {
+                "ok": False,
+                "error": {
+                    "code": module_snippetless.v3_wiring._vendor_contract.public_error_code(
+                        "INSUFFICIENT_EVIDENCE"
+                    )
+                },
+            },
+        )
 
     def test_typed_backend_failures_survive_as_public_codes(self):
         class RedirectError(Exception):
@@ -928,9 +962,11 @@ class FilterSchemaTests(OfflineTestCase, FixtureMixin):
         self.assertEqual(schema["name"], "goat_filtered_search")
         self.assertEqual(
             schema["description"],
-            "Filter at most five official Wikipedia Action API search candidates "
-            "by inclusive UTC time, domain and language metadata. Active filters "
-            "exclude missing metadata; no metadata inference, refill or fallback.",
+            "Filter at most five official Wikipedia Action API candidates from the "
+            "known English source (language=en) by inclusive UTC time, domain and "
+            "language metadata. Active filters exclude missing metadata; no fabricated "
+            "dates, refill, fallback or metadata inference; deny wins; primary matches "
+            "regional variants, regional requires exact tag.",
         )
         self.assertEqual(schema["parameters"], EXPECTED_FILTER_PARAMETERS)
         self.assertEqual(
@@ -2386,18 +2422,29 @@ class VerticalPinnedBoundaryTests(OfflineTestCase):
                 test.assertEqual(address, test.PINNED_ADDRESS)
                 test.assertEqual(timeout, 10)
                 self.hostname = hostname
+                self._path = ""
 
             def request(self, method, path, headers=None):
                 request_calls.append((method, self.hostname, path, headers))
                 test.assertEqual(method, "GET")
                 test.assertEqual((headers or {}).get("Host"), self.hostname)
+                self._path = path
 
             def getresponse(self):
                 status = (statuses or {}).get(self.hostname, 200)
                 headers = []
                 if 300 <= status <= 399:
                     headers = [("Location", "https://example.com/redirect")]
-                return FakeResponse(status, bodies[self.hostname], headers)
+                body = bodies[self.hostname]
+                if (
+                    self.hostname == "en.wikipedia.org"
+                    and "prop=extracts" in (self._path or "")
+                ):
+                    body = json.dumps({"query": {"pages": [
+                        {"pageid": 1, "ns": 0, "title": "Nuclear fission",
+                         "extract": "Nuclear fission releases energy slowly."},
+                    ]}}).encode("utf-8")
+                return FakeResponse(status, body, headers)
 
             def close(self):
                 pass
@@ -2474,6 +2521,7 @@ class VerticalPinnedBoundaryTests(OfflineTestCase):
                 "commons.wikimedia.org",
                 "en.wikipedia.org",
                 "en.wikipedia.org",
+                "en.wikipedia.org",
             ],
         )
         requested_hosts = sorted(host for _m, host, _p, _h in seams["request_calls"])
@@ -2483,6 +2531,7 @@ class VerticalPinnedBoundaryTests(OfflineTestCase):
                 "api.crossref.org",
                 "api.gdeltproject.org",
                 "commons.wikimedia.org",
+                "en.wikipedia.org",
                 "en.wikipedia.org",
                 "en.wikipedia.org",
             ],
@@ -2592,9 +2641,14 @@ class VerticalPinnedBoundaryTests(OfflineTestCase):
                         {"vertical": "scholar", "query": "fission"}
                     )
                 )
-                self.assertEqual(
-                    payload, {"ok": False, "error": {"code": "URL_BLOCKED"}}
-                )
+                if failure == "timeout":
+                    self.assertEqual(
+                        payload, {"ok": False, "error": {"code": "UPSTREAM_TIMEOUT"}}
+                    )
+                else:
+                    self.assertEqual(
+                        payload, {"ok": False, "error": {"code": "URL_BLOCKED"}}
+                    )
                 del error
 
     def test_default_import_and_register_need_no_network_subprocess_or_threads(self):

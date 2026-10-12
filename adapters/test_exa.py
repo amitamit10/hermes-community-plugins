@@ -77,7 +77,7 @@ class ExaClientTests(unittest.TestCase):
 
         result = client.search("topic")
 
-        self.assertEqual(result, {"ok": False, "error": {"code": "URL_BLOCKED"}})
+        self.assertEqual(result, {"ok": False, "error": {"code": "HTTP_ERROR"}, "status": 429})
         self.assertEqual(len(transport.calls), 1)
         self.assertNotIn("rate limited", repr(result))
 

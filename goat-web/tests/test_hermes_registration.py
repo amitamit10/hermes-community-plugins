@@ -482,9 +482,11 @@ assert isinstance(_raw_answer, str), type(_raw_answer)
 assert "\\u00e9" not in _raw_answer, "answer JSON must not escape Unicode"
 _answer = _json.loads(_raw_answer)
 assert _answer.get("ok") is True, _answer
-assert "Caf\u00e9" in _answer.get("answer", ""), _answer
+assert "Nuclear fission releases energy." in _answer.get("answer", ""), _answer
+assert "Caf\u00e9 reactors use fission heat." not in _answer.get("answer", ""), _answer
 _sources = _answer.get("sources")
 assert isinstance(_sources, list) and _sources, _answer
+assert any("Caf\u00e9" in (_i.get("title", "") or "") for _i in _sources), _answer
 assert [ _i["index"] for _i in _sources ] == list(range(1, len(_sources) + 1)), _sources
 _cited = {int(_n) for _n in _re.findall(r"\[(\d+)\]", _answer["answer"])}
 assert _cited and _cited <= { _i["index"] for _i in _sources }, (_answer, _sources)

@@ -15,6 +15,12 @@ from urllib.parse import urljoin, urlsplit
 OK = "OK"
 URL_BLOCKED = "URL_BLOCKED"
 REDIRECT_BLOCKED = "REDIRECT_BLOCKED"
+DNS_ERROR = "DNS_ERROR"
+UPSTREAM_TIMEOUT = "UPSTREAM_TIMEOUT"
+CONNECTION_ERROR = "CONNECTION_ERROR"
+HTTP_ERROR = "HTTP_ERROR"
+RATE_LIMITED = "RATE_LIMITED"
+PROVIDER_BLOCKED = "PROVIDER_BLOCKED"
 PRIVATE_HOST = "PRIVATE_HOST"
 BAD_SCHEME = "BAD_SCHEME"
 BAD_PORT = "BAD_PORT"
@@ -38,7 +44,7 @@ class GuardError(Exception):
     """A URL-gate failure carrying a sanitized public error code."""
 
     def __init__(self, code):
-        self.code = code if code in (REDIRECT_BLOCKED, PRIVATE_HOST, BAD_SCHEME, BAD_PORT, CREDENTIALS_IN_URL, URL_BLOCKED) else URL_BLOCKED
+        self.code = code if code in (REDIRECT_BLOCKED, PRIVATE_HOST, BAD_SCHEME, BAD_PORT, CREDENTIALS_IN_URL, URL_BLOCKED, DNS_ERROR, UPSTREAM_TIMEOUT, CONNECTION_ERROR, HTTP_ERROR, RATE_LIMITED, PROVIDER_BLOCKED) else URL_BLOCKED
         super().__init__(self.code)
 
 
@@ -168,10 +174,18 @@ def resolve_and_validate(host, resolver=None):
     lookup = socket.getaddrinfo if resolver is None else resolver
     try:
         answers = lookup(normalized, 443, type=socket.SOCK_STREAM)
+    except GuardError:
+        raise
+    except socket.gaierror:
+        raise GuardError(DNS_ERROR) from None
+    except TimeoutError:
+        raise GuardError(UPSTREAM_TIMEOUT) from None
+    except OSError:
+        raise GuardError(DNS_ERROR) from None
     except Exception:
         raise GuardError(URL_BLOCKED) from None
     if not answers:
-        raise GuardError(URL_BLOCKED)
+        raise GuardError(DNS_ERROR)
     verified = []
     seen = set()
     for answer in answers:
@@ -256,8 +270,8 @@ def _pinned_request_once(url, *, resolver, timeout, max_response_bytes, connecti
     if parsed.netloc.endswith(":443"):
         host_header += ":443"
     factory = _PinnedHTTPSConnection if connection_factory is None else connection_factory
-    connection = factory(hostname, addresses[0], timeout=timeout)
     try:
+        connection = factory(hostname, addresses[0], timeout=timeout)
         connection.request(
             "GET",
             path,
@@ -276,6 +290,14 @@ def _pinned_request_once(url, *, resolver, timeout, max_response_bytes, connecti
         return {"status": response.status, "headers": headers, "body": body, "url": url}
     except GuardError:
         raise
+    except socket.gaierror:
+        raise GuardError(DNS_ERROR) from None
+    except TimeoutError:
+        raise GuardError(UPSTREAM_TIMEOUT) from None
+    except OSError:
+        raise GuardError(CONNECTION_ERROR) from None
+    except http.client.HTTPException:
+        raise GuardError(CONNECTION_ERROR) from None
     except Exception:
         raise GuardError(URL_BLOCKED) from None
     finally:
@@ -326,7 +348,9 @@ def pinned_fetch(
                     max_response_bytes=max_response_bytes,
                     connection_factory=connection_factory,
                 )
-            except GuardError:
+            except GuardError as exc:
+                if exc.code in (DNS_ERROR, UPSTREAM_TIMEOUT, CONNECTION_ERROR):
+                    raise
                 raise GuardError(REDIRECT_BLOCKED) from None
         else:
             response = _pinned_request_once(
@@ -357,14 +381,20 @@ def pinned_fetch(
 __all__ = [
     "BAD_PORT",
     "BAD_SCHEME",
+    "CONNECTION_ERROR",
     "CREDENTIALS_IN_URL",
+    "DNS_ERROR",
     "GuardError",
+    "HTTP_ERROR",
     "MAX_REDIRECTS",
     "MAX_RESPONSE_BYTES",
     "MAX_TIMEOUT_SECONDS",
     "OK",
     "PRIVATE_HOST",
+    "PROVIDER_BLOCKED",
+    "RATE_LIMITED",
     "REDIRECT_BLOCKED",
+    "UPSTREAM_TIMEOUT",
     "URL_BLOCKED",
     "check_url",
     "pinned_fetch",

@@ -11,6 +11,7 @@ from free_stack import (
     searxng_search,
     wikipedia_search,
 )
+from result_contract import CONNECTION_ERROR
 
 
 class FakeTransport:
@@ -85,11 +86,13 @@ class FreeStackTests(unittest.TestCase):
                     "title": "Python (programming language)",
                     "url": "https://en.wikipedia.org/wiki/Python_(programming_language)",
                     "snippet": "A programming language.",
+                    "language": "en",
                 },
                 {
                     "title": "Monty Python",
                     "url": "https://en.wikipedia.org/wiki/Monty_Python",
                     "snippet": "British comedy group.",
+                    "language": "en",
                 },
             ],
             "truncated": False,
@@ -144,12 +147,12 @@ class FreeStackTests(unittest.TestCase):
         self.assertEqual(result, {"ok": False, "error": {"code": MISSING_CONFIG}})
         self.assertEqual(transport.calls, [])
 
-    def test_searxng_unreachable_instance_is_missing_config(self):
+    def test_searxng_unreachable_instance_is_connection_error(self):
         transport = FakeTransport(OSError("connection refused"))
 
         result = searxng_search("topic", instance_url="http://localhost:9999", transport=transport)
 
-        self.assertEqual(result, {"ok": False, "error": {"code": MISSING_CONFIG}})
+        self.assertEqual(result, {"ok": False, "error": {"code": CONNECTION_ERROR}})
 
     def test_searxng_rejects_non_local_http_instance_without_fetch(self):
         transport = FakeTransport('{"results": []}')
