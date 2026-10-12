@@ -43,6 +43,7 @@ DEFAULT_SOURCE_ROOT = SCRIPT_PATH.parents[2]
 PLUGIN_FILES = (
     ("goat-web/plugins/goat-web/__init__.py", "__init__.py"),
     ("goat-web/plugins/goat-web/goat_tools.py", "goat_tools.py"),
+    ("goat-web/plugins/goat-web/search_providers.py", "search_providers.py"),
     ("goat-web/plugins/goat-web/adapters.py", "adapters.py"),
     ("goat-web/plugins/goat-web/url_gate.py", "url_gate.py"),
     ("goat-web/plugins/goat-web/tool_schemas.py", "tool_schemas.py"),

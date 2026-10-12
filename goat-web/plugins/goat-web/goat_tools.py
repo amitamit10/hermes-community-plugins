@@ -368,8 +368,14 @@ def _search_result_url(raw_url):
     return raw_url if allowed else None
 
 
-def goat_search(query, transport=None, *, max_results=MAX_RESULTS, provider_config=_UNSET):
-    """Search public web results using DuckDuckGo HTML (keyless by default)."""
+def goat_search(query, transport=None, *, max_results=MAX_RESULTS, provider_config=_UNSET, allow_fallback=False):
+    """Search public web results using DuckDuckGo HTML (keyless by default).
+
+    With ``allow_fallback=True`` the query dispatches over the ordered
+    provider registry (``search_providers``: DDG first, then Wikipedia
+    OpenSearch) with budget, fallback, and source/transition provenance.
+    Any other value keeps the single-provider baseline behavior exactly.
+    """
     try:
         fetch = _transport_or_error(transport, provider_config)
         if not isinstance(query, str) or not query.strip():
@@ -377,6 +383,26 @@ def goat_search(query, transport=None, *, max_results=MAX_RESULTS, provider_conf
         if type(max_results) is not int:
             max_results = MAX_RESULTS
         max_results = _bounded_integer(max_results, 1, MAX_RESULTS)
+        if allow_fallback is True:
+            if __package__:
+                from . import search_providers as _search_providers
+            else:
+                import search_providers as _search_providers
+
+            def _ddg_provider_search(
+                provider_query, *, transport, max_results
+            ):
+                return goat_search(
+                    provider_query, transport, max_results=max_results
+                )
+
+            _search_providers.register_provider("ddg", _ddg_provider_search)
+            return _search_providers.search_with_fallback(
+                query,
+                transport=fetch,
+                max_results=max_results,
+                provider_config=provider_config,
+            )
         search_url = "https://html.duckduckgo.com/html/?" + urlencode({"q": query.strip()})
         status, body, _final_url, _headers = _fetch(search_url, fetch)
         if status == 429:
