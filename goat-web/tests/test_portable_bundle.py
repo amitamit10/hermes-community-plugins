@@ -52,6 +52,7 @@ EXPECTED_FILES = {
     "url_gate.py",
     "tool_schemas.py",
     "v3_wiring.py",
+    "search_providers.py",
     "plugin.yaml",
     "_goat_v3_vendor/answer_synth.py",
     "_goat_v3_vendor/search_filters.py",
