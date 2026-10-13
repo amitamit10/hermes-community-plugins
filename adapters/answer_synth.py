@@ -3239,3 +3239,646 @@ __all__ = [
     "plan_research_query",
     "validate_research_plan",
 ]
+# V52 evidence-graph substrate (compact additive vertical).
+# Grammar uses Who plus a regular past verb plus NP plus a question mark.
+# NP is a literal or the N past-verb by NP and denotes OBJECT role only.
+# Year suffix is directly attached single-hop only.
+# Limits are max 4 hops and 8 atoms with max 8 searches.
+# Limits are 2000 query chars and 512 name chars and 5 candidates.
+# Limits are 8000 body chars and 5 sources and 8000 answer chars.
+import copy
+
+_EG_MAX_Q = 2000
+_EG_MAX_BIND = 512
+_EG_MAX_ATOMS = 8
+_EG_MAX_CAND = 5
+_EG_MAX_SRC = 5
+_EG_MAX_ANS = 8000
+_EG_TOP_KEYS = frozenset(("query", "max_hops", "max_searches", "atoms", "output", "status", "reason"))
+_EG_PLANNED = "planned"
+_EG_UNSUPPORTED = "unsupported"
+_EG_UNSUPPORTED_ARITHMETIC = "unsupported_arithmetic"
+_EG_SEAL = object()
+_EG_OUTER_RE = re.compile(r"^\s*Who\s+(?P<ov>[A-Za-z]+)\s+(?P<np>.+?)\s*\?\s*$", re.IGNORECASE | re.DOTALL)
+_EG_REL_RE = re.compile(r"^\s*the\s+(?P<noun>[A-Za-z]+)\s+(?P<verb>[A-Za-z]+)\s+by\s+(?P<inner>.+?)\s*$", re.IGNORECASE | re.DOTALL)
+_EG_LIT_PUNCT_RE = re.compile(r"[^A-Za-z \-'\u2019]")
+_EG_Q_ALLOW_RE = re.compile(r"[^A-Za-z0-9\s\?\-'\u2019]")
+_EG_ANDOR_RE = re.compile(r"\b(and|or)\b", re.IGNORECASE)
+_EG_YEAR_SUFFIX_RE = re.compile(r"\s+in\s+(?P<year>\d{4})\s*\?\s*$", re.IGNORECASE)
+_EG_HOW_MANY_RE = re.compile(r"\bhow\s+many\b", re.IGNORECASE)
+def _eg_eq(a, b):
+    if isinstance(a, bool) or isinstance(b, bool):
+        return type(a) is type(b) and a == b
+    if type(a) in (str, int) or type(b) in (str, int):
+        return type(a) is type(b) and a == b
+    if type(a) is list or type(b) is list:
+        if type(a) is not list or type(b) is not list:
+            return False
+        return len(a) == len(b) and all(_eg_eq(x, y) for x, y in zip(a, b))
+    if type(a) is dict or type(b) is dict:
+        if type(a) is not dict or type(b) is not dict:
+            return False
+        if set(a.keys()) != set(b.keys()):
+            return False
+        return all(_eg_eq(a[k], b[k]) for k in a)
+    return type(a) is type(b) and a == b
+
+def _eg_is_year(v):
+    return type(v) is str and re.fullmatch(r"\d{4}", v) is not None
+
+def _eg_split_year(q):
+    m = _EG_YEAR_SUFFIX_RE.search(q) if type(q) is str else None
+    if m is None:
+        return None
+    y = m.group("year")
+    ys, ye = m.span("year")
+    if q[ys:ye] != y or not _eg_is_year(y):
+        return None
+    base = q[:m.start()].rstrip() + "?"
+    if not base.strip():
+        return None
+    return (y, [ys, ye], base)
+
+def _eg_is_arith(q):
+    return isinstance(q, str) and _EG_HOW_MANY_RE.search(q) is not None
+
+def _eg_has_controls(s):
+    return not isinstance(s, str) or any(ord(c) < 32 or ord(c) == 127 for c in s)
+
+def _eg_clean_title(t):
+    raw = t.strip() if isinstance(t, str) else ""
+    kept = "".join(c for c in raw if not (ord(c) < 32 or ord(c) == 127))
+    return kept[:MAX_TITLE_CHARS]
+
+def _eg_pick_intermediate(found):
+    urls = {}
+    for _b, _t, _u, _ti in found:
+        if _is_safe_answer_url(_u):
+            urls.setdefault(_u, []).append(_eg_clean_title(_ti))
+    out = []
+    for u in sorted(urls.keys()):
+        cands = sorted(x for x in urls[u] if isinstance(x, str))
+        best = next((c for c in cands if c.strip()), cands[0] if cands else "")
+        out.append({"url": u, "title": best})
+    return out[:_EG_MAX_SRC]
+class _EvidenceProof(dict):
+    def __init__(self, *, atom_id, query, subject, obj, binding, sentence, source, atom_snap, known):
+        super().__init__(atom_id=atom_id, query=query, subject=subject, object=obj,
+                         binding=binding, sentence=sentence, source=dict(source))
+        self._seal, self._atom_id, self._query = _EG_SEAL, atom_id, query
+        self._binding, self._sentence = binding, sentence
+        self._source, self._atom, self._known = dict(source), atom_snap, dict(known)
+
+def _eg_is_native(p):
+    return type(p) is _EvidenceProof and getattr(p, "_seal", None) is _EG_SEAL
+
+def _eg_past_ed(w):
+    return isinstance(w, str) and w.isalpha() and w.casefold().endswith("ed")
+
+def _eg_single_noun(w):
+    if not isinstance(w, str):
+        return False
+    if re.fullmatch(r"[A-Za-z]+", w) is None:
+        return False
+    if w.casefold() in _UNRESOLVED_SLOTS:
+        return False
+    return not _research_has_comparison_or_scope(w)
+
+def _eg_valid_lit(raw):
+    s = raw.strip() if isinstance(raw, str) else ""
+    if not s or len(s) > _EG_MAX_BIND or _eg_has_controls(s):
+        return False
+    if "?" in s or "{" in s or "}" in s or _EG_LIT_PUNCT_RE.search(s) is not None:
+        return False
+    if re.fullmatch(r"[A-Za-z]+(?:[ \-'][A-Za-z]+)*", s) is None:
+        return False
+    if _EG_ANDOR_RE.search(" " + s + " ") is not None or _has_embedded_clause(s):
+        return False
+    if _research_has_comparison_or_scope(s):
+        return False
+    return _is_resolved_slot(s)
+
+def _eg_list2(v):
+    return type(v) is list and len(v) == 2 and type(v[0]) is int and type(v[1]) is int
+
+def _eg_mk(atoms, q, cs, subj, obj, verb, vs, noun, ns, rq, year=None, ys=None):
+    i = len(atoms) + 1
+    c = {}
+    if noun is not None:
+        c = {"object_type": noun, "object_type_span": [ns[0], ns[1]]}
+    if year is not None:
+        c["year"] = year
+        c["year_span"] = [ys[0], ys[1]]
+    deps = [] if i == 1 else ["a%d" % (i - 1)]
+    atoms.append({
+        "id": "a%d" % i, "subject": dict(subj), "object": dict(obj),
+        "relation": {"surface": verb, "span": [vs[0], vs[1]]},
+        "retrieval_query": rq, "constraints": c, "depends_on": deps,
+        "output": "v%d" % i, "depth": i,
+        "query_surface": q[cs[0]:cs[1]], "clause_span": [cs[0], cs[1]],
+    })
+    return atoms[-1]
+
+def _eg_canonical_plan(qraw, mh, ms):
+    if (
+        type(qraw) is not str or type(mh) is not int or type(ms) is not int
+        or not 1 <= mh <= 4 or not 1 <= ms <= 8
+    ):
+        return None
+    if (
+        not qraw.strip() or len(qraw) > _EG_MAX_Q or len(qraw.strip()) > _EG_MAX_Q
+        or _eg_has_controls(qraw) or "{" in qraw or "}" in qraw
+        or _research_has_comparison_or_scope(qraw)
+        or _EG_Q_ALLOW_RE.search(qraw) is not None
+        or not qraw.strip().endswith("?") or qraw.count("?") != 1
+    ):
+        return None
+    yinfo = _eg_split_year(qraw)
+    year = None
+    yspan = None
+    work = qraw
+    if yinfo is not None:
+        year, yspan, work = yinfo
+    m = _EG_OUTER_RE.match(work)
+    if m is None:
+        return None
+    ov_s, ov_e = m.span("ov")
+    np_s, np_e = m.span("np")
+    ov = work[ov_s:ov_e]
+    np_txt = work[np_s:np_e]
+    if (
+        not _eg_past_ed(ov) or "?" in np_txt or "{" in np_txt
+        or "}" in np_txt or qraw[ov_s:ov_e] != ov
+    ):
+        return None
+    levels = []
+    cur_txt = np_txt
+    cur_base = np_s
+    for _ in range(4):
+        rm = _EG_REL_RE.match(cur_txt)
+        if rm is None:
+            break
+        n_s, n_e = rm.span("noun")
+        v_s, v_e = rm.span("verb")
+        i_s, i_e = rm.span("inner")
+        noun, verb, inner = cur_txt[n_s:n_e], cur_txt[v_s:v_e], cur_txt[i_s:i_e]
+        if not _eg_single_noun(noun) or not _eg_past_ed(verb):
+            return None
+        a_ns, a_ne = cur_base + n_s, cur_base + n_e
+        a_vs, a_ve = cur_base + v_s, cur_base + v_e
+        a_is, a_ie = cur_base + i_s, cur_base + i_e
+        np_abs = [cur_base, cur_base + len(cur_txt)]
+        levels.append((noun, [a_ns, a_ne], verb, [a_vs, a_ve], list(np_abs)))
+        cur_txt = inner
+        cur_base = a_is
+    if cur_txt.strip().casefold().startswith("the "):
+        return None
+    lit = cur_txt.strip()
+    if not lit:
+        return None
+    lead = len(cur_txt) - len(cur_txt.lstrip())
+    trail = len(cur_txt) - len(cur_txt.rstrip())
+    ls, le = cur_base + lead, cur_base + len(cur_txt) - trail
+    if qraw[ls:le] != lit or not _eg_valid_lit(lit):
+        return None
+    if year is not None and len(levels) != 0:
+        return None
+    hops = len(levels) + 1
+    if hops > 4 or hops > mh or hops > ms or hops > _EG_MAX_ATOMS:
+        return None
+    c0 = len(qraw) - len(qraw.lstrip())
+    c1 = len(qraw.rstrip())
+    atoms = []
+    if not levels:
+        rq = "Who %s %s?" % (ov, lit)
+        subj0 = {"kind": "variable", "id": "v1"}
+        obj0 = {"kind": "literal", "text": lit, "span": [ls, le]}
+        _eg_mk(atoms, qraw, [c0, c1], subj0, obj0, ov, [ov_s, ov_e], None, None, rq, year, yspan)
+        return {"query": qraw, "max_hops": mh, "max_searches": ms, "atoms": atoms,
+                "output": "v1", "status": _EG_PLANNED, "reason": _EG_PLANNED}
+    rev = list(reversed(levels))
+    in_noun, in_nspan, in_verb, in_vspan, in_np = rev[0]
+    rq1 = "What %s %s %s?" % (in_verb, lit, in_noun)
+    subj1 = {"kind": "literal", "text": lit, "span": [ls, le]}
+    obj1 = {"kind": "variable", "id": "v1"}
+    _eg_mk(atoms, qraw, list(in_np), subj1, obj1, in_verb, list(in_vspan), in_noun, list(in_nspan), rq1)
+    for idx, (nn, nn_span, vv, vv_span, np_sp) in enumerate(rev[1:], 2):
+        rq = "What %s {v%d} %s?" % (vv, idx - 1, nn)
+        subj = {"kind": "variable", "id": "v%d" % (idx - 1)}
+        obj = {"kind": "variable", "id": "v%d" % idx}
+        _eg_mk(atoms, qraw, list(np_sp), subj, obj, vv, list(vv_span), nn, list(nn_span), rq)
+    rqN = "Who %s {v%d}?" % (ov, hops - 1)
+    subjN = {"kind": "variable", "id": "v%d" % hops}
+    objN = {"kind": "variable", "id": "v%d" % (hops - 1)}
+    _eg_mk(atoms, qraw, [c0, c1], subjN, objN, ov, [ov_s, ov_e], None, None, rqN)
+    return {"query": qraw, "max_hops": mh, "max_searches": ms, "atoms": atoms,
+            "output": "v%d" % hops, "status": _EG_PLANNED, "reason": _EG_PLANNED}
+def plan_evidence_query(query, max_hops=2, max_searches=4):
+    """Plan a closed evidence chain or abstain.
+
+    The original query is mandatory and drives every span. Closed plan
+    schema is query plus budgets plus atoms plus output plus status plus
+    reason with full atom fields. Native proof only with no JSON scalar
+    authority and bounded trusted extracts that chain all atoms or
+    abstain. No fixture entities or answers or whitelists. Grammar is Who
+    regular past NP with relative NP object roles and single-hop year.
+    """
+    try:
+        if (
+            type(query) is not str or len(query) > _EG_MAX_Q
+            or len(query.strip()) > _EG_MAX_Q
+        ):
+            return {"query": "", "max_hops": max_hops, "max_searches": max_searches,
+                    "atoms": [], "output": "", "status": _EG_UNSUPPORTED, "reason": _EG_UNSUPPORTED}
+        canon = _eg_canonical_plan(query, max_hops, max_searches)
+        if isinstance(canon, dict):
+            return canon
+        if _eg_is_arith(query):
+            reason = _EG_UNSUPPORTED_ARITHMETIC
+        else:
+            reason = _EG_UNSUPPORTED
+        return {"query": query, "max_hops": max_hops, "max_searches": max_searches,
+                "atoms": [], "output": "", "status": _EG_UNSUPPORTED, "reason": reason}
+    except Exception:
+        return {"query": "", "max_hops": 2, "max_searches": 4,
+                "atoms": [], "output": "", "status": _EG_UNSUPPORTED, "reason": _EG_UNSUPPORTED}
+
+def validate_evidence_query_plan(plan, query, max_hops=None, max_searches=None):
+    """Validate a plan against its original query strictly.
+
+    The original query is mandatory and must equal the planned query.
+    Closed schema is rebuilt canonically with strict value plus type
+    compare. Native proof gating holds and bounded budgets use exact int
+    checks that chain all atoms or abstain. No fixture entities or
+    answers or whitelists. Grammar is Who regular past with relative NP
+    object roles and single-hop year only.
+    """
+    try:
+        if not isinstance(plan, dict) or type(query) is not str:
+            return False
+        if set(plan.keys()) != set(_EG_TOP_KEYS):
+            return False
+        pq = plan.get("query")
+        mh = plan.get("max_hops")
+        ms = plan.get("max_searches")
+        if plan.get("status") != _EG_PLANNED or plan.get("reason") != _EG_PLANNED:
+            return False
+        if type(pq) is not str or type(mh) is not int or type(ms) is not int:
+            return False
+        if not 1 <= mh <= 4 or not 1 <= ms <= 8 or pq != query:
+            return False
+        if max_hops is not None and (
+            type(max_hops) is not int or not 1 <= max_hops <= 4 or max_hops != mh
+        ):
+            return False
+        if max_searches is not None and (
+            type(max_searches) is not int or not 1 <= max_searches <= 8 or max_searches != ms
+        ):
+            return False
+        atoms = plan.get("atoms")
+        out = plan.get("output")
+        if type(atoms) is not list or type(out) is not str:
+            return False
+        if not 1 <= len(atoms) <= _EG_MAX_ATOMS or not out:
+            return False
+        if len(atoms) > mh or len(atoms) > ms:
+            return False
+        exp = _eg_canonical_plan(pq, mh, ms)
+        return True if isinstance(exp, dict) and _eg_eq(plan, exp) else False
+    except Exception:
+        return False
+def _eg_base_ok(s):
+    if not isinstance(s, str):
+        return False
+    t = s.strip()
+    if not t or "?" in t or len(t) > _EG_MAX_Q or not _is_complete_sentence(t):
+        return False
+    if _is_fragmentary_sentence(t) or _is_unreliable_sentence(t) or _has_embedded_clause(t):
+        return False
+    return True
+
+def _eg_neg_ok(s):
+    if not isinstance(s, str):
+        return False
+    t = s.strip()
+    if not t or "?" in t or len(t) > _EG_MAX_Q or not _is_complete_sentence(t):
+        return False
+    if _is_fragmentary_sentence(t) or _has_embedded_clause(t):
+        return False
+    if '"' in t or "\u201c" in t or "\u201d" in t:
+        return False
+    return _HEDGE_RE.search(t.casefold()) is None
+
+def _eg_ident(s):
+    return s.strip().casefold() if isinstance(s, str) else ""
+def _eg_base_cands(surface):
+    low = surface.casefold() if type(surface) is str else ""
+    if len(low) < 3 or not low.endswith("ed") or not low.isalpha():
+        return set()
+    stem = low[:-2]
+    cands = {c for c in (stem, stem + "e") if c and c.isalpha()}
+    if low.endswith("ied") and len(low) >= 4:
+        yform = low[:-3] + "y"
+        if yform and yform.isalpha():
+            cands.add(yform)
+    if len(stem) >= 2 and stem[-1] == stem[-2] and stem[-1] not in "aeiou":
+        undoubled = stem[:-1]
+        if undoubled and undoubled.isalpha():
+            cands.add(undoubled)
+            eform = undoubled + "e"
+            if eform and eform.isalpha():
+                cands.add(eform)
+    return cands
+def _eg_try_binding(pats, sent, known):
+    if not pats or not isinstance(sent, str) or not isinstance(known, str):
+        return None
+    for pat in pats:
+        try:
+            m = re.match(pat, sent, re.IGNORECASE | re.DOTALL)
+        except Exception:
+            continue
+        if not m:
+            continue
+        try:
+            b = m.group("b")
+        except Exception:
+            continue
+        if type(b) is not str or not b.strip() or _eg_ident(b) == _eg_ident(known):
+            continue
+        if not _eg_valid_lit(b.strip()):
+            continue
+        return b.strip()
+    return None
+
+def _eg_role_patterns(verb_surface, type_name, known_text, subject_is_known):
+    """Build one shared pair of directed whole-sentence patterns."""
+    known_part = r"\b" + re.escape(_eg_ident(known_text)) + r"\b"
+    past_part = r"\b" + re.escape(verb_surface) + r"\b"
+    opt_part = r"(?:the\s+[A-Za-z]+\s+)?"
+    bind_part = r"(?P<b>[^.!?]+?)"
+    if type_name is not None:
+        type_part = r"\b" + re.escape(type_name) + r"\b"
+    else:
+        type_part = None
+    if subject_is_known and type_part is not None:
+        active = r"^\s*" + known_part + r"\s+" + past_part + r"\s+the\s+" + type_part + r"\s+" + bind_part + r"\s*[.!]\s*$"
+        passive = r"^\s*the\s+" + type_part + r"\s+" + bind_part + r"\s+was\s+" + past_part + r"\s+by\s+" + known_part + r"\s*[.!]\s*$"
+        return [active, passive]
+    if subject_is_known:
+        active = r"^\s*" + known_part + r"\s+" + past_part + r"\s+" + bind_part + r"\s*[.!]\s*$"
+        passive = r"^\s*" + bind_part + r"\s+was\s+" + past_part + r"\s+by\s+" + known_part + r"\s*[.!]\s*$"
+        return [active, passive]
+    if type_part is not None:
+        active = r"^\s*" + bind_part + r"\s+" + past_part + r"\s+the\s+" + type_part + r"\s+" + known_part + r"\s*[.!]\s*$"
+        passive = r"^\s*the\s+" + type_part + r"\s+" + known_part + r"\s+was\s+" + past_part + r"\s+by\s+" + bind_part + r"\s*[.!]\s*$"
+        return [active, passive]
+    active = r"^\s*" + bind_part + r"\s+" + past_part + r"\s+" + opt_part + known_part + r"\s*[.!]\s*$"
+    passive = r"^\s*" + opt_part + known_part + r"\s+was\s+" + past_part + r"\s+by\s+" + bind_part + r"\s*[.!]\s*$"
+    return [active, passive]
+
+def _eg_strip_negative_markers(sentence, verb_surface):
+    """Rewrite a supported scoped negative into its positive shape."""
+    cands = _eg_base_cands(verb_surface)
+    if cands:
+        ordered = sorted((re.escape(c) for c in cands), key=len, reverse=True)
+        base = r"\b(?:" + "|".join(ordered) + r")\b"
+    else:
+        base = ""
+    out = sentence
+    if base:
+        out = re.sub(r"\bdid(?:\s+not|n['\u2019]t)\s+" + base + r"\b", verb_surface, out, flags=re.IGNORECASE)
+    past = r"\b" + re.escape(verb_surface) + r"\b"
+    out = re.sub(r"\bnever\s+" + past, " " + verb_surface, out, flags=re.IGNORECASE)
+    return re.sub(r"\bwas(?:\s+not|n['\u2019]t)\b", "was", out, flags=re.IGNORECASE)
+
+def _eg_match(verb_surface, type_name, type_span, known_text, sentence, year, subject_is_known, is_negative):
+    if type(verb_surface) is not str or not verb_surface:
+        return None
+    if not isinstance(known_text, str) or not known_text.strip():
+        return None
+    if not isinstance(sentence, str) or not sentence:
+        return None
+    if type_name is not None and (type(type_name) is not str or not _eg_single_noun(type_name)):
+        return None
+    if type_name is not None and type_span is not None and not _eg_list2(type_span):
+        return None
+    if type_name is None and type_span is not None:
+        return None
+    if year is not None and (not _eg_is_year(year) or re.search(r"\bin\s+" + re.escape(year) + r"\b", sentence, re.IGNORECASE) is None):
+        return None
+    if year is not None:
+        sentence = re.sub(r"\s+in\s+" + re.escape(year) + r"\b", "", sentence, count=1, flags=re.IGNORECASE)
+    if not _eg_ident(known_text):
+        return None
+    if is_negative:
+        sentence = _eg_strip_negative_markers(sentence, verb_surface)
+    pats = _eg_role_patterns(verb_surface, type_name, known_text, subject_is_known)
+    return _eg_try_binding(pats, sentence, known_text)
+def _eg_known(atom, resolved):
+    subj, obj, out = atom.get("subject"), atom.get("object"), atom.get("output")
+    if not isinstance(subj, dict) or not isinstance(obj, dict) or type(out) is not str:
+        return None
+    if (subj.get("kind") == "literal" and obj.get("kind") == "variable"
+            and obj.get("id") == out and _eg_valid_lit(subj.get("text"))):
+        return (subj.get("text").strip(), True)
+    if (obj.get("kind") == "literal" and subj.get("kind") == "variable"
+            and subj.get("id") == out and _eg_valid_lit(obj.get("text"))):
+        return (obj.get("text").strip(), False)
+    sid = subj.get("id")
+    oid = obj.get("id")
+    if out == sid and oid in resolved:
+        return (resolved[oid], False)
+    if out == oid and sid in resolved:
+        return (resolved[sid], True)
+    return None
+
+def ground_evidence_atom(atom, bindings, candidates, *, query):
+    """Ground one closed atom from bounded trusted extracts only.
+
+    The original query is mandatory and selects the canonical atom. The
+    atom must equal its canonical closed schema or the call abstains.
+    Only native proof objects fill variables with no scalar or plain dict
+    authority. Trusted extracts are bounded and scanned exhaustively with
+    overlong batches rejected. Chains one proof or abstains with no
+    fixture entities or answers or whitelists.
+    """
+    try:
+        if (not isinstance(atom, dict) or not isinstance(bindings, dict)
+                or not isinstance(candidates, (list, tuple)) or type(query) is not str):
+            return {"status": "ungrounded", "reason": "insufficient_evidence"}
+        if (not query or len(query) > _EG_MAX_Q or not 1 <= len(candidates) <= _EG_MAX_CAND):
+            return {"status": "ungrounded", "reason": "insufficient_evidence"}
+        aid = atom.get("id")
+        if type(aid) is not str:
+            return {"status": "ungrounded", "reason": "insufficient_evidence"}
+        for cand in candidates:
+            if isinstance(cand, Mapping):
+                ext = cand.get("extract", "")
+                if isinstance(ext, str) and len(ext) > _EG_MAX_ANS:
+                    return {"status": "ungrounded", "reason": "insufficient_evidence"}
+        canon = _eg_canonical_plan(query, 4, 8)
+        if not isinstance(canon, dict):
+            return {"status": "ungrounded", "reason": "insufficient_evidence"}
+        by_id = {c.get("id"): c for c in canon.get("atoms", []) if isinstance(c, dict) and type(c.get("id")) is str}
+        exp = by_id.get(aid)
+        if exp is None or not _eg_eq(atom, exp):
+            return {"status": "ungrounded", "reason": "insufficient_evidence"}
+        deps = exp.get("depends_on")
+        if set(bindings.keys()) != set(deps):
+            return {"status": "ungrounded", "reason": "insufficient_evidence"}
+        resolved = {}
+        for d in deps:
+            p = bindings[d]
+            if not _eg_is_native(p) or p._query != query or p._atom_id != d or not _eg_eq(p._atom, by_id[d]):
+                return {"status": "ungrounded", "reason": "insufficient_evidence"}
+            ovar = p._atom.get("output")
+            oval = p._binding
+            if type(oval) is not str or (ovar in resolved and resolved[ovar] != oval):
+                return {"status": "ungrounded", "reason": "insufficient_evidence"}
+            resolved[ovar] = oval
+        known = _eg_known(exp, resolved)
+        if known is None:
+            return {"status": "ungrounded", "reason": "insufficient_evidence"}
+        known_val, subject_is_known = known
+        verb = exp.get("relation", {}).get("surface")
+        cons = exp.get("constraints", {})
+        type_name = cons.get("object_type")
+        type_span = cons.get("object_type_span")
+        qyear = cons.get("year")
+        found = []
+        neg_found = []
+        for cand in candidates:
+            if not isinstance(cand, Mapping):
+                continue
+            url = cand.get("url", "")
+            if not _is_safe_answer_url(url):
+                continue
+            title = _eg_clean_title(cand.get("title", ""))
+            ext = cand.get("extract", "")
+            if not isinstance(ext, str) or not ext.strip():
+                continue
+            for sent in _split_sentences(ext):
+                t = sent.strip()
+                if not t:
+                    continue
+                if _eg_base_ok(t):
+                    b = _eg_match(verb, type_name, type_span, known_val, t, qyear, subject_is_known, False)
+                    if b is not None and _eg_valid_lit(b.strip()):
+                        found.append((b.strip(), t, url, title))
+                        continue
+                if not _eg_neg_ok(t):
+                    continue
+                nb = _eg_match(verb, type_name, type_span, known_val, t, qyear, subject_is_known, True)
+                if nb is not None and _eg_valid_lit(nb.strip()):
+                    neg_found.append((nb.strip(), t, url, title))
+        if not found:
+            return {"status": "ungrounded", "reason": "insufficient_evidence"}
+        keys = {}
+        for b, t, u, ti in found:
+            k = _eg_ident(b)
+            if not k:
+                return {"status": "ungrounded", "reason": "insufficient_evidence"}
+            keys.setdefault(k, []).append((b, t, u, ti))
+        if len(keys) != 1:
+            return {
+                "status": "ungrounded",
+                "reason": "ambiguous_binding",
+                "intermediate_sources": _eg_pick_intermediate(found),
+            }
+        pos_key = next(iter(keys.keys()))
+        for nb, _nt, _nu, _nti in neg_found:
+            nk = _eg_ident(nb)
+            if nk and nk == pos_key:
+                return {"status": "ungrounded", "reason": "contradiction"}
+        ordered = sorted(keys[pos_key], key=lambda x: (x[2], x[3], x[1], x[0]))
+        b0, t0, u0, ti0 = ordered[0]
+        sres, ores = (known_val, b0) if subject_is_known else (b0, known_val)
+        proof = _EvidenceProof(atom_id=atom.get("id"), query=query, subject=sres, obj=ores,
+                               binding=b0, sentence=t0, source={"url": u0, "title": ti0},
+                               atom_snap=copy.deepcopy(exp), known=dict(resolved))
+        return {"status": "grounded", "binding": b0, "proof": proof}
+    except Exception:
+        return {"status": "ungrounded", "reason": "insufficient_evidence"}
+def compose_evidence_query_plan(plan, proofs, query, *, max_sources=5, max_answer_chars=8000):
+    """Compose validated native proofs into a cited answer or abstain.
+
+    The original query is mandatory and proofs must carry it with canon
+    atoms. Only native proofs count with no dict field authority. Trusted
+    extracts stay bounded at 5 sources and 8000 chars. All chain proofs
+    are retained with citations or the call abstains. No fixture entities
+    or answers or whitelists.
+    """
+    try:
+        if (not isinstance(plan, dict) or not isinstance(proofs, dict) or type(query) is not str
+                or type(max_sources) is not int or type(max_answer_chars) is not int):
+            return {"error": {"code": _INSUFFICIENT}}
+        if (not 1 <= max_sources <= _EG_MAX_SRC or not 1 <= max_answer_chars <= _EG_MAX_ANS):
+            return {"error": {"code": _INSUFFICIENT}}
+        if validate_evidence_query_plan(plan, query) is not True:
+            return {"error": {"code": _INSUFFICIENT}}
+        atoms = plan.get("atoms")
+        out = plan.get("output")
+        if set(proofs.keys()) != {a.get("id") for a in atoms}:
+            return {"error": {"code": _INSUFFICIENT}}
+        by_id = {x.get("id"): x for x in atoms if isinstance(x, dict)}
+        resolved = {}
+        sents = []
+        srcs = []
+        for a in atoms:
+            pid = a.get("id")
+            p = proofs.get(pid)
+            if not _eg_is_native(p):
+                return {"error": {"code": _INSUFFICIENT}}
+            if p._query != query or p._atom_id != pid:
+                return {"error": {"code": _INSUFFICIENT}}
+            if not _eg_eq(p._atom, a):
+                return {"error": {"code": _INSUFFICIENT}}
+            exp_known = {}
+            for d in a.get("depends_on", []):
+                prod = by_id.get(d)
+                if prod.get("output") not in resolved:
+                    return {"error": {"code": _INSUFFICIENT}}
+                exp_known[prod.get("output")] = resolved[prod.get("output")]
+            if not _eg_eq(p._known, exp_known):
+                return {"error": {"code": _INSUFFICIENT}}
+            known = _eg_known(a, resolved)
+            if known is None:
+                return {"error": {"code": _INSUFFICIENT}}
+            cur, subject_is_known = known
+            ps = p._sentence
+            pb = p._binding
+            if not isinstance(ps, str) or type(pb) is not str:
+                return {"error": {"code": _INSUFFICIENT}}
+            if not _eg_base_ok(ps):
+                return {"error": {"code": _INSUFFICIENT}}
+            if not _eg_valid_lit(pb):
+                return {"error": {"code": _INSUFFICIENT}}
+            cons = a.get("constraints", {})
+            qy = cons.get("year") if "year" in cons else None
+            need_type = cons.get("object_type") if "object_type" in cons else None
+            need_span = cons.get("object_type_span") if "object_type_span" in cons else None
+            surf = a.get("relation", {}).get("surface")
+            rb = _eg_match(surf, need_type, need_span, cur, ps.strip(), qy, subject_is_known, False)
+            if rb is None or not _eg_valid_lit(rb) or _eg_ident(rb) != _eg_ident(pb):
+                return {"error": {"code": _INSUFFICIENT}}
+            if not _is_safe_answer_url(p._source.get("url", "")):
+                return {"error": {"code": _INSUFFICIENT}}
+            resolved[a.get("output")] = pb
+            sents.append(ps.strip())
+            srcs.append({"url": p._source.get("url", ""), "title": p._source.get("title", "")[:MAX_TITLE_CHARS]})
+        if out not in resolved or len(sents) != len(atoms) or len(srcs) > max_sources:
+            return {"error": {"code": _INSUFFICIENT}}
+        answer = "\n".join("%s [%d]" % (s, i + 1) for i, s in enumerate(sents))
+        if not answer or len(answer) > max_answer_chars or len(answer) > _EG_MAX_ANS:
+            return {"error": {"code": _INSUFFICIENT}}
+        sources = [{"index": i + 1, "title": r["title"], "url": r["url"]} for i, r in enumerate(srcs)]
+        return {"binding": resolved[out], "answer": answer, "sources": sources}
+    except Exception:
+        return {"error": {"code": _INSUFFICIENT}}
+
+__all__ = __all__ + [
+    "plan_evidence_query",
+    "validate_evidence_query_plan",
+    "ground_evidence_atom",
+    "compose_evidence_query_plan",
+]
