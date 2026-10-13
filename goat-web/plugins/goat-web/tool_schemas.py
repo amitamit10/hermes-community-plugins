@@ -93,7 +93,13 @@ SCHEMAS = {
             "requests, at most five candidates). No model call or arbitrary page "
             "fetch; direct complete subject-relation evidence or public "
             "INSUFFICIENT_EVIDENCE; bounded full claims with cited sources only; "
-            "multi-hop unsupported; not general-web coverage."
+            "not general-web coverage. Bounded research budgets accepted "
+            "(research default False, dependency depth 1..4, logical calls 1..8) "
+            "with legacy single-hop behavior preserved; bounded opt-in research "
+            "chains/facets/intersections over supported orbit/capital/authorship "
+            "relations plus temporal facts now; comparisons evidence-only; "
+            "unsupported computation abstains with public budgets and at most "
+            "two HTTP per logical call (<=2)."
         ),
         "parameters": {
             "type": "object",
@@ -116,6 +122,36 @@ SCHEMAS = {
                     "description": (
                         "Maximum returned results or answer sources, 1 through 5; "
                         "booleans, strings and floats are rejected."
+                    ),
+                },
+                "research": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": (
+                        "Bounded opt-in research flag; default False keeps "
+                        "single-hop legacy behavior."
+                    ),
+                },
+                "max_hops": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 4,
+                    "default": 2,
+                    "description": (
+                        "Dependency depth, 1 through 4; "
+                        "booleans, strings and floats are rejected."
+                    ),
+                },
+                "max_searches": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 8,
+                    "default": 4,
+                    "description": (
+                        "Logical search calls, 1 through 8, default 4; at most two "
+                        "Wikipedia HTTP requests per logical call and hard cap at "
+                        "most twice max_searches; booleans, "
+                        "strings and floats are rejected."
                     ),
                 },
             },
