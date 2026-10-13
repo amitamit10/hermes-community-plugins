@@ -125,7 +125,7 @@ class CrawlFailConsistencyTests(OfflineRecordingTestCase):
                 self.assertEqual(res.get("error"), {"code": "HTTP_ERROR"})
                 self.assertEqual(res.get("status"), 404)
             self.assertEqual(calls, [root])
-        # --- root ok, child 404-with-links -> HTTP_ERROR, never grandchild ---
+        # --- root ok, child fail-with-links -> partial-success, never grandchild ---
         for child_body, code in ((FAILED_CHILD_WITH_LINKS, "HTTP_ERROR"), (FAILED_CHALLENGE_WITH_LINKS, "PROVIDER_BLOCKED")):
             with self.subTest(child_code=code):
                 for run in ("raw", "json"):
@@ -144,15 +144,16 @@ class CrawlFailConsistencyTests(OfflineRecordingTestCase):
                         with mock.patch.object(goat_tools, "pinned_fetch", _t3):
                             res = json.loads(handler({"url": root}))
                     if code == "HTTP_ERROR":
-                        self.assertEqual(res.get("error"), {"code": "HTTP_ERROR"})
-                        self.assertEqual(res.get("status"), 404)
-                        if run == "json":
-                            self.assertFalse(res.get("ok"))
+                        expected_skipped = [{"url": child, "code": "HTTP_ERROR", "status": 404}]
                     else:
-                        if run == "raw":
-                            self.assertEqual(res, {"error": {"code": "PROVIDER_BLOCKED"}})
-                        else:
-                            self.assertEqual(res, {"ok": False, "error": {"code": "PROVIDER_BLOCKED"}})
+                        expected_skipped = [{"url": child, "code": "PROVIDER_BLOCKED"}]
+                    self.assertIn("pages", res)
+                    self.assertEqual([p["url"] for p in res["pages"]], [root])
+                    self.assertEqual(set(res["pages"][0]), {"url", "depth", "status", "title", "text", "truncated"})
+                    self.assertEqual(res.get("skipped"), expected_skipped)
+                    self.assertNotIn("error", res)
+                    if run == "json":
+                        self.assertTrue(res.get("ok"))
                     self.assertEqual(calls, [root, child])
                     self.assertNotIn(grandchild, calls)
         # --- successful crawl still BFS bounded ---

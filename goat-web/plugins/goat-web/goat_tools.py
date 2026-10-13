@@ -562,6 +562,7 @@ def goat_crawl(
         queue = deque(((start, 0),))
         visited = set()
         pages = []
+        skipped = []
         while queue and len(pages) < page_limit:
             current, depth = queue.popleft()
             current = _clean_url(current)
@@ -570,22 +571,46 @@ def goat_crawl(
             if not _origin_matches(current, origin):
                 continue
             visited.add(current)
-            status, body, final_url, headers = _fetch(current, fetch)
-            if not _origin_matches(final_url, origin):
-                raise URLGateError(REDIRECT_BLOCKED)
+            try:
+                status, body, final_url, headers = _fetch(current, fetch)
+            except URLGateError as error:
+                skipped.append({"url": current, "code": map_error(error)})
+                continue
+            except Exception as error:
+                skipped.append({"url": current, "code": map_error(error)})
+                continue
+            try:
+                if not _origin_matches(final_url, origin):
+                    raise URLGateError(REDIRECT_BLOCKED)
+            except URLGateError as error:
+                skipped.append({"url": current, "code": map_error(error)})
+                continue
+            except Exception as error:
+                skipped.append({"url": current, "code": map_error(error)})
+                continue
             if status == 429:
-                return _rate_limited_result(status, _retry_after_from_headers(headers))
+                entry = {"url": current, "code": RATE_LIMITED, "status": 429}
+                retry_after = _retry_after_from_headers(headers)
+                if retry_after is not None:
+                    entry["retry_after"] = retry_after
+                skipped.append(entry)
+                continue
             if _has_provider_challenge(body):
-                raise URLGateError(PROVIDER_BLOCKED)
+                skipped.append({"url": current, "code": PROVIDER_BLOCKED})
+                continue
             if _validated_http_status(status) is None:
-                raise URLGateError(URL_BLOCKED)
+                skipped.append({"url": current, "code": URL_BLOCKED})
+                continue
             if not 200 <= status < 300:
-                return _http_error_result(status)
+                skipped.append({"url": current, "code": HTTP_ERROR, "status": status})
+                continue
             if not body.strip():
-                return _http_error_result(status)
+                skipped.append({"url": current, "code": HTTP_ERROR, "status": status})
+                continue
             text, content_cut = _truncate(trafilatura_like_extract(body))
             if not text.strip():
-                return _http_error_result(status)
+                skipped.append({"url": current, "code": HTTP_ERROR, "status": status})
+                continue
             pages.append(
                 {
                     "url": current,
@@ -604,6 +629,27 @@ def goat_crawl(
                 target = _clean_url(urljoin(final_url, href))
                 if target not in visited and _origin_matches(target, origin):
                     queue.append((target, depth + 1))
+        if pages:
+            out = {"pages": pages}
+            if skipped:
+                out["skipped"] = skipped
+            return out
+        if skipped:
+            first = skipped[0]
+            code = first.get("code")
+            if code == RATE_LIMITED:
+                result = {"error": {"code": RATE_LIMITED}}
+                if type(first.get("status")) is int:
+                    result["status"] = first["status"]
+                if type(first.get("retry_after")) is int:
+                    result["retry_after"] = first["retry_after"]
+                return result
+            if code == HTTP_ERROR:
+                status = first.get("status")
+                if type(status) is int:
+                    return _http_error_result(status)
+                return {"error": {"code": HTTP_ERROR}}
+            return {"error": {"code": code}}
         return {"pages": pages}
     except Exception as error:
         return _error_result(error)

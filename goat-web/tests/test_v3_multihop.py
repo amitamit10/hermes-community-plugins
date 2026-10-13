@@ -191,9 +191,19 @@ class MultiHopTests(OfflineTestCase, FixtureMixin):
         _, tools = self.load_tools(fake)
         payload = json.loads(tools["goat_answer"]["handler"]({"query": QUESTION}))
         self.assertEqual(
-            payload, {"ok": False, "error": {"code": "INSUFFICIENT_EVIDENCE"}}
+            payload.get("error", {}).get("code"), "INSUFFICIENT_EVIDENCE"
         )
+        self.assertIs(payload.get("ok"), False)
         self.assertNotIn("answer", payload)
+        self.assertNotIn("sources", payload)
+        research = payload.get("metadata", {}).get("research", {})
+        self.assertEqual(research.get("status"), "partial")
+        intermediate = research.get("intermediate_evidence", [])
+        inter_urls = [
+            item.get("url") if isinstance(item, dict) else item
+            for item in intermediate
+        ]
+        self.assertIn("https://example.com/hamlet", inter_urls)
 
     def test_conflicting_hop_evidence_suppresses(self):
         def fake(query, *, max_results=5):
@@ -208,9 +218,19 @@ class MultiHopTests(OfflineTestCase, FixtureMixin):
         _, tools = self.load_tools(fake)
         payload = json.loads(tools["goat_answer"]["handler"]({"query": QUESTION}))
         self.assertEqual(
-            payload, {"ok": False, "error": {"code": "INSUFFICIENT_EVIDENCE"}}
+            payload.get("error", {}).get("code"), "INSUFFICIENT_EVIDENCE"
         )
+        self.assertIs(payload.get("ok"), False)
         self.assertNotIn("answer", payload)
+        self.assertNotIn("sources", payload)
+        research = payload.get("metadata", {}).get("research", {})
+        self.assertEqual(research.get("status"), "partial")
+        intermediate = research.get("intermediate_evidence", [])
+        inter_urls = [
+            item.get("url") if isinstance(item, dict) else item
+            for item in intermediate
+        ]
+        self.assertIn("https://example.com/hamlet", inter_urls)
 
     def test_single_hop_path_regression_pin(self):
         def fake(query, *, max_results=5):

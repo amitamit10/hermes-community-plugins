@@ -1,0 +1,299 @@
+{
+  "label": "synthetic",
+  "note": "Deliberate synthetic evidence maps only. No real API claim. Extract bodies are exact fixture text; temporal_literal never enters extracts.",
+  "fixtures": [
+    {
+      "id": "v51-chain-positive",
+      "label": "synthetic",
+      "query": "Who designed the capital of the body orbited by Corvin?",
+      "evidence": {
+        "What does Corvin orbit?": [
+          {
+            "extract": "Corvin orbits Dessa.",
+            "title": "Corvin",
+            "url": "https://example.com/corvin-orbit"
+          }
+        ],
+        "What is the capital of Dessa?": [
+          {
+            "extract": "Elmar is the capital of Dessa.",
+            "title": "Dessa",
+            "url": "https://example.com/dessa-capital"
+          }
+        ],
+        "Who designed Elmar?": [
+          {
+            "extract": "Corvin Vale designed Elmar.",
+            "title": "Elmar",
+            "url": "https://example.com/elmar-designed"
+          }
+        ]
+      }
+    },
+    {
+      "id": "v51-facets-positive",
+      "label": "synthetic",
+      "query": "Who wrote Dessa?; Who designed Elmar?",
+      "evidence": {
+        "Who designed Elmar?": [
+          {
+            "extract": "Elmar Kent designed Elmar.",
+            "title": "Elmar",
+            "url": "https://example.com/elmar-designed"
+          }
+        ],
+        "Who wrote Dessa?": [
+          {
+            "extract": "Dessa Lark wrote Dessa.",
+            "title": "Dessa",
+            "url": "https://example.com/dessa-wrote"
+          }
+        ]
+      }
+    },
+    {
+      "id": "v51-intersection-positive",
+      "label": "synthetic",
+      "query": "Who both wrote Dessa and designed Elmar?",
+      "evidence": {
+        "Who designed Elmar?": [
+          {
+            "extract": "Dessa Lark designed Elmar.",
+            "title": "Elmar",
+            "url": "https://example.com/elmar-shared"
+          }
+        ],
+        "Who wrote Dessa?": [
+          {
+            "extract": "Dessa Lark wrote Dessa.",
+            "title": "Dessa",
+            "url": "https://example.com/dessa-wrote"
+          }
+        ]
+      }
+    },
+    {
+      "id": "v51-year-positive",
+      "label": "synthetic",
+      "query": "Who invented Fenwick in 1984?",
+      "temporal_literal": "1984",
+      "evidence": {
+        "Who invented Fenwick in 1984?": [
+          {
+            "extract": "Fenwick was invented in 1984 by Garran.",
+            "title": "Fenwick",
+            "url": "https://example.com/fenwick-invent-year"
+          }
+        ]
+      }
+    },
+    {
+      "id": "v51-year-negative-missing",
+      "label": "synthetic",
+      "query": "Who invented Fenwick in 1984?",
+      "temporal_literal": "1984",
+      "evidence": {
+        "Who invented Fenwick?": [
+          {
+            "extract": "Garran invented Fenwick.",
+            "title": "Fenwick",
+            "url": "https://example.com/fenwick-invent"
+          }
+        ]
+      }
+    },
+    {
+      "id": "v51-date-positive",
+      "label": "synthetic",
+      "query": "When was the inventor of Fenwick born?",
+      "evidence": {
+        "Garran born": [
+          {
+            "extract": "Garran was born in 1970.",
+            "title": "Garran",
+            "url": "https://example.com/garran-born"
+          }
+        ],
+        "Who invented Fenwick?": [
+          {
+            "extract": "Garran invented Fenwick.",
+            "title": "Fenwick",
+            "url": "https://example.com/fenwick-invent"
+          }
+        ]
+      }
+    },
+    {
+      "id": "v51-date-place-only-negative",
+      "label": "synthetic",
+      "query": "When was Dessa Lark born?",
+      "evidence": {
+        "Dessa Lark born": [
+          {
+            "extract": "Dessa Lark was born in Hollis.",
+            "title": "Dessa Lark",
+            "url": "https://example.com/dessa-born-place"
+          }
+        ]
+      }
+    },
+    {
+      "id": "v51-ambiguous-bridge",
+      "label": "synthetic",
+      "query": "Who designed the capital of the body orbited by Corvin?",
+      "evidence": {
+        "What does Corvin orbit?": [
+          {
+            "extract": "Corvin orbits Dessa.",
+            "title": "Corvin",
+            "url": "https://example.com/corvin-a"
+          },
+          {
+            "extract": "Corvin orbits Elmar.",
+            "title": "Corvin",
+            "url": "https://example.com/corvin-b"
+          }
+        ]
+      }
+    },
+    {
+      "id": "v51-missing-first-hop",
+      "label": "synthetic",
+      "query": "Who designed the capital of the body orbited by Corvin?",
+      "evidence": {
+        "What is the capital of Dessa?": [
+          {
+            "extract": "Elmar is the capital of Dessa.",
+            "title": "Dessa",
+            "url": "https://example.com/dessa-capital"
+          }
+        ]
+      }
+    },
+    {
+      "id": "v51-conflicting-facet",
+      "label": "synthetic",
+      "query": "Who wrote Dessa?; Who designed Elmar?",
+      "evidence": {
+        "Who designed Elmar?": [
+          {
+            "extract": "Elmar Kent designed Elmar.",
+            "title": "Elmar",
+            "url": "https://example.com/elmar-designed"
+          },
+          {
+            "extract": "Jento Lark designed Elmar.",
+            "title": "Elmar",
+            "url": "https://example.com/elmar-other"
+          }
+        ],
+        "Who wrote Dessa?": [
+          {
+            "extract": "Dessa Lark wrote Dessa.",
+            "title": "Dessa",
+            "url": "https://example.com/dessa-wrote"
+          }
+        ]
+      }
+    },
+    {
+      "id": "v51-negative-first-hop",
+      "label": "synthetic",
+      "query": "Who designed the capital of the body orbited by Corvin?",
+      "evidence": {
+        "What does Corvin orbit?": [
+          {
+            "extract": "Corvin does not orbit Dessa.",
+            "title": "Corvin",
+            "url": "https://example.com/corvin-orbit"
+          }
+        ]
+      }
+    },
+    {
+      "id": "v51-modal-second-facet",
+      "label": "synthetic",
+      "query": "Who wrote Dessa?; Who designed Elmar?",
+      "evidence": {
+        "Who designed Elmar?": [
+          {
+            "extract": "Elmar Kent perhaps designed Elmar.",
+            "title": "Elmar",
+            "url": "https://example.com/elmar-designed"
+          }
+        ],
+        "Who wrote Dessa?": [
+          {
+            "extract": "Dessa Lark wrote Dessa.",
+            "title": "Dessa",
+            "url": "https://example.com/dessa-wrote"
+          }
+        ]
+      }
+    },
+    {
+      "id": "v51-provider-error",
+      "label": "synthetic",
+      "query": "Who wrote Dessa?; Who designed Elmar?",
+      "force_http_status": 500,
+      "evidence": {
+        "Who designed Elmar?": [
+          {
+            "extract": "Elmar Kent designed Elmar.",
+            "title": "Elmar",
+            "url": "https://example.com/elmar-designed"
+          }
+        ],
+        "Who wrote Dessa?": [
+          {
+            "extract": "Dessa Lark wrote Dessa.",
+            "title": "Dessa",
+            "url": "https://example.com/dessa-wrote"
+          }
+        ]
+      }
+    },
+    {
+      "id": "v51-temporal-unsupported",
+      "label": "synthetic",
+      "query": "Was Dessa born before Elmar?",
+      "evidence": {
+        "Dessa born": [
+          {
+            "extract": "Dessa was born in 1970.",
+            "title": "Dessa",
+            "url": "https://example.com/dessa-born"
+          }
+        ],
+        "Elmar born": [
+          {
+            "extract": "Elmar was born in 1980.",
+            "title": "Elmar",
+            "url": "https://example.com/elmar-born"
+          }
+        ]
+      }
+    },
+    {
+      "id": "v51-arithmetic-unsupported",
+      "label": "synthetic",
+      "query": "How many years between the births of Dessa Lark and Elmar Kent?",
+      "evidence": {
+        "Dessa Lark born": [
+          {
+            "extract": "Dessa Lark was born in 1970.",
+            "title": "Dessa Lark",
+            "url": "https://example.com/dessa-born"
+          }
+        ],
+        "Elmar Kent born": [
+          {
+            "extract": "Elmar Kent was born in 1980.",
+            "title": "Elmar Kent",
+            "url": "https://example.com/elmar-born"
+          }
+        ]
+      }
+    }
+  ]
+}
